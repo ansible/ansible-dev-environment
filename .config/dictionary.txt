@@ -1,1 +1,7 @@
+bindep
+bthornto
+fileh
+levelname
+levelno
 pipc
+uninstallation

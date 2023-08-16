@@ -9,14 +9,15 @@ A pip-like install for ansible collections.
 - Install all collection python requirements
 - Install all collection test requirements
 - Checks for missing system packages
-- Symlinks the current collection into the current python intepreter's site-packages
-- Install all collection collection dependencies into the current python intepreter's site-packages
+- Symlinks the current collection into the current python interpreter's site-packages
+- Install all collection collection dependencies into the current python interpreter's site-packages
 
 By placing collections into the python site-packages directory they are discoverable by ansible as well as python and pytest.
 
 ## Usage
 
 ### Setting up a development environment
+
 ```
 $ git clone <collection_repo>
 $ cd collection_repo
@@ -35,6 +36,7 @@ INFO     Symlinking /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site
 ```
 
 ### Tearing down the development environment
+
 ```
 $ pipc uninstall ansible.scm
 INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
@@ -82,7 +84,8 @@ Usage:
         pipc install -e .[test]
         python -m pipc install ansible.utils
 ```
-```
+
+````
 $ pipc uninstall --help
 usage: pipc uninstall [-h] collection_specifier
 
@@ -97,3 +100,4 @@ Usage:
         pipc install -e .
         pipc install -e .[test]
         python -m pipc install ansible.utils```
+````

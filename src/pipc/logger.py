@@ -1,4 +1,4 @@
-"""Produce coloroed logs."""
+"""Produce pretty logs."""
 
 from __future__ import annotations
 
@@ -59,6 +59,9 @@ class ExitOnExceptionHandler(logging.StreamHandler[Any]):
 
         Args:
             record: The log record
+
+        Raises:
+            SystemExit: If the log record is an error or critical
         """
         super().emit(record)
         if record.levelno in (logging.ERROR, logging.CRITICAL):

@@ -28,7 +28,7 @@ class UnInstaller:
         """Initialize the uninstaller.
 
         Arguments:
-            args: The CLI arguments
+            app: The app instance
         """
         self.app: App = app
 
@@ -42,7 +42,7 @@ class UnInstaller:
             logger.critical(err)
             return
 
-        self._pip_uninstall(C.REQUIMENTS_PY)
+        self._pip_uninstall(C.REQUIREMENTS_PY)
         self._pip_uninstall(C.TEST_REQUIREMENTS_PY)
         self._remove_collections()
 

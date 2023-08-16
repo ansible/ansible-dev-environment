@@ -29,14 +29,14 @@ class Installer:
         """Initialize the installer.
 
         Arguments:
-            args: The CLI arguments
+            app: The app instance
         """
         self.app: App = app
 
     def run(self: Installer) -> None:
         """Run the installer."""
         if self.app.args.collection_specifier.startswith("."):
-            self._pip_install(C.REQUIMENTS_PY)
+            self._pip_install(C.REQUIREMENTS_PY)
             if "[test]" in self.app.args.collection_specifier:
                 self._pip_install(C.TEST_REQUIREMENTS_PY)
             site_pkg_path = self._install_collection()

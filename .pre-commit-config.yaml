@@ -78,6 +78,7 @@ repos:
         additional_dependencies:
           - pytest
           - tox
+          - pyyaml
 
   - repo: https://github.com/pre-commit/mirrors-mypy.git
     rev: v1.5.0
