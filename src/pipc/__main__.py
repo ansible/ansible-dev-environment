@@ -1,7 +1,7 @@
 """A runpy entry point for pipc.
 
 This makes it possible to invoke CLI
-via :command:`python -m ansible_cdk`.
+via :command:`python -m pipc`.
 """
 
 from .cli import main
