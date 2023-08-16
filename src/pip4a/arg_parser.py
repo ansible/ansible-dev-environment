@@ -26,10 +26,10 @@ def parse() -> argparse.Namespace:
     )
 
     install_usage = """Usage:
-        pipc install .
-        pipc install -e .
-        pipc install -e .[test]
-        python -m pipc install ansible.utils"""
+        pip4a install .
+        pip4a install -e .
+        pip4a install -e .[test]
+        python -m pip4a install ansible.utils"""
 
     install = subparsers.add_parser(
         "install",

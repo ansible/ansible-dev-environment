@@ -13,10 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_galaxy() -> tuple[str, dict[str, str]]:
-    """Retreive the collection name from the galaxy.yml file.
+    """Retrieve the collection name from the galaxy.yml file.
 
     Returns:
         str: The collection name and dependencies
+
+    Raises:
+        SystemExit: If the collection name is not found
     """
     file_name = Path("galaxy.yml").resolve()
     if not file_name.exists():
@@ -39,4 +42,4 @@ def get_galaxy() -> tuple[str, dict[str, str]]:
     except KeyError as exc:
         err = f"Failed to find collection name in {file_name}: {exc}"
         logger.critical(err)
-    raise SystemExit(1)  # We shouln't be here
+    raise SystemExit(1)  # We shouldn't be here

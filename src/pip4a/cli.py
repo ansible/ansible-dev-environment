@@ -34,7 +34,7 @@ class Cli:
 
     def init_logger(self: Cli) -> None:
         """Initialize the logger."""
-        logger = logging.getLogger("pipc")
+        logger = logging.getLogger("pip4a")
         ch = ExitOnExceptionHandler()
         ch.setLevel(logging.DEBUG)
         cf = ColoredFormatter(
@@ -49,7 +49,7 @@ class Cli:
 
     def ensure_isolated(self: Cli) -> None:
         """Ensure the environment is isolated."""
-        logger = logging.getLogger("pipc")
+        logger = logging.getLogger("pip4a")
         env_vars = os.environ
         errors = []
         if "ANSIBLE_COLLECTIONS_PATHS" in env_vars:
