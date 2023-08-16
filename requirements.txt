@@ -7,7 +7,6 @@
 cachetools==5.3.1
 chardet==5.2.0
 colorama==0.4.6
-coverage[toml]==7.3.0
 distlib==0.3.7
 execnet==2.0.2
 filelock==3.12.2
@@ -17,7 +16,6 @@ platformdirs==3.10.0
 pluggy==1.2.0
 pyproject-api==1.5.3
 pytest==7.4.0
-pytest-cov==4.1.0
 pytest-xdist==3.3.1
 pyyaml==6.0.1
 tox==4.9.0
