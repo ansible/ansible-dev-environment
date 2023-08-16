@@ -1,4 +1,4 @@
-"""A runpy entry point for pipc.
+"""A runpy entry point for pip4a.
 
 This makes it possible to invoke CLI
 via :command:`python -m pip4a`.
