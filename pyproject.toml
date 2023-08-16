@@ -23,8 +23,8 @@ description = "A pip-like ansible collection installer."
 dynamic = ["dependencies", "optional-dependencies", "version"]
 keywords = ["ansible"]
 license = {text = "GPL-3.0-only"}
-maintainers = [{"email" = "info@ansible.com", "name" = "Ansible by Red Hat"}]
-name = "pipac"
+maintainers = [{"email" = "bthornto@redhat.com", "name" = "Bradley Thornton"}]
+name = "pip4a"
 readme = "README.md"
 requires-python = ">=3.9"
 
@@ -32,10 +32,10 @@ requires-python = ">=3.9"
 pip4a = "pip4a.cli:main"
 
 [project.urls]
-changelog = "https://github.com/ansible-community/pipac/releases"
-documentation = "https://pipac.readthedocs.io/en/latest/"
-homepage = "https://github.com/ansible-community/pipac"
-repository = "https://github.com/ansible-community/pipac"
+changelog = "https://github.com/ansible-community/pip4a/releases"
+documentation = "https://pip4a.readthedocs.io/en/latest/"
+homepage = "https://github.com/ansible-community/pip4a"
+repository = "https://github.com/ansible-community/pip4a"
 
 [tool.mypy]
 files = ["src", "tests"]
