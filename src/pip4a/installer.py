@@ -173,16 +173,16 @@ class Installer:
         """Check the bindep file."""
         bindep = Path("./bindep.txt").resolve()
         if not bindep.exists():
-            msg = f"bindep file {bindep} does not exist, skipping"
+            msg = f"System package requirements file {bindep} does not exist, skipping"
             logger.info(msg)
             return
         msg = f"bindep file found: {bindep}"
-        logging.debug(msg)
+        logger.debug(msg)
 
         bindep_found = bool(shutil.which("bindep"))
         if not bindep_found:
             msg = "Installing bindep for: {bindep}"
-            logging.debug(msg)
+            logger.debug(msg)
             command = f"{sys.executable} -m pip install bindep"
             try:
                 subprocess.run(
@@ -193,11 +193,11 @@ class Installer:
                 )
             except subprocess.CalledProcessError as exc:
                 err = f"Failed to install bindep: {exc}"
-                logging.critical(err)
+                logger.critical(err)
 
         command = f"bindep -b -f {bindep}"
         msg = f"Running command: {command}"
-        logging.debug(msg)
+        logger.debug(msg)
         proc = subprocess.run(
             command,
             check=False,
@@ -210,9 +210,10 @@ class Installer:
 
         lines = proc.stdout.splitlines()
         msg = (
-            "Required system packages are missing"
-            " please use the system package manager to install them."
+            "Required system packages are missing."
+            " Please use the system package manager to install them."
         )
-        for line in lines[1:]:
+        logger.warning(msg)
+        for line in lines:
             msg = f"Missing: {line}"
-            logging.warning(msg)
+            logger.warning(msg)
