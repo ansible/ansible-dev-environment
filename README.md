@@ -1,4 +1,4 @@
-# pipac
+# pip4a
 
 A pip-like install for ansible collections.
 
@@ -23,8 +23,8 @@ $ git clone <collection_repo>
 $ cd collection_repo
 $ python -m venv venv
 $ source venv/bin/activate
-$ pip install pipac
-$ pipac install -e .[test]
+$ pip install pip4a
+$ pip4a install -e .[test]
 INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
 INFO     Requirements file /home/bthornto/github/ansible.scm/requirements.txt is empty, skipping
 INFO     Installing python requirements from /home/bthornto/github/ansible.scm/test-requirements.txt
@@ -38,7 +38,7 @@ INFO     Symlinking /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site
 ### Tearing down the development environment
 
 ```
-$ pipac uninstall ansible.scm
+$ pip4a uninstall ansible.scm
 INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
 INFO     Requirements file /home/bthornto/github/ansible.scm/requirements.txt is empty, skipping
 INFO     Uninstalling python requirements from /home/bthornto/github/ansible.scm/test-requirements.txt
@@ -52,8 +52,8 @@ INFO     Removed collection root: /home/bthornto/github/ansible.scm/venv/lib64/p
 ## Help
 
 ```
-$ pipac --help
-usage: pipac [-h] [--verbose] {install,uninstall} ...
+$ pip4a --help
+usage: pip4a [-h] [--verbose] {install,uninstall} ...
 
 A pip-like ansible collection installer.
 
@@ -68,8 +68,8 @@ subcommands:
 ```
 
 ```
-$ pipac install --help
-usage: pipac install [-h] [-e] collection_specifier
+$ pip4a install --help
+usage: pip4a install [-h] [-e] collection_specifier
 
 positional arguments:
   collection_specifier  Collection to install.
@@ -79,15 +79,15 @@ options:
   -e, --editable        Install editable.
 
 Usage:
-        pipac install .
-        pipac install -e .
-        pipac install -e .[test]
-        python -m pipac install ansible.utils
+        pip4a install .
+        pip4a install -e .
+        pip4a install -e .[test]
+        python -m pip4a install ansible.utils
 ```
 
 ````
-$ pipac uninstall --help
-usage: pipac uninstall [-h] collection_specifier
+$ pip4a uninstall --help
+usage: pip4a uninstall [-h] collection_specifier
 
 positional arguments:
   collection_specifier  Collection to uninstall.
@@ -96,8 +96,8 @@ options:
   -h, --help            show this help message and exit
 
 Usage:
-        pipac install .
-        pipac install -e .
-        pipac install -e .[test]
-        python -m pipac install ansible.utils```
+        pip4a install .
+        pip4a install -e .
+        pip4a install -e .[test]
+        python -m pip4a install ansible.utils```
 ````

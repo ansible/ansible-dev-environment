@@ -29,7 +29,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 [project.scripts]
-pipac = "pipac.cli:main"
+pip4a = "pip4a.cli:main"
 
 [project.urls]
 changelog = "https://github.com/ansible-community/pipac/releases"
@@ -261,7 +261,7 @@ optional-dependencies.test = {file = [".config/requirements-test.txt"]}
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
-write_to = "src/pipac/_version.py"
+write_to = "src/pip4a/_version.py"
 
 [tool.tomlsort]
 all = true
