@@ -32,10 +32,10 @@ requires-python = ">=3.9"
 pip4a = "pip4a.cli:main"
 
 [project.urls]
-changelog = "https://github.com/ansible-community/pip4a/releases"
+changelog = "https://github.com/cidrblock/pip4a/releases"
 documentation = "https://pip4a.readthedocs.io/en/latest/"
-homepage = "https://github.com/ansible-community/pip4a"
-repository = "https://github.com/ansible-community/pip4a"
+homepage = "https://github.com/cidrblock/pip4a"
+repository = "https://github.com/cidrblock/pip4a"
 
 [tool.mypy]
 files = ["src", "tests"]
