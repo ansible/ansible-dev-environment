@@ -1,7 +1,7 @@
 """A runpy entry point for pipc.
 
 This makes it possible to invoke CLI
-via :command:`python -m pipac`.
+via :command:`python -m pip4a`.
 """
 
 from .cli import main
