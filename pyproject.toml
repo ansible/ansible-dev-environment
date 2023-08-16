@@ -24,18 +24,18 @@ dynamic = ["dependencies", "optional-dependencies", "version"]
 keywords = ["ansible"]
 license = {text = "GPL-3.0-only"}
 maintainers = [{"email" = "info@ansible.com", "name" = "Ansible by Red Hat"}]
-name = "pipc"
+name = "pipac"
 readme = "README.md"
 requires-python = ">=3.9"
 
 [project.scripts]
-pipc = "pipc.cli:main"
+pipac = "pipac.cli:main"
 
 [project.urls]
-changelog = "https://github.com/ansible-community/pipc/releases"
-documentation = "https://pipc.readthedocs.io/en/latest/"
-homepage = "https://github.com/ansible-community/pipc"
-repository = "https://github.com/ansible-community/pipc"
+changelog = "https://github.com/ansible-community/pipac/releases"
+documentation = "https://pipac.readthedocs.io/en/latest/"
+homepage = "https://github.com/ansible-community/pipac"
+repository = "https://github.com/ansible-community/pipac"
 
 [tool.mypy]
 files = ["src", "tests"]
@@ -261,7 +261,7 @@ optional-dependencies.test = {file = [".config/requirements-test.txt"]}
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
-write_to = "src/pipc/_version.py"
+write_to = "src/pipac/_version.py"
 
 [tool.tomlsort]
 all = true
