@@ -1,21 +1,13 @@
-# push workflow is shared and expected to perform actions after a merge happens
-# on a maintenance branch (default or release). For example updating the
-# draft release-notes.
+---
+# See https://github.com/ansible-community/devtools/blob/main/.github/workflows/push.yml
 name: push
-
 on:
   push:
-    # branches to consider in the event; optional, defaults to all
     branches:
       - main
-      - 'releases/**'
-      - 'stable/**'
-  workflow_call:  # allows reuse of this workflow from other devtools repos
+      - "releases/**"
+      - "stable/**"
 
 jobs:
-  update_release_draft:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ack:
+    uses: ansible/devtools/.github/workflows/push.yml@main
