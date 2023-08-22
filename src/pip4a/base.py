@@ -48,7 +48,7 @@ class Base:
         if venv:
             if not venv.exists():
                 if create:
-                    if not venv.relative_to(Path.cwd()):
+                    if not venv.is_relative_to(Path.cwd()):
                         err = "Virtual environment must relative to cwd to create it."
                         logger.critical(err)
                     msg = f"Creating virtual environment: {venv}"
