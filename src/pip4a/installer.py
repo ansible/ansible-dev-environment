@@ -96,7 +96,6 @@ class Installer(Base):
             err = f"Failed to copy collection to build directory: {exc}"
             logger.critical(err)
 
-
         command = (
             f"cd {C.COLLECTION_BUILD_DIR} &&"
             f" {self.bindir / 'ansible-galaxy'} collection build"
@@ -120,7 +119,8 @@ class Installer(Base):
             logger.critical(err)
 
         built = [
-            f for f in Path(C.COLLECTION_BUILD_DIR).iterdir()
+            f
+            for f in Path(C.COLLECTION_BUILD_DIR).iterdir()
             if f.is_file() and f.name.endswith(".tar.gz")
         ]
         if len(built) != 1:
