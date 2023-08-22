@@ -216,9 +216,12 @@ class Installer(Base):
         msg = f"bindep file found: {bindep}"
         logger.debug(msg)
 
+        command = f"{self.interpreter} -m pip show bindep"
+        msg = f"Running command: {command}"
+        logger.debug(msg)
         try:
             subprocess.run(
-                f"{self.interpreter} -m bindep",
+                command,
                 check=True,
                 shell=True,  # noqa: S602
             )
@@ -226,9 +229,12 @@ class Installer(Base):
         except subprocess.CalledProcessError:
             bindep_found = False
 
+        msg = f"bindep found: {bindep_found}"
+        logger.debug(msg)
+
         if not bindep_found:
-            msg = "Installing bindep for: {bindep}"
-            logger.debug(msg)
+            msg = f"Installing bindep for: {bindep}"
+            logger.info(msg)
             command = f"{self.interpreter} -m pip install bindep"
             try:
                 subprocess.run(
