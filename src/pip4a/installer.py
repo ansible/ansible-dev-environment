@@ -5,47 +5,47 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import site
 import subprocess
-import sys
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from .base import Base
 from .constants import Constants as C  # noqa: N817
-
-
-if TYPE_CHECKING:
-    from .app import App
 
 
 logger = logging.getLogger(__name__)
 
 
-class Installer:
+class Installer(Base):
     """The installer class."""
-
-    def __init__(self: Installer, app: App) -> None:
-        """Initialize the installer.
-
-        Arguments:
-            app: The app instance
-        """
-        self.app: App = app
 
     def run(self: Installer) -> None:
         """Run the installer."""
-        if self.app.args.collection_specifier.startswith("."):
-            self._pip_install(C.REQUIREMENTS_PY)
-            if "[test]" in self.app.args.collection_specifier:
-                self._pip_install(C.TEST_REQUIREMENTS_PY)
-            site_pkg_path = self._install_collection()
-            if self.app.args.editable:
-                self._swap_editable_collection(site_pkg_path)
-            self._check_bindep()
-            return
-        err = "Only local collections are supported at this time. ('.' or .[test])]"
-        logger.critical(err)
+        if not self.app.args.collection_specifier.startswith("."):
+            err = "Only local collections are supported at this time. ('.' or .[test])]"
+            logger.critical(err)
+
+        self._set_interpreter(create=True)
+        self._set_bindir()
+        self._set_site_pkg_path()
+
+        self._pip_install(C.REQUIREMENTS_PY)
+        if "[test]" in self.app.args.collection_specifier:
+            self._pip_install(C.TEST_REQUIREMENTS_PY)
+        self._install_core()
+        self._install_collection()
+        if self.app.args.editable:
+            self._swap_editable_collection()
+        self._check_bindep()
+
+        if self.app.args.venv and (self.python_path != self.interpreter):
+            msg = "A virtual environment was specified but has not been activated."
+            logger.warning(msg)
+            msg = (
+                "Please activate the virtual environment:"
+                f"\nsource {self.app.args.venv}/bin/activate"
+            )
+            logger.warning(msg)
 
     def _init_build_dir(self: Installer) -> None:
         """Initialize the build directory."""
@@ -55,12 +55,34 @@ class Installer:
             shutil.rmtree(C.COLLECTION_BUILD_DIR)
         C.COLLECTION_BUILD_DIR.mkdir()
 
-    def _install_collection(self: Installer) -> Path:
+    def _install_core(self: Installer) -> None:
+        """Install ansible-core if not installed already."""
+        core = self.bindir / "ansible"
+        if core.exists():
+            return
+        msg = "Installing ansible-core."
+        logger.info(msg)
+        command = f"{self.interpreter} -m pip install ansible-core"
+        msg = f"Running command: {command}"
+        logger.debug(msg)
+        try:
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=not self.app.args.verbose,
+                shell=True,  # noqa: S602
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to install ansible-core: {exc}"
+            logger.critical(err)
+
+    def _install_collection(self: Installer) -> None:
         """Install the collection from the current working directory."""
         self._init_build_dir()
 
         command = (
-            f"ansible-galaxy collection build --output-path {C.COLLECTION_BUILD_DIR}"
+            f"{self.bindir / 'ansible-galaxy'} collection build"
+            f" --output-path {C.COLLECTION_BUILD_DIR}"
         )
 
         msg = "Running ansible-galaxy to build collection."
@@ -86,12 +108,11 @@ class Installer:
                 f"{C.COLLECTION_BUILD_DIR}, found {len(built)}"
             )
             raise RuntimeError(err)
-        tarball = built[0]
-        site_pkg_dirs = site.getsitepackages()
+        built[0]
 
-        first_site_pkg_path = Path(site_pkg_dirs[0])
         command = (
-            f"ansible-galaxy collection install {tarball} -p {first_site_pkg_path}"
+            f"{self.bindir / 'ansible-galaxy'} collection"
+            " install {tarball} -p {self.site_pkg_path}"
         )
         env = os.environ
         if not self.app.args.verbose:
@@ -112,16 +133,10 @@ class Installer:
             err = f"Failed to install collection: {exc} {exc.stderr}"
             logger.critical(err)
 
-        return first_site_pkg_path
-
-    def _swap_editable_collection(self: Installer, site_pkg_path: Path) -> None:
-        """Swap the installed collection with the current working directory.
-
-        Args:
-            site_pkg_path: The first site package path
-        """
+    def _swap_editable_collection(self: Installer) -> None:
+        """Swap the installed collection with the current working directory."""
         site_pkg_collection_path = (
-            site_pkg_path
+            self.site_pkg_path
             / "ansible_collections"
             / self.app.collection_name.split(".")[0]
             / self.app.collection_name.split(".")[1]
@@ -152,11 +167,12 @@ class Installer:
             logger.info(msg)
             return
 
-        command = f"{sys.executable} -m pip install -r {requirements_file}"
+        command = f"{self.interpreter} -m pip install -r {requirements_file}"
 
         msg = f"Installing python requirements from {requirements_file}"
         logger.info(msg)
         msg = f"Running command: {command}"
+
         logger.debug(msg)
         try:
             subprocess.run(
@@ -179,11 +195,20 @@ class Installer:
         msg = f"bindep file found: {bindep}"
         logger.debug(msg)
 
-        bindep_found = bool(shutil.which("bindep"))
+        try:
+            subprocess.run(
+                f"{self.interpreter} -m bindep",
+                check=True,
+                shell=True,  # noqa: S602
+            )
+            bindep_found = True
+        except subprocess.CalledProcessError:
+            bindep_found = False
+
         if not bindep_found:
             msg = "Installing bindep for: {bindep}"
             logger.debug(msg)
-            command = f"{sys.executable} -m pip install bindep"
+            command = f"{self.interpreter} -m pip install bindep"
             try:
                 subprocess.run(
                     command,
@@ -195,7 +220,7 @@ class Installer:
                 err = f"Failed to install bindep: {exc}"
                 logger.critical(err)
 
-        command = f"bindep -b -f {bindep}"
+        command = f"{self.bindir / 'bindep'} -b -f {bindep}"
         msg = f"Running command: {command}"
         logger.debug(msg)
         proc = subprocess.run(
@@ -206,6 +231,8 @@ class Installer:
             text=True,
         )
         if proc.returncode == 0:
+            msg = "All required system packages are installed."
+            logger.debug(msg)
             return
 
         lines = proc.stdout.splitlines()
