@@ -4,43 +4,43 @@ from __future__ import annotations
 
 import logging
 import shutil
-import site
 import subprocess
-import sys
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .base import Base
 from .constants import Constants as C  # noqa: N817
 
 
 if TYPE_CHECKING:
-    from .app import App
+    from pathlib import Path
+    pass
 
 
 logger = logging.getLogger(__name__)
 
 
-class UnInstaller:
+class UnInstaller(Base):
     """The uninstaller class."""
-
-    def __init__(self: UnInstaller, app: App) -> None:
-        """Initialize the uninstaller.
-
-        Arguments:
-            app: The app instance
-        """
-        self.app: App = app
 
     def run(self: UnInstaller) -> None:
         """Run the installer."""
         if self.app.args.collection_specifier not in (self.app.collection_name, "."):
             err = (
-                f"Only uninstallation the local collection {self.app.collection_name})"
-                " is supported at this time."
+                "Invalid requirement: {self.app.args.collection_specifier} ignored -"
+                " the uninstall command expects the name of the local collection."
+            )
+            logger.warning(err)
+            err = (
+                "You must give at least one requirement"
+                f" to uninstall (e.g. {self.app.collection_name})."
             )
             logger.critical(err)
-            return
+
+
+        self._set_interpreter()
+        self._set_bindir()
+        self._set_site_pkg_path()
 
         self._pip_uninstall(C.REQUIREMENTS_PY)
         self._pip_uninstall(C.TEST_REQUIREMENTS_PY)
@@ -53,7 +53,7 @@ class UnInstaller:
         ]
 
         collection_namespace_roots = []
-        collection_root = Path(site.getsitepackages()[0]) / "ansible_collections"
+        collection_root = self.site_pkg_path / "ansible_collections"
 
         for collection_name in collection_names:
             namespace, name = collection_name.split(".")
@@ -128,7 +128,7 @@ class UnInstaller:
             logger.info(msg)
             return
 
-        command = f"{sys.executable} -m pip uninstall -r {requirements_file} -y"
+        command = f"{self.interpreter} -m pip uninstall -r {requirements_file} -y"
 
         msg = f"Uninstalling python requirements from {requirements_file}"
         logger.info(msg)
@@ -140,7 +140,8 @@ class UnInstaller:
                 check=True,
                 capture_output=not self.app.args.verbose,
                 shell=True,  # noqa: S602
+                text=True,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to uninstall requirements from {requirements_file}: {exc}"
-            raise RuntimeError(err) from exc
+            err = f"Failed to uninstall requirements from {requirements_file}: {exc} - {exc.stderr}"
+            logger.critical(err)

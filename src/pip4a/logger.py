@@ -46,8 +46,10 @@ class ColoredFormatter(logging.Formatter):
         colored_record = copy(record)
         levelname = colored_record.levelname
         seq = MAPPING.get(levelname, 37)  # default white
-        colored_levelname = f"{PREFIX}{seq}m{levelname: <8}{SUFFIX}"
+        colored_levelname = f"{PREFIX}{seq}m{levelname:}:{SUFFIX}"
         colored_record.levelname = colored_levelname
+        colored_msg = f"{PREFIX}{seq}m{record.msg}{SUFFIX}"
+        colored_record.msg = colored_msg
         return logging.Formatter.format(self, colored_record)
 
 
