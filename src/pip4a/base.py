@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class Base:
     """A base class for pip4a."""
 
@@ -30,8 +31,12 @@ class Base:
         self.bindir: Path
         self.interpreter: Path
         self.site_pkg_path: Path
+        self.python_path: Path
 
-    def _set_interpreter(self: Base, create: bool=False) -> None: # noqa: FBT001,FBT002
+    def _set_interpreter(  # noqa: PLR0912
+        self: Base,
+        create: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
         """Set the interpreter."""
         venv = None
         if self.app.args.venv:
@@ -79,6 +84,23 @@ class Base:
             msg = f"Using current interpreter: {self.interpreter}"
             logger.info(msg)
 
+        command = "python -c 'import sys; print(sys.executable)'"
+        msg = f"Running command: {command}"
+        logger.debug(msg)
+        try:
+            proc = subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                shell=True,  # noqa: S602
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to find interpreter in use: {exc}"
+            logger.critical(err)
+
+        self.python_path = Path(proc.stdout.strip())
+
     def _set_bindir(self: Base) -> None:
         """Set the bindir."""
         self.bindir = self.interpreter.parent
@@ -89,9 +111,9 @@ class Base:
     def _set_site_pkg_path(self: Base) -> None:
         """USe the interpreter to find the site packages path."""
         command = (
-                f"{self.interpreter} -c"
-                " 'import json,site; print(json.dumps(site.getsitepackages()))'"
-            )
+            f"{self.interpreter} -c"
+            " 'import json,site; print(json.dumps(site.getsitepackages()))'"
+        )
         msg = f"Running command: {command}"
         logger.debug(msg)
         try:

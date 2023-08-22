@@ -1,7 +1,18 @@
 """Parse the command line arguments."""
 import argparse
 
-from ._version import __version__
+
+try:
+    from ._version import version as __version__
+except ImportError:  # pragma: no cover
+    try:
+        import pkg_resources
+
+        __version__ = pkg_resources.get_distribution("pip4a").version
+    except Exception:  # pylint: disable=broad-except # noqa: BLE001
+        # this is the fallback SemVer version picked by setuptools_scm when tag
+        # information is not available.
+        __version__ = "0.1.dev1"
 
 
 def parse() -> argparse.Namespace:
@@ -44,7 +55,6 @@ def parse() -> argparse.Namespace:
         "--venv",
         help="Target virtual environment.",
     )
-
 
     install_usage = """Usage:
         pip4a install .
