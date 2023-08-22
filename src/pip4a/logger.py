@@ -10,8 +10,8 @@ from typing import Any
 
 MAPPING = {
     "DEBUG": "30",  # grey
-    "INFO": "96;1",  # bold bright cyan
-    "WARNING": "93;1",  # bold bright yellow
+    "INFO": "96",  # bright cyan
+    "WARNING": "93",  # bright yellow
     "ERROR": "31;1",  # bold red
     "CRITICAL": "91;1",  # bold bright red
 }
