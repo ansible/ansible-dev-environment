@@ -19,20 +19,26 @@ By placing collections into the python site-packages directory they are discover
 ### Setting up a development environment
 
 ```
+$ pip install pip4a --user
 $ git clone <collection_repo>
-$ cd collection_repo
-$ python -m venv venv
-$ source venv/bin/activate
-$ pip install pip4a
-$ pip4a install -e .[test]
-INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
-INFO     Requirements file /home/bthornto/github/ansible.scm/requirements.txt is empty, skipping
-INFO     Installing python requirements from /home/bthornto/github/ansible.scm/test-requirements.txt
-INFO     Initializing build directory: /home/bthornto/github/ansible.scm/build
-INFO     Running ansible-galaxy to build collection.
-INFO     Running ansible-galaxy to install collection and it's dependencies.
-INFO     Removing installed /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections/ansible/scm
-INFO     Symlinking /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections/ansible/scm to /home/bthornto/github/ansible.scm
+$ cd <collection_repo>
+$ pip4a install -e .\[test] --venv venv
+INFO: Found collection name: network.interfaces from /home/bthornto/github/network.interfaces/galaxy.yml.
+INFO: Creating virtual environment: /home/bthornto/github/network.interfaces/venv
+INFO: Virtual environment: /home/bthornto/github/network.interfaces/venv
+INFO: Using specified interpreter: /home/bthornto/github/network.interfaces/venv/bin/python
+INFO: Requirements file /home/bthornto/github/network.interfaces/requirements.txt is empty, skipping
+INFO: Installing python requirements from /home/bthornto/github/network.interfaces/test-requirements.txt
+INFO: Installing ansible-core.
+INFO: Initializing build directory: /home/bthornto/github/network.interfaces/build
+INFO: Copying collection to build directory using git ls-files.
+INFO: Running ansible-galaxy to build collection.
+INFO: Running ansible-galaxy to install collection and it's dependencies.
+INFO: Removing installed /home/bthornto/github/network.interfaces/venv/lib64/python3.11/site-packages/ansible_collections/network/interfaces
+INFO: Symlinking /home/bthornto/github/network.interfaces/venv/lib64/python3.11/site-packages/ansible_collections/network/interfaces to /home/bthornto/github/network.interfaces
+WARNING: A virtual environment was specified but has not been activated.
+WARNING: Please activate the virtual environment:
+source venv/bin/activate
 ```
 
 ### Tearing down the development environment
@@ -51,53 +57,8 @@ INFO     Removed collection root: /home/bthornto/github/ansible.scm/venv/lib64/p
 
 ## Help
 
-```
-$ pip4a --help
-usage: pip4a [-h] [--verbose] {install,uninstall} ...
+`pip4a --help`
 
-A pip-like ansible collection installer.
+`pip4a install --help`
 
-options:
-  -h, --help           show this help message and exit
-  --verbose            Increase output verbosity.
-
-subcommands:
-  valid subcommands
-
-  {install,uninstall}  additional help
-```
-
-```
-$ pip4a install --help
-usage: pip4a install [-h] [-e] collection_specifier
-
-positional arguments:
-  collection_specifier  Collection to install.
-
-options:
-  -h, --help            show this help message and exit
-  -e, --editable        Install editable.
-
-Usage:
-        pip4a install .
-        pip4a install -e .
-        pip4a install -e .[test]
-        python -m pip4a install ansible.utils
-```
-
-````
-$ pip4a uninstall --help
-usage: pip4a uninstall [-h] collection_specifier
-
-positional arguments:
-  collection_specifier  Collection to uninstall.
-
-options:
-  -h, --help            show this help message and exit
-
-Usage:
-        pip4a install .
-        pip4a install -e .
-        pip4a install -e .[test]
-        python -m pip4a install ansible.utils```
-````
+`pip4a uninstall --help`
