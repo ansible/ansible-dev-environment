@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import site
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -67,6 +68,13 @@ class Cli:
         usr_coll = Path("/usr/share/ansible/collections")
         if usr_coll.exists() and tuple(usr_coll.iterdir()):
             err = f"Collections found in {usr_coll}"
+            errors.append(err)
+
+        if "VIRTUAL_ENV" not in env_vars and not self.args.venv:
+            err = (
+                "Unable to install in user site packages directory:"
+                f" {site.getusersitepackages()}, please activate or specify a virtual envrionment"
+            )
             errors.append(err)
 
         if errors:
