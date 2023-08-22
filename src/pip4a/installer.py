@@ -77,11 +77,28 @@ class Installer(Base):
             logger.critical(err)
 
     def _install_collection(self: Installer) -> None:
-        """Install the collection from the current working directory."""
+        """Install the collection from the build directory."""
         self._init_build_dir()
 
+        command = f"cp -r --parents $(git ls-files 2> /dev/null || ls) {C.COLLECTION_BUILD_DIR}"
+        msg = "Copying collection to build directory using git ls-files."
+        logger.info(msg)
+        msg = f"Running command: {command}"
+        logger.debug(msg)
+        try:
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=not self.app.args.verbose,
+                shell=True,  # noqa: S602
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to copy collection to build directory: {exc}"
+            logger.critical(err)
+
         command = (
-            f"{self.bindir / 'ansible-galaxy'} collection build"
+            f"cd {C.COLLECTION_BUILD_DIR} &&"
+            f" {self.bindir / 'ansible-galaxy'} collection build"
             f" --output-path {C.COLLECTION_BUILD_DIR}"
         )
 
@@ -101,18 +118,22 @@ class Installer(Base):
             err = f"Failed to build collection: {exc} {exc.stderr}"
             logger.critical(err)
 
-        built = [f for f in Path(C.COLLECTION_BUILD_DIR).iterdir() if f.is_file()]
+        built = [
+            f
+            for f in Path(C.COLLECTION_BUILD_DIR).iterdir()
+            if f.is_file() and f.name.endswith(".tar.gz")
+        ]
         if len(built) != 1:
             err = (
                 "Expected to find one collection tarball in"
                 f"{C.COLLECTION_BUILD_DIR}, found {len(built)}"
             )
             raise RuntimeError(err)
-        built[0]
+        tarball = built[0]
 
         command = (
             f"{self.bindir / 'ansible-galaxy'} collection"
-            " install {tarball} -p {self.site_pkg_path}"
+            f" install {tarball} -p {self.site_pkg_path}"
         )
         env = os.environ
         if not self.app.args.verbose:
