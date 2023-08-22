@@ -1,4 +1,5 @@
 bindep
+bindir
 bthornto
 fileh
 levelname

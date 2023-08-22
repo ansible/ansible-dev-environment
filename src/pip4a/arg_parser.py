@@ -45,7 +45,6 @@ def parse() -> argparse.Namespace:
         help="Target virtual environment.",
     )
 
-
     install_usage = """Usage:
         pip4a install .
         pip4a install -e .

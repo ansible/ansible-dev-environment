@@ -63,7 +63,7 @@ repos:
         name: Spell check with cspell
 
   - repo: https://github.com/jsh9/pydoclint
-    rev: 0.1.5
+    rev: 0.2.1
     hooks:
       - id: pydoclint
         args:

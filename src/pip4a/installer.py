@@ -6,7 +6,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 
 from pathlib import Path
 
@@ -39,7 +38,7 @@ class Installer(Base):
             self._swap_editable_collection()
         self._check_bindep()
 
-        if self.app.args.venv and (Path(sys.executable).parent != self.interpreter.parent):
+        if self.app.args.venv and (self.python_path != self.interpreter):
             msg = "A virtual environment was specified but has not been activated."
             logger.warning(msg)
             msg = (
@@ -109,10 +108,11 @@ class Installer(Base):
                 f"{C.COLLECTION_BUILD_DIR}, found {len(built)}"
             )
             raise RuntimeError(err)
-        tarball = built[0]
+        built[0]
 
         command = (
-            f"{self.bindir / 'ansible-galaxy'} collection install {tarball} -p {self.site_pkg_path}"
+            f"{self.bindir / 'ansible-galaxy'} collection"
+            " install {tarball} -p {self.site_pkg_path}"
         )
         env = os.environ
         if not self.app.args.verbose:
@@ -133,13 +133,8 @@ class Installer(Base):
             err = f"Failed to install collection: {exc} {exc.stderr}"
             logger.critical(err)
 
-
     def _swap_editable_collection(self: Installer) -> None:
-        """Swap the installed collection with the current working directory.
-
-        Args:
-            site_pkg_path: The first site package path
-        """
+        """Swap the installed collection with the current working directory."""
         site_pkg_collection_path = (
             self.site_pkg_path
             / "ansible_collections"

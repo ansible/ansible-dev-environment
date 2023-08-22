@@ -14,6 +14,7 @@ from .constants import Constants as C  # noqa: N817
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     pass
 
 
@@ -36,7 +37,6 @@ class UnInstaller(Base):
                 f" to uninstall (e.g. {self.app.collection_name})."
             )
             logger.critical(err)
-
 
         self._set_interpreter()
         self._set_bindir()
