@@ -73,7 +73,7 @@ class Cli:
         if "VIRTUAL_ENV" not in env_vars and not self.args.venv:
             err = (
                 "Unable to install in user site packages directory:"
-                f" {site.getusersitepackages()}, please activate or specify a virtual envrionment"
+                f" {site.getusersitepackages()}, please activate or specify a virtual environment"
             )
             errors.append(err)
 
