@@ -6,16 +6,8 @@ import logging
 import shutil
 import subprocess
 
-from typing import TYPE_CHECKING
-
 from .base import Base
 from .constants import Constants as C  # noqa: N817
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    pass
 
 
 logger = logging.getLogger(__name__)
@@ -38,19 +30,27 @@ class UnInstaller(Base):
             )
             logger.critical(err)
 
+        if not C.WORKING_DIR.exists():
+            msg = f"Failed to find working directory '{C.WORKING_DIR}', nothing to do."
+            logger.warning(msg)
+            return
+
         self._set_interpreter()
         self._set_bindir()
         self._set_site_pkg_path()
 
-        self._pip_uninstall(C.REQUIREMENTS_PY)
-        self._pip_uninstall(C.TEST_REQUIREMENTS_PY)
+        self._pip_uninstall()
         self._remove_collections()
+        shutil.rmtree(C.WORKING_DIR, ignore_errors=True)
 
-    def _remove_collections(self: UnInstaller) -> None:  # noqa: C901, PLR0912
-        collection_names = [
-            *list(self.app.collection_dependencies.keys()),
-            self.app.collection_name,
-        ]
+    def _remove_collections(self: UnInstaller) -> None:  # noqa: C901, PLR0912, PLR0915
+        """Remove the collection and dependencies."""
+        if not C.INSTALLED_COLLECTIONS.exists():
+            msg = f"Failed to find {C.INSTALLED_COLLECTIONS}"
+            logger.warning(msg)
+            return
+        with C.INSTALLED_COLLECTIONS.open() as f:
+            collection_names = f.read().splitlines()
 
         collection_namespace_roots = []
         collection_root = self.site_pkg_path / "ansible_collections"
@@ -116,21 +116,18 @@ class UnInstaller(Base):
             msg = f"Failed to remove collection root: {exc}"
             logger.debug(msg)
 
-    def _pip_uninstall(self: UnInstaller, requirements_file: Path) -> None:
+    def _pip_uninstall(self: UnInstaller) -> None:
         """Uninstall the dependencies."""
-        if not requirements_file.exists():
-            msg = f"Requirements file {requirements_file} does not exist, skipping"
-            logger.info(msg)
+        if not C.DISCOVERED_PYTHON_REQS.exists():
+            msg = f"Failed to find {C.DISCOVERED_PYTHON_REQS}"
+            logger.warning(msg)
             return
 
-        if requirements_file.stat().st_size == 0:
-            msg = f"Requirements file {requirements_file} is empty, skipping"
-            logger.info(msg)
-            return
+        command = (
+            f"{self.interpreter} -m pip uninstall -r {C.DISCOVERED_PYTHON_REQS} -y"
+        )
 
-        command = f"{self.interpreter} -m pip uninstall -r {requirements_file} -y"
-
-        msg = f"Uninstalling python requirements from {requirements_file}"
+        msg = f"Uninstalling python requirements from {C.DISCOVERED_PYTHON_REQS}"
         logger.info(msg)
         msg = f"Running command: {command}"
         logger.debug(msg)
@@ -143,5 +140,45 @@ class UnInstaller(Base):
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to uninstall requirements from {requirements_file}: {exc} - {exc.stderr}"
+            err = (
+                f"Failed to uninstall requirements from {C.DISCOVERED_PYTHON_REQS}:"
+                f" {exc} - {exc.stderr}"
+            )
+            logger.critical(err)
+
+        # Repair the core and builder installs if needed.
+        msg = "Repairing the core and builder installs if needed."
+        logger.info(msg)
+        command = f"{self.interpreter} -m pip check"
+        msg = f"Running command: {command}"
+        logger.debug(msg)
+        try:
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                shell=True,  # noqa: S602
+                text=True,
+            )
+        except subprocess.CalledProcessError:
+            pass
+        else:
+            return
+
+        command = (
+            f"{self.interpreter} -m pip install --upgrade"
+            " --force-reinstall ansible-core ansible-builder"
+        )
+        msg = f"Running command: {command}"
+        logger.debug(msg)
+        try:
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                shell=True,  # noqa: S602
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to repair the core and builder installs: {exc}"
             logger.critical(err)

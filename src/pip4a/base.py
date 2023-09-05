@@ -32,6 +32,7 @@ class Base:
         self.interpreter: Path
         self.site_pkg_path: Path
         self.python_path: Path
+        self._pip_include_test: bool = False
 
     def _set_interpreter(  # noqa: PLR0912
         self: Base,
