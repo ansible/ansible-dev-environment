@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .base import Base
 from .constants import Constants as C  # noqa: N817
-from .utils import oxford_join, subprocess_run
+from .utils import opt_deps_to_files, oxford_join, subprocess_run
 
 
 logger = logging.getLogger(__name__)
@@ -35,9 +35,6 @@ class Installer(Base):
         self._install_collection()
         if self.app.args.editable:
             self._swap_editable_collection()
-
-        if "[test]" in self.app.args.collection_specifier:
-            self._pip_include_test = True
 
         self._discover_deps()
         self._pip_install()
@@ -82,8 +79,10 @@ class Installer(Base):
             f" --write-bindep {C.DISCOVERED_BINDEP_REQS}"
             " --sanitize"
         )
-        if self._pip_include_test and C.TEST_REQUIREMENTS_PY.exists():
-            command += f" --user-pip {C.TEST_REQUIREMENTS_PY}"
+        opt_deps = re.match(r".*\[(.*)\]", self.app.args.collection_specifier)
+        if opt_deps:
+            for dep in opt_deps_to_files(opt_deps.group(1)):
+                command += f" --user-pip {dep}"
         msg = f"Writing discovered python requirements to: {C.DISCOVERED_PYTHON_REQS}"
         logger.info(msg)
         msg = f"Writing discovered system package requirements to: {C.DISCOVERED_BINDEP_REQS}"
