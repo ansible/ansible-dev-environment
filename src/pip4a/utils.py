@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 
 from pathlib import Path
 
+import subprocess_tee
 import yaml
 
 
@@ -43,3 +45,41 @@ def get_galaxy() -> tuple[str, dict[str, str]]:
         err = f"Failed to find collection name in {file_name}: {exc}"
         logger.critical(err)
     raise SystemExit(1)  # We shouldn't be here
+
+
+def subprocess_run(
+    verbose: bool,  # noqa: FBT001
+    command: str,
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess command."""
+    msg = f"Running command: {command}"
+    logger.debug(msg)
+    if verbose:
+        return subprocess_tee.run(
+            command,
+            check=True,
+            shell=True,  # noqa: S604
+            text=True,
+        )
+    return subprocess.run(
+        command,
+        check=True,
+        shell=True,  # noqa: S602
+        capture_output=True,
+        text=True,
+    )
+
+
+def oxford_join(words: list[str]) -> str:
+    """Join a list of words with commas and an oxford comma.
+
+    :param words: A list of words to join
+    :return: A string of words joined with commas and an oxford comma
+    """
+    if not words:
+        return ""
+    if len(words) == 1:
+        return words[0]
+    if len(words) == 2:  # noqa: PLR2004
+        return " and ".join(words)
+    return ", ".join(words[:-1]) + ", and " + words[-1]
