@@ -83,3 +83,29 @@ def oxford_join(words: list[str]) -> str:
     if len(words) == 2:  # noqa: PLR2004
         return " and ".join(words)
     return ", ".join(words[:-1]) + ", and " + words[-1]
+
+
+def opt_deps_to_files(dep_str: str) -> list[Path]:
+    """Convert a string of optional dependencies to a list of files.
+
+    :param dep_str: A string of optional dependencies
+    :return: A list of files
+    """
+    deps = dep_str.split(",")
+    files = []
+    for dep in deps:
+        _dep = dep.strip()
+        variant1 = Path.cwd() / f"{_dep}-requirements.txt"
+        if variant1.exists():
+            files.append(variant1)
+            continue
+        variant2 = Path.cwd() / f"requirements-{_dep}.txt"
+        if variant2.exists():
+            files.append(variant2)
+            continue
+        msg = (
+            f"Failed to find optional dependency file for '{_dep}'."
+            f" Checked for '{variant1.name}' and '{variant2.name}'. Skipping."
+        )
+        logger.warning(msg)
+    return files

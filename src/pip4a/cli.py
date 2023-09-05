@@ -91,6 +91,7 @@ class Cli:
 
     def run(self: Cli) -> None:
         """Run the application."""
+        logger = logging.getLogger("pip4a")
         collection_name, dependencies = get_galaxy()
 
         self.app = App(
@@ -98,6 +99,10 @@ class Cli:
             collection_name=collection_name,
             collection_dependencies=dependencies,
         )
+        if "," in self.app.args.collection_specifier:
+            err = "Multiple optional dependencies are not supported at this time."
+            logger.critical(err)
+
         if self.app.args.subcommand == "install":
             installer = Installer(self.app)
             installer.run()
