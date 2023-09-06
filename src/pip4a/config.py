@@ -26,9 +26,11 @@ logger = logging.getLogger(__name__)
 class Config:
     """The application configuration."""
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(
-            self: Config, args: Namespace,
-        ) -> None:
+        self: Config,
+        args: Namespace,
+    ) -> None:
         """Initialize the configuration."""
         self._create_venv: bool
         self.args: Namespace = args
@@ -39,8 +41,7 @@ class Config:
         self.site_pkg_path: Path
         self.venv_interpreter: Path
 
-
-    def init(self: Config, create_venv: bool = False) -> None: # noqa: FBT001, FBT002
+    def init(self: Config, create_venv: bool = False) -> None:  # noqa: FBT001, FBT002
         """Initialize the configuration.
 
         Args:
@@ -50,7 +51,8 @@ class Config:
             self._get_galaxy()
         elif self.args.subcommand == "uninstall":
             parts = self.args.collection_specifier.split(".")
-            if len(parts) != 2:
+            fqcn_parts = 2
+            if len(parts) != fqcn_parts:
                 err = (
                     "The collection specifier must be in the form of"
                     " 'namespace.collection'"
@@ -99,7 +101,7 @@ class Config:
     @property
     def vuuid(self: Config) -> str:
         """Return the virtual environment uuid."""
-        result = hashlib.md5(str(self.venv).encode()) # noqa: S324
+        result = hashlib.md5(str(self.venv).encode())  # noqa: S324
         return result.hexdigest()
 
     @property
@@ -115,7 +117,7 @@ class Config:
     @property
     def collection_build_dir(self: Config) -> Path:
         """Return the collection cache directory."""
-        return self.collection_cache_dir  / "build"
+        return self.collection_cache_dir / "build"
 
     @property
     def discovered_python_reqs(self: Config) -> Path:
@@ -135,7 +137,9 @@ class Config:
     @property
     def site_pkg_collection_path(self: Config) -> Path:
         """Return the site packages collection path."""
-        return self.site_pkg_path / "ansible_collections" / self.c_namespace / self.c_name
+        return (
+            self.site_pkg_path / "ansible_collections" / self.c_namespace / self.c_name
+        )
 
     @property
     def venv_bindir(self: Config) -> Path:
@@ -204,10 +208,9 @@ class Config:
             err = f"Cannot find interpreter: {venv_interpreter}."
             logger.critical(err)
 
-        msg = f"Virtual envrionment interpreter: {venv_interpreter}"
+        msg = f"Virtual environment interpreter: {venv_interpreter}"
         logger.info(msg)
         self.venv_interpreter = venv_interpreter
-
 
     def _set_site_pkg_path(self: Config) -> None:
         """USe the interpreter to find the site packages path."""
@@ -235,4 +238,3 @@ class Config:
         logger.debug(msg)
 
         self.site_pkg_path = Path(site_pkg_dirs[0])
-
