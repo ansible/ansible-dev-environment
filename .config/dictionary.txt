@@ -5,4 +5,5 @@ fileh
 levelname
 levelno
 pip4a
+reqs
 uninstallation
