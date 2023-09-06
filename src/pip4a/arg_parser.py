@@ -35,27 +35,35 @@ def parse() -> argparse.Namespace:
     subparsers = parser.add_subparsers(
         title="subcommands",
         description="valid subcommands",
-        help="additional help",
         dest="subcommand",
         required=True,
     )
 
-    parent_parser = argparse.ArgumentParser(add_help=False)
-
-    parent_parser.add_argument(
+    level1 = argparse.ArgumentParser(add_help=False)
+    level1.add_argument(
         "-v",
         "--verbose",
         action="store_true",
         default=False,
         help="Increase output verbosity.",
     )
-    parent_parser.add_argument(
-        "collection_specifier",
-        help="Collection name or path to collection with extras.",
-    )
-    parent_parser.add_argument(
+    level1.add_argument(
         "--venv",
         help="Target virtual environment.",
+    )
+
+    _list = subparsers.add_parser(
+        "list",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[level1],
+        help="List installed collections",
+    )
+
+    level2 = argparse.ArgumentParser(add_help=False, parents=[level1])
+
+    level2.add_argument(
+        "collection_specifier",
+        help="Collection name or path to collection with extras.",
     )
 
     install_usage = """Usage:
@@ -68,7 +76,8 @@ def parse() -> argparse.Namespace:
         "install",
         epilog=install_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[parent_parser],
+        parents=[level2],
+        help="Install a collection.",
     )
     install.add_argument(
         "-e",
@@ -76,11 +85,12 @@ def parse() -> argparse.Namespace:
         action="store_true",
         help="Install editable.",
     )
-
     _uninstall = subparsers.add_parser(
         "uninstall",
         epilog=install_usage,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[parent_parser],
+        parents=[level2],
+        help="Uninstall a collection.",
     )
+
     return parser.parse_args()

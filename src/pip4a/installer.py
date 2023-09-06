@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
 import shutil
 import subprocess
@@ -99,19 +98,31 @@ class Installer:
 
     def _install_galaxy_collection(self: Installer) -> None:
         """Install the collection from galaxy."""
+        if self._config.site_pkg_collection_path.exists():
+            msg = f"Removing installed {self._config.site_pkg_collection_path}"
+            logger.debug(msg)
+            if self._config.site_pkg_collection_path.is_symlink():
+                self._config.site_pkg_collection_path.unlink()
+            else:
+                shutil.rmtree(self._config.site_pkg_collection_path)
+
         command = (
             f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
             f" install {self._config.collection_name}"
             f" -p {self._config.site_pkg_path}"
             " --force"
         )
-        env = os.environ
-        if not self._config.args.verbose:
-            env["ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING"] = "false"
+        env = {
+            "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
+        }
         msg = "Running ansible-galaxy to install non-local collection and it's dependencies."
         logger.info(msg)
         try:
-            proc = subprocess_run(command=command, verbose=self._config.args.verbose)
+            proc = subprocess_run(
+                command=command,
+                env=env,
+                verbose=self._config.args.verbose,
+            )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collection: {exc} {exc.stderr}"
             logger.critical(err)
@@ -177,24 +188,45 @@ class Installer:
             else:
                 shutil.rmtree(self._config.site_pkg_collection_path)
 
+        info_dirs = [
+            entry
+            for entry in self._config.site_pkg_collections_path.iterdir()
+            if entry.is_dir()
+            and entry.name.endswith(".info")
+            and entry.name.startswith(self._config.collection_name)
+        ]
+        for info_dir in info_dirs:
+            msg = f"Removing installed {info_dir}"
+            logger.debug(msg)
+            shutil.rmtree(info_dir)
+
         command = (
             f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
             f" install {tarball} -p {self._config.site_pkg_path}"
             " --force"
         )
-        env = os.environ
-        if not self._config.args.verbose:
-            env["ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING"] = "false"
-        msg = (
-            "Running ansible-galaxy to install local collection and it's dependencies."
-        )
+        env = {
+            "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
+        }
+        msg = "Running ansible-galaxy to install a local collection and it's dependencies."
         logger.info(msg)
         try:
-            proc = subprocess_run(command=command, verbose=self._config.args.verbose)
+            proc = subprocess_run(
+                command=command,
+                env=env,
+                verbose=self._config.args.verbose,
+            )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collection: {exc} {exc.stderr}"
             logger.critical(err)
             return
+
+        # ansible-galaxy collection install does not include the galaxy.yml for version
+        # nor does it create an info file that can be used to determine the version.
+        shutil.copy(
+            self._config.collection_build_dir / "galaxy.yml",
+            self._config.site_pkg_collection_path / "galaxy.yml",
+        )
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
         msg = f"Installed collections: {oxford_join(installed)}"
         logger.info(msg)
@@ -211,10 +243,12 @@ class Installer:
             else:
                 shutil.rmtree(self._config.site_pkg_collection_path)
 
-        cwd = Path.cwd()
-        msg = f"Symlinking {self._config.site_pkg_collection_path} to {cwd}"
+        msg = (
+            f"Symlinking {self._config.site_pkg_collection_path}"
+            f" to {self._config.collection_path}"
+        )
         logger.info(msg)
-        self._config.site_pkg_collection_path.symlink_to(cwd)
+        self._config.site_pkg_collection_path.symlink_to(self._config.collection_path)
 
     def _pip_install(self: Installer) -> None:
         """Install the dependencies."""

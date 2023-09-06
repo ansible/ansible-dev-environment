@@ -2,6 +2,7 @@ bindep
 bindir
 bthornto
 caplog
+capsys
 cpart
 fileh
 fqcn

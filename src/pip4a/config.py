@@ -161,7 +161,10 @@ class Config:
     @property
     def site_pkg_collections_path(self: Config) -> Path:
         """Return the site packages collection path."""
-        return self.site_pkg_path / "ansible_collections"
+        site_pkg_collections_path = self.site_pkg_path / "ansible_collections"
+        if not site_pkg_collections_path.exists():
+            site_pkg_collections_path.mkdir()
+        return site_pkg_collections_path
 
     @property
     def site_pkg_collection_path(self: Config) -> Path:
