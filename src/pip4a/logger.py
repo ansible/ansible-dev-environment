@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 
 from copy import copy
-from typing import Any
 
 
 MAPPING = {
@@ -53,7 +52,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, colored_record)
 
 
-class ExitOnExceptionHandler(logging.StreamHandler[Any]):
+class ExitOnExceptionHandler(logging.StreamHandler):  # type: ignore[type-arg]
     """Exit on exception handler."""
 
     def emit(self: ExitOnExceptionHandler, record: logging.LogRecord) -> None:

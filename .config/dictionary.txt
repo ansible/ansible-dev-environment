@@ -1,9 +1,14 @@
 bindep
 bindir
 bthornto
+caplog
 fileh
+fqcn
 levelname
 levelno
+netcommon
 pip4a
 reqs
+specp
 uninstallation
+vuuid
