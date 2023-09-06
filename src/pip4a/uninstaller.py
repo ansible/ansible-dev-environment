@@ -52,7 +52,6 @@ class UnInstaller:
             )
             logger.debug(msg)
 
-
         for entry in self._config.site_pkg_collections_path.iterdir():
             if all(
                 (
@@ -85,4 +84,3 @@ class UnInstaller:
         except OSError as exc:
             msg = f"Failed to remove collection root: {exc}"
             logger.debug(msg)
-
