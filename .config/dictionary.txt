@@ -2,6 +2,7 @@ bindep
 bindir
 bthornto
 caplog
+cpart
 fileh
 fqcn
 levelname
