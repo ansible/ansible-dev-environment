@@ -135,11 +135,14 @@ class Config:
         return self.collection_cache_dir / "installed_collections.txt"
 
     @property
+    def site_pkg_collections_path(self: Config) -> Path:
+        """Return the site packages collection path."""
+        return self.site_pkg_path / "ansible_collections"
+
+    @property
     def site_pkg_collection_path(self: Config) -> Path:
         """Return the site packages collection path."""
-        return (
-            self.site_pkg_path / "ansible_collections" / self.c_namespace / self.c_name
-        )
+        return self.site_pkg_collections_path / self.c_namespace / self.c_name
 
     @property
     def venv_bindir(self: Config) -> Path:
