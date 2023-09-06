@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import site
+import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING
 from .arg_parser import parse
 from .config import Config
 from .installer import Installer
+from .lister import Lister
 from .logger import ColoredFormatter, ExitOnExceptionHandler
 from .uninstaller import UnInstaller
 
@@ -72,7 +74,7 @@ class Cli:
 
         if "VIRTUAL_ENV" not in env_vars and not self.args.venv:
             err = (
-                "Unable to install in user site packages directory:"
+                "Unable to use user site packages directory:"
                 f" {site.getusersitepackages()}, please activate or specify a virtual environment"
             )
             errors.append(err)
@@ -95,19 +97,28 @@ class Cli:
 
         self.config = Config(args=self.args)
 
+        if self.config.args.subcommand == "list":
+            self.config.init()
+            lister = Lister(config=self.config, output_format="list")
+            lister.run()
+            sys.exit(0)
+
         if "," in self.config.args.collection_specifier:
             err = "Multiple optional dependencies are not supported at this time."
             logger.critical(err)
+            sys.exit(1)
 
         if self.config.args.subcommand == "install":
             self.config.init(create_venv=True)
             installer = Installer(self.config)
             installer.run()
+            sys.exit(0)
 
         if self.config.args.subcommand == "uninstall":
             self.config.init()
             uninstaller = UnInstaller(self.config)
             uninstaller.run()
+            sys.exit(0)
 
 
 def main() -> None:

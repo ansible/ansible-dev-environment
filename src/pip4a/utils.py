@@ -21,6 +21,7 @@ def subprocess_run(
     command: str,
     verbose: bool,  # noqa: FBT001
     cwd: Path | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command."""
     msg = f"Running command: {command}"
@@ -30,6 +31,7 @@ def subprocess_run(
             command,
             check=True,
             cwd=cwd,
+            env=env,
             shell=True,  # noqa: S604
             text=True,
         )
@@ -37,6 +39,7 @@ def subprocess_run(
         command,
         check=True,
         cwd=cwd,
+        env=env,
         shell=True,  # noqa: S602
         capture_output=True,
         text=True,

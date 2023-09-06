@@ -10,6 +10,7 @@ from pip4a.utils import subprocess_run
 
 def test_venv(
     caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -20,13 +21,26 @@ def test_venv(
     )
     subprocess_run(command=command, verbose=True)
     monkeypatch.chdir(tmp_path)
+
     monkeypatch.setattr(
         "sys.argv",
         ["pip4a", "install", str(tmp_path / "cisco.nxos"), "--venv=venv"],
     )
-    main()
+    with pytest.raises(SystemExit):
+        main()
     string = "Installed collections: cisco.nxos, ansible.netcommon, and ansible.utils"
     assert string in caplog.text
+    _captured = capsys.readouterr()
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pip4a", "list", "--venv=venv"],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "cisco.nxos" in captured.out
+    assert "ansible.netcommon" in captured.out
+    assert "ansible.utils" in captured.out
 
 
 def test_non_local(
@@ -39,6 +53,7 @@ def test_non_local(
         "sys.argv",
         ["pip4a", "install", "ansible.scm", f"--venv={tmp_path / 'venv'}"],
     )
-    main()
+    with pytest.raises(SystemExit):
+        main()
     string = "Installed collections: ansible.scm and ansible.utils"
     assert string in caplog.text
