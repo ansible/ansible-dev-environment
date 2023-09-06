@@ -9,12 +9,11 @@ import site
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .app import App
 from .arg_parser import parse
+from .config import Config
 from .installer import Installer
 from .logger import ColoredFormatter, ExitOnExceptionHandler
 from .uninstaller import UnInstaller
-from .utils import get_galaxy
 
 
 if TYPE_CHECKING:
@@ -27,7 +26,7 @@ class Cli:
     def __init__(self: Cli) -> None:
         """Initialize the CLI and parse CLI args."""
         self.args: Namespace
-        self.app: App
+        self.config: Config
 
     def parse_args(self: Cli) -> None:
         """Parse the command line arguments."""
@@ -43,6 +42,7 @@ class Cli:
         )
         ch.setFormatter(cf)
         logger.addHandler(ch)
+
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
         else:
@@ -92,23 +92,21 @@ class Cli:
     def run(self: Cli) -> None:
         """Run the application."""
         logger = logging.getLogger("pip4a")
-        collection_name, dependencies = get_galaxy()
 
-        self.app = App(
-            args=self.args,
-            collection_name=collection_name,
-            collection_dependencies=dependencies,
-        )
-        if "," in self.app.args.collection_specifier:
+        self.config = Config(args=self.args)
+
+        if "," in self.config.args.collection_specifier:
             err = "Multiple optional dependencies are not supported at this time."
             logger.critical(err)
 
-        if self.app.args.subcommand == "install":
-            installer = Installer(self.app)
+        if self.config.args.subcommand == "install":
+            self.config.init(create_venv=True)
+            installer = Installer(self.config)
             installer.run()
 
-        if self.app.args.subcommand == "uninstall":
-            uninstaller = UnInstaller(self.app)
+        if self.config.args.subcommand == "uninstall":
+            self.config.init()
+            uninstaller = UnInstaller(self.config)
             uninstaller.run()
 
 

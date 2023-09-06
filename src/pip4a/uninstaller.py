@@ -6,54 +6,53 @@ import logging
 import shutil
 import subprocess
 
-from .base import Base
-from .constants import Constants as C  # noqa: N817
+from typing import TYPE_CHECKING
+
+from .utils import subprocess_run
+
+
+if TYPE_CHECKING:
+    from .config import Config
 
 
 logger = logging.getLogger(__name__)
 
 
-class UnInstaller(Base):
+class UnInstaller:
     """The uninstaller class."""
 
+    def __init__(self: UnInstaller, config: Config) -> None:
+        """Initialize the installer.
+
+        Args:
+            config: The application configuration.
+        """
+        self._config = config
+
     def run(self: UnInstaller) -> None:
-        """Run the installer."""
-        if self.app.args.collection_specifier not in (self.app.collection_name, "."):
+        """Run the uninstaller."""
+        if not self._config.collection_cache_dir.exists():
             err = (
-                "Invalid requirement: {self.app.args.collection_specifier} ignored -"
-                " the uninstall command expects the name of the local collection."
-            )
-            logger.warning(err)
-            err = (
-                "You must give at least one requirement"
-                f" to uninstall (e.g. {self.app.collection_name})."
+                f"Either the collection '{self._config.collection_name}' was"
+                " previously uninstalled or was not initially installed using pip4a."
             )
             logger.critical(err)
 
-        if not C.WORKING_DIR.exists():
-            msg = f"Failed to find working directory '{C.WORKING_DIR}', nothing to do."
-            logger.warning(msg)
-            return
-
-        self._set_interpreter()
-        self._set_bindir()
-        self._set_site_pkg_path()
-
         self._pip_uninstall()
         self._remove_collections()
-        shutil.rmtree(C.WORKING_DIR, ignore_errors=True)
+        shutil.rmtree(self._config.collection_cache_dir)
 
     def _remove_collections(self: UnInstaller) -> None:  # noqa: C901, PLR0912, PLR0915
         """Remove the collection and dependencies."""
-        if not C.INSTALLED_COLLECTIONS.exists():
-            msg = f"Failed to find {C.INSTALLED_COLLECTIONS}"
+        if not self._config.installed_collections.exists():
+            msg = f"Failed to find {self._config}"
             logger.warning(msg)
             return
-        with C.INSTALLED_COLLECTIONS.open() as f:
+        with self._config.installed_collections.open() as f:
             collection_names = f.read().splitlines()
 
         collection_namespace_roots = []
-        collection_root = self.site_pkg_path / "ansible_collections"
+        collection_root = self._config.site_pkg_path / "ansible_collections"
 
         for collection_name in collection_names:
             namespace, name = collection_name.split(".")
@@ -118,30 +117,23 @@ class UnInstaller(Base):
 
     def _pip_uninstall(self: UnInstaller) -> None:
         """Uninstall the dependencies."""
-        if not C.DISCOVERED_PYTHON_REQS.exists():
-            msg = f"Failed to find {C.DISCOVERED_PYTHON_REQS}"
+        if not self._config.discovered_python_reqs.exists():
+            msg = f"Failed to find {self._config.discovered_python_reqs}"
             logger.warning(msg)
             return
 
         command = (
-            f"{self.interpreter} -m pip uninstall -r {C.DISCOVERED_PYTHON_REQS} -y"
+            f"{self._config.venv_interpreter} -m pip uninstall"
+            f" -r {self._config.discovered_python_reqs} -y"
         )
 
-        msg = f"Uninstalling python requirements from {C.DISCOVERED_PYTHON_REQS}"
+        msg = f"Uninstalling python requirements from {self._config.discovered_python_reqs}"
         logger.info(msg)
-        msg = f"Running command: {command}"
-        logger.debug(msg)
         try:
-            subprocess.run(
-                command,
-                check=True,
-                capture_output=not self.app.args.verbose,
-                shell=True,  # noqa: S602
-                text=True,
-            )
+            subprocess_run(command=command, verbose=self._config.args.verbose)
         except subprocess.CalledProcessError as exc:
             err = (
-                f"Failed to uninstall requirements from {C.DISCOVERED_PYTHON_REQS}:"
+                f"Failed to uninstall requirements from {self._config.discovered_python_reqs}:"
                 f" {exc} - {exc.stderr}"
             )
             logger.critical(err)
@@ -149,36 +141,20 @@ class UnInstaller(Base):
         # Repair the core and builder installs if needed.
         msg = "Repairing the core and builder installs if needed."
         logger.info(msg)
-        command = f"{self.interpreter} -m pip check"
-        msg = f"Running command: {command}"
-        logger.debug(msg)
+        command = f"{self._config.venv_interpreter} -m pip check"
         try:
-            subprocess.run(
-                command,
-                check=True,
-                capture_output=True,
-                shell=True,  # noqa: S602
-                text=True,
-            )
+            subprocess_run(command=command, verbose=self._config.args.verbose)
         except subprocess.CalledProcessError:
             pass
         else:
             return
 
         command = (
-            f"{self.interpreter} -m pip install --upgrade"
+            f"{self._config.venv_interpreter} -m pip install --upgrade"
             " --force-reinstall ansible-core ansible-builder"
         )
-        msg = f"Running command: {command}"
-        logger.debug(msg)
         try:
-            subprocess.run(
-                command,
-                check=True,
-                capture_output=True,
-                shell=True,  # noqa: S602
-                text=True,
-            )
+            subprocess_run(command=command, verbose=self._config.args.verbose)
         except subprocess.CalledProcessError as exc:
             err = f"Failed to repair the core and builder installs: {exc}"
             logger.critical(err)

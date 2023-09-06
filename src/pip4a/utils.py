@@ -5,51 +5,22 @@ from __future__ import annotations
 import logging
 import subprocess
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import subprocess_tee
-import yaml
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_galaxy() -> tuple[str, dict[str, str]]:
-    """Retrieve the collection name from the galaxy.yml file.
-
-    Returns:
-        str: The collection name and dependencies
-
-    Raises:
-        SystemExit: If the collection name is not found
-    """
-    file_name = Path("galaxy.yml").resolve()
-    if not file_name.exists():
-        err = f"Failed to find {file_name}, please run from the collection root."
-        logger.critical(err)
-
-    with file_name.open(encoding="utf-8") as fileh:
-        try:
-            yaml_file = yaml.safe_load(fileh)
-        except yaml.YAMLError as exc:
-            err = f"Failed to load yaml file: {exc}"
-            logger.critical(err)
-
-    dependencies = yaml_file.get("dependencies", [])
-    try:
-        collection_name = yaml_file["namespace"] + "." + yaml_file["name"]
-        msg = f"Found collection name: {collection_name} from {file_name}."
-        logger.info(msg)
-        return yaml_file["namespace"] + "." + yaml_file["name"], dependencies
-    except KeyError as exc:
-        err = f"Failed to find collection name in {file_name}: {exc}"
-        logger.critical(err)
-    raise SystemExit(1)  # We shouldn't be here
-
-
 def subprocess_run(
-    verbose: bool,  # noqa: FBT001
     command: str,
+    verbose: bool,  # noqa: FBT001
+    cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command."""
     msg = f"Running command: {command}"
@@ -58,12 +29,14 @@ def subprocess_run(
         return subprocess_tee.run(
             command,
             check=True,
+            cwd=cwd,
             shell=True,  # noqa: S604
             text=True,
         )
     return subprocess.run(
         command,
         check=True,
+        cwd=cwd,
         shell=True,  # noqa: S602
         capture_output=True,
         text=True,
@@ -85,7 +58,7 @@ def oxford_join(words: list[str]) -> str:
     return ", ".join(words[:-1]) + ", and " + words[-1]
 
 
-def opt_deps_to_files(dep_str: str) -> list[Path]:
+def opt_deps_to_files(collection_path: Path, dep_str: str) -> list[Path]:
     """Convert a string of optional dependencies to a list of files.
 
     :param dep_str: A string of optional dependencies
@@ -95,11 +68,11 @@ def opt_deps_to_files(dep_str: str) -> list[Path]:
     files = []
     for dep in deps:
         _dep = dep.strip()
-        variant1 = Path.cwd() / f"{_dep}-requirements.txt"
+        variant1 = collection_path / f"{_dep}-requirements.txt"
         if variant1.exists():
             files.append(variant1)
             continue
-        variant2 = Path.cwd() / f"requirements-{_dep}.txt"
+        variant2 = collection_path / f"requirements-{_dep}.txt"
         if variant2.exists():
             files.append(variant2)
             continue

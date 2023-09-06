@@ -1,9 +1,11 @@
 bindep
 bindir
 bthornto
+caplog
 fileh
 levelname
 levelno
+netcommon
 pip4a
 reqs
 uninstallation

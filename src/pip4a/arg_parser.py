@@ -37,6 +37,7 @@ def parse() -> argparse.Namespace:
         description="valid subcommands",
         help="additional help",
         dest="subcommand",
+        required=True,
     )
 
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -45,6 +46,7 @@ def parse() -> argparse.Namespace:
         "-v",
         "--verbose",
         action="store_true",
+        default=False,
         help="Increase output verbosity.",
     )
     parent_parser.add_argument(
