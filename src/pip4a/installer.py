@@ -220,6 +220,13 @@ class Installer:
             err = f"Failed to install collection: {exc} {exc.stderr}"
             logger.critical(err)
             return
+
+        # ansible-galaxy collection install does not include the galaxy.yml for version
+        # nor does it create an info file that can be used to determine the version.
+        shutil.copy(
+            self._config.collection_build_dir / "galaxy.yml",
+            self._config.site_pkg_collection_path / "galaxy.yml",
+        )
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
         msg = f"Installed collections: {oxford_join(installed)}"
         logger.info(msg)

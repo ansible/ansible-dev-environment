@@ -41,6 +41,7 @@ def test_venv(
     assert "cisco.nxos" in captured.out
     assert "ansible.netcommon" in captured.out
     assert "ansible.utils" in captured.out
+    assert "unknown" not in captured.out
 
 
 def test_non_local(

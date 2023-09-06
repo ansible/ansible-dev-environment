@@ -42,7 +42,10 @@ class Lister:
         for namespace_dir in self._config.site_pkg_collections_path.iterdir():
             if not namespace_dir.is_dir():
                 continue
+
             for name_dir in namespace_dir.iterdir():
+                if not name_dir.is_dir():
+                    continue
                 some_info_dirs = [
                     info_dir
                     for info_dir in all_info_dirs
@@ -57,14 +60,18 @@ class Lister:
                             "editable_location": "",
                         }
                 elif (name_dir / "galaxy.yml").exists():
-                    if name_dir.is_symlink():
-                        location = name_dir.resolve()
+                    location = name_dir.resolve() if name_dir.is_symlink() else ""
                     with (name_dir / "galaxy.yml").open() as info_file:
                         info = yaml.safe_load(info_file)
                         collections[f"{namespace_dir.name}.{name_dir.name}"] = {
                             "version": info["version"],
                             "editable_location": f"{location}",
                         }
+                else:
+                    collections[f"{namespace_dir.name}.{name_dir.name}"] = {
+                        "version": "unknown",
+                        "editable_location": "",
+                    }
 
         if self._output_format == "list":
             column1_width = 30
