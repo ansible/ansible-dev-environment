@@ -35,9 +35,12 @@ class Installer:
     def run(self: Installer) -> None:
         """Run the installer."""
         self._install_core()
-        self._install_collection()
-        if self._config.args.editable:
-            self._swap_editable_collection()
+        if self._config.collection_local:
+            self._install_local_collection()
+            if self._config.args.editable:
+                self._swap_editable_collection()
+        else:
+            self._install_galaxy_collection()
 
         self._discover_deps()
         self._pip_install()
@@ -53,14 +56,6 @@ class Installer:
                 f"\nsource {self._config.args.venv}/bin/activate"
             )
             logger.warning(msg)
-
-    def _init_build_dir(self: Installer) -> None:
-        """Initialize the build directory."""
-        msg = f"Initializing build directory: {self._config.collection_build_dir}"
-        logger.info(msg)
-        if self._config.collection_build_dir.exists():
-            shutil.rmtree(self._config.collection_build_dir)
-        self._config.collection_build_dir.mkdir(parents=True)
 
     def _install_core(self: Installer) -> None:
         """Install ansible-core if not installed already."""
@@ -102,10 +97,33 @@ class Installer:
             err = f"Failed to discover requirements: {exc} {exc.stderr}"
             logger.critical(err)
 
-    def _install_collection(self: Installer) -> None:
-        """Install the collection from the build directory."""
-        self._init_build_dir()
+    def _install_galaxy_collection(self: Installer) -> None:
+        """Install the collection from galaxy."""
+        command = (
+            f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
+            f" install {self._config.collection_name}"
+            f" -p {self._config.site_pkg_path}"
+            " --force"
+        )
+        env = os.environ
+        if not self._config.args.verbose:
+            env["ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING"] = "false"
+        msg = "Running ansible-galaxy to install non-local collection and it's dependencies."
+        logger.info(msg)
+        try:
+            proc = subprocess_run(command=command, verbose=self._config.args.verbose)
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to install collection: {exc} {exc.stderr}"
+            logger.critical(err)
+            return
+        installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
+        msg = f"Installed collections: {oxford_join(installed)}"
+        logger.info(msg)
+        with self._config.installed_collections.open(mode="w") as f:
+            f.write("\n".join(installed))
 
+    def _install_local_collection(self: Installer) -> None:
+        """Install the collection from the build directory."""
         command = (
             "cp -r --parents $(git ls-files 2> /dev/null || ls)"
             f" {self._config.collection_build_dir}"
@@ -167,7 +185,9 @@ class Installer:
         env = os.environ
         if not self._config.args.verbose:
             env["ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING"] = "false"
-        msg = "Running ansible-galaxy to install collection and it's dependencies."
+        msg = (
+            "Running ansible-galaxy to install local collection and it's dependencies."
+        )
         logger.info(msg)
         try:
             proc = subprocess_run(command=command, verbose=self._config.args.verbose)

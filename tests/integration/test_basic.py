@@ -27,3 +27,18 @@ def test_venv(
     main()
     string = "Installed collections: cisco.nxos, ansible.netcommon, and ansible.utils"
     assert string in caplog.text
+
+
+def test_non_local(
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Install non-local collection."""
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pip4a", "install", "ansible.scm", f"--venv={tmp_path / 'venv'}"],
+    )
+    main()
+    string = "Installed collections: ansible.scm and ansible.utils"
+    assert string in caplog.text

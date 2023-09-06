@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 
@@ -37,6 +38,7 @@ class Config:
         self.bindir: Path
         self.c_name: str
         self.c_namespace: str
+        self.collection_local: bool
         self.python_path: Path
         self.site_pkg_path: Path
         self.venv_interpreter: Path
@@ -48,7 +50,17 @@ class Config:
             create_venv: Create a virtual environment. Defaults to False.
         """
         if self.args.subcommand == "install":
-            self._get_galaxy()
+            cpart = self.args.collection_specifier.split("[")[0]
+            if re.match(r"[a-z0-9]+\.[a-z0-9]+", cpart):
+                self.c_namespace, self.c_name = cpart.split(".")
+                self.collection_local = False
+            else:
+                self.collection_local = True
+                self._get_galaxy()
+            if self.args.editable and not self.collection_local:
+                err = "Cannot use --editable with a non-local collection."
+                logger.critical(err)
+
         elif self.args.subcommand == "uninstall":
             parts = self.args.collection_specifier.split(".")
             fqcn_parts = 2
@@ -84,7 +96,10 @@ class Config:
     def cache_dir(self: Config) -> Path:
         """Return the cache directory."""
         cache_home = os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")
-        return (Path(cache_home) / "pip4a").resolve()
+        cache_dir = (Path(cache_home) / "pip4a").resolve()
+        if not cache_dir.exists():
+            cache_dir.mkdir(parents=True)
+        return cache_dir
 
     @property
     def venv(self: Config) -> Path:
@@ -107,17 +122,26 @@ class Config:
     @property
     def venv_cache_dir(self: Config) -> Path:
         """Return the virtual environment cache directory."""
-        return self.cache_dir / self.vuuid
+        venv_cache_dir = self.cache_dir / self.vuuid
+        if not venv_cache_dir.exists():
+            venv_cache_dir.mkdir()
+        return venv_cache_dir
 
     @property
     def collection_cache_dir(self: Config) -> Path:
         """Return the collection cache directory."""
-        return self.venv_cache_dir / self.collection_name
+        collection_cache_dir = self.venv_cache_dir / self.collection_name
+        if not collection_cache_dir.exists():
+            collection_cache_dir.mkdir()
+        return collection_cache_dir
 
     @property
     def collection_build_dir(self: Config) -> Path:
         """Return the collection cache directory."""
-        return self.collection_cache_dir / "build"
+        collection_build_dir = self.collection_cache_dir / "build"
+        if not collection_build_dir.exists():
+            collection_build_dir.mkdir()
+        return collection_build_dir
 
     @property
     def discovered_python_reqs(self: Config) -> Path:
