@@ -81,8 +81,8 @@ class Inspector:
                             requirements = requirements_file.read().splitlines()
                             system_requirements.extend(requirements)
 
-                output = json.dumps(collections, indent=4, sort_keys=True)
-                if HAS_RICH and not os.environ.get("NOCOLOR"):
-                    print_json(output)
-                else:
-                    print(output)  # noqa: T201
+        output = json.dumps(collections, indent=4, sort_keys=True)
+        if HAS_RICH and not os.environ.get("NOCOLOR"):
+            print_json(output)
+        else:
+            print(output)  # noqa: T201
