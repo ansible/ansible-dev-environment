@@ -9,7 +9,7 @@ from copy import copy
 
 MAPPING = {
     "DEBUG": "30",  # grey
-    "INFO": "96",  # bright cyan
+    "INFO": "92",  # bright cyan
     "WARNING": "93",  # bright yellow
     "ERROR": "31;1",  # bold red
     "CRITICAL": "91;1",  # bold bright red

@@ -52,11 +52,11 @@ def parse() -> argparse.Namespace:
         help="Target virtual environment.",
     )
 
-    _list = subparsers.add_parser(
-        "list",
+    _check = subparsers.add_parser(
+        "check",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[level1],
-        help="List installed collections",
+        help="Check installed collections",
     )
 
     _inspect = subparsers.add_parser(
@@ -64,6 +64,13 @@ def parse() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[level1],
         help="Inspect installed collections",
+    )
+
+    _list = subparsers.add_parser(
+        "list",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[level1],
+        help="List installed collections",
     )
 
     level2 = argparse.ArgumentParser(add_help=False, parents=[level1])

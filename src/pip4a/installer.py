@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .utils import opt_deps_to_files, oxford_join, subprocess_run
+from .utils import builder_introspect, note, oxford_join, subprocess_run
 
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ class Installer:
         else:
             self._install_galaxy_collection()
 
-        self._discover_deps()
+        builder_introspect(config=self._config)
         self._pip_install()
         self._check_bindep()
 
@@ -62,38 +62,12 @@ class Installer:
         if core.exists():
             return
         msg = "Installing ansible-core."
-        logger.info(msg)
+        logger.debug(msg)
         command = f"{self._config.venv_interpreter} -m pip install ansible-core"
         try:
             subprocess_run(command=command, verbose=self._config.args.verbose)
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install ansible-core: {exc}"
-            logger.critical(err)
-
-    def _discover_deps(self: Installer) -> None:
-        """Discover the dependencies."""
-        command = (
-            f"ansible-builder introspect {self._config.site_pkg_path}"
-            f" --write-pip {self._config.discovered_python_reqs}"
-            f" --write-bindep {self._config.discovered_bindep_reqs}"
-            " --sanitize"
-        )
-        opt_deps = re.match(r".*\[(.*)\]", self._config.args.collection_specifier)
-        if opt_deps:
-            dep_paths = opt_deps_to_files(
-                collection_path=self._config.collection_path,
-                dep_str=opt_deps.group(1),
-            )
-            for dep_path in dep_paths:
-                command += f" --user-pip {dep_path}"
-        msg = f"Writing discovered python requirements to: {self._config.discovered_python_reqs}"
-        logger.info(msg)
-        msg = f"Writing discovered system requirements to: {self._config.discovered_bindep_reqs}"
-        logger.info(msg)
-        try:
-            subprocess_run(command=command, verbose=self._config.args.verbose)
-        except subprocess.CalledProcessError as exc:
-            err = f"Failed to discover requirements: {exc} {exc.stderr}"
             logger.critical(err)
 
     def _install_galaxy_collection(self: Installer) -> None:
@@ -116,7 +90,7 @@ class Installer:
             "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
         }
         msg = "Running ansible-galaxy to install non-local collection and it's dependencies."
-        logger.info(msg)
+        logger.debug(msg)
         try:
             proc = subprocess_run(
                 command=command,
@@ -129,18 +103,16 @@ class Installer:
             return
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
         msg = f"Installed collections: {oxford_join(installed)}"
-        logger.info(msg)
-        with self._config.installed_collections.open(mode="w") as f:
-            f.write("\n".join(installed))
+        note(msg)
 
-    def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912, PLR0915
+    def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912
         """Install the collection from the build directory."""
         command = (
             "cp -r --parents $(git ls-files 2> /dev/null || ls)"
             f" {self._config.collection_build_dir}"
         )
         msg = "Copying collection to build directory using git ls-files."
-        logger.info(msg)
+        logger.debug(msg)
         try:
             subprocess_run(
                 command=command,
@@ -159,7 +131,7 @@ class Installer:
         )
 
         msg = "Running ansible-galaxy to build collection."
-        logger.info(msg)
+        logger.debug(msg)
 
         try:
             subprocess_run(command=command, verbose=self._config.args.verbose)
@@ -209,7 +181,7 @@ class Installer:
             "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
         }
         msg = "Running ansible-galaxy to install a local collection and it's dependencies."
-        logger.info(msg)
+        logger.debug(msg)
         try:
             proc = subprocess_run(
                 command=command,
@@ -237,14 +209,12 @@ class Installer:
 
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
         msg = f"Installed collections: {oxford_join(installed)}"
-        logger.info(msg)
-        with self._config.installed_collections.open(mode="w") as f:
-            f.write("\n".join(installed))
+        note(msg)
 
     def _swap_editable_collection(self: Installer) -> None:
         """Swap the installed collection with the current working directory."""
         msg = f"Removing installed {self._config.site_pkg_collection_path}"
-        logger.info(msg)
+        logger.debug(msg)
         if self._config.site_pkg_collection_path.exists():
             if self._config.site_pkg_collection_path.is_symlink():
                 self._config.site_pkg_collection_path.unlink()
@@ -255,7 +225,7 @@ class Installer:
             f"Symlinking {self._config.site_pkg_collection_path}"
             f" to {self._config.collection_path}"
         )
-        logger.info(msg)
+        logger.debug(msg)
         self._config.site_pkg_collection_path.symlink_to(self._config.collection_path)
 
     def _pip_install(self: Installer) -> None:
@@ -268,7 +238,7 @@ class Installer:
         msg = (
             f"Installing python requirements from {self._config.discovered_python_reqs}"
         )
-        logger.info(msg)
+        logger.debug(msg)
         try:
             subprocess_run(command=command, verbose=self._config.args.verbose)
         except subprocess.CalledProcessError as exc:
@@ -277,6 +247,9 @@ class Installer:
                 f" {self._config.discovered_python_reqs}: {exc}"
             )
             raise RuntimeError(err) from exc
+        else:
+            msg = "All python requirements are installed."
+            note(msg)
 
     def _check_bindep(self: Installer) -> None:
         """Check the bindep file."""

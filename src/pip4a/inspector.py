@@ -8,6 +8,8 @@ import os
 
 from typing import TYPE_CHECKING
 
+from .utils import collect_manifests
+
 
 if TYPE_CHECKING:
     from .config import Config
@@ -30,56 +32,13 @@ class Inspector:
         """Initialize the Inspector."""
         self._config: Config = config
 
-    def run(self: Inspector) -> None:  # noqa: C901, PLR0912
+    def run(self: Inspector) -> None:
         """Run the Inspector."""
         # pylint: disable=too-many-locals
-        collections = {}
-        for namespace_dir in self._config.site_pkg_collections_path.iterdir():
-            if not namespace_dir.is_dir():
-                continue
-
-            for name_dir in namespace_dir.iterdir():
-                if not name_dir.is_dir():
-                    continue
-                manifest = name_dir / "MANIFEST.json"
-                if not manifest.exists():
-                    manifest = (
-                        self._config.venv_cache_dir
-                        / f"{namespace_dir.name}.{name_dir.name}"
-                        / "MANIFEST.json"
-                    )
-                if not manifest.exists():
-                    msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
-                    logger.debug(msg)
-                    continue
-                with manifest.open() as manifest_file:
-                    manifest_json = json.load(manifest_file)
-
-                cname = f"{namespace_dir.name}.{name_dir.name}"
-
-                collections[cname] = manifest_json
-                c_info = collections[cname].get("collection_info", {})
-                if not c_info:
-                    collections[cname]["collection_info"] = {}
-                    c_info = collections[cname]["collection_info"]
-                c_info["requirements"] = {"python": {}, "system": []}
-
-                python_requirements = c_info["requirements"]["python"]
-                system_requirements = c_info["requirements"]["system"]
-
-                for file in name_dir.iterdir():
-                    if not file.is_file():
-                        continue
-                    if not file.name.endswith(".txt"):
-                        continue
-                    if "requirements" in file.name:
-                        with file.open() as requirements_file:
-                            requirements = requirements_file.read().splitlines()
-                            python_requirements[file.stem] = requirements
-                    if file.stem == "bindep":
-                        with file.open() as requirements_file:
-                            requirements = requirements_file.read().splitlines()
-                            system_requirements.extend(requirements)
+        collections = collect_manifests(
+            target=self._config.site_pkg_collections_path,
+            venv_cache_dir=self._config.venv_cache_dir,
+        )
 
         output = json.dumps(collections, indent=4, sort_keys=True)
         if HAS_RICH and not os.environ.get("NOCOLOR"):
