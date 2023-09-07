@@ -69,7 +69,7 @@ def test_venv(
 
 
 def test_non_local(
-    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -81,4 +81,5 @@ def test_non_local(
     with pytest.raises(SystemExit):
         main()
     string = "Installed collections: ansible.scm and ansible.utils"
-    assert string in caplog.text
+    captured = capsys.readouterr()
+    assert string in captured.out
