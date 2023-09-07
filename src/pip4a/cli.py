@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from .arg_parser import parse
 from .config import Config
+from .inspector import Inspector
 from .installer import Installer
 from .lister import Lister
 from .logger import ColoredFormatter, ExitOnExceptionHandler
@@ -96,6 +97,12 @@ class Cli:
         logger = logging.getLogger("pip4a")
 
         self.config = Config(args=self.args)
+
+        if self.config.args.subcommand == "inspect":
+            self.config.init()
+            inspector = Inspector(config=self.config)
+            inspector.run()
+            sys.exit(0)
 
         if self.config.args.subcommand == "list":
             self.config.init()

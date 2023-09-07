@@ -133,7 +133,7 @@ class Installer:
         with self._config.installed_collections.open(mode="w") as f:
             f.write("\n".join(installed))
 
-    def _install_local_collection(self: Installer) -> None:
+    def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912, PLR0915
         """Install the collection from the build directory."""
         command = (
             "cp -r --parents $(git ls-files 2> /dev/null || ls)"
@@ -223,10 +223,18 @@ class Installer:
 
         # ansible-galaxy collection install does not include the galaxy.yml for version
         # nor does it create an info file that can be used to determine the version.
-        shutil.copy(
-            self._config.collection_build_dir / "galaxy.yml",
-            self._config.site_pkg_collection_path / "galaxy.yml",
-        )
+        # preserve the MANIFEST.json file for editable installs
+        if not self._config.args.editable:
+            shutil.copy(
+                self._config.collection_build_dir / "galaxy.yml",
+                self._config.site_pkg_collection_path / "galaxy.yml",
+            )
+        else:
+            shutil.copy(
+                self._config.site_pkg_collection_path / "MANIFEST.json",
+                self._config.collection_cache_dir / "MANIFEST.json",
+            )
+
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
         msg = f"Installed collections: {oxford_join(installed)}"
         logger.info(msg)
