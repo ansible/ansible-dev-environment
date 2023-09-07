@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 
@@ -12,6 +13,8 @@ import subprocess_tee
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -85,3 +88,81 @@ def opt_deps_to_files(collection_path: Path, dep_str: str) -> list[Path]:
         )
         logger.warning(msg)
     return files
+
+
+def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
+    """Recursively sort a dictionary.
+
+    Args:
+        item: The dictionary to sort.
+
+    Returns:
+        The sorted dictionary.
+    """
+    return {
+        k: sort_dict(v) if isinstance(v, dict) else v for k, v in sorted(item.items())
+    }
+
+
+def collect_manifests(  # noqa: C901
+    target: Path,
+    venv_cache_dir: Path,
+) -> dict[str, Any]:
+    # pylint: disable=too-many-locals
+    """Collect manifests from a target directory.
+
+    Args:
+        target: The target directory to collect manifests from.
+
+    Returns:
+        A dictionary of manifests.
+    """
+    collections = {}
+    for namespace_dir in target.iterdir():
+        if not namespace_dir.is_dir():
+            continue
+
+        for name_dir in namespace_dir.iterdir():
+            if not name_dir.is_dir():
+                continue
+            manifest = name_dir / "MANIFEST.json"
+            if not manifest.exists():
+                manifest = (
+                    venv_cache_dir
+                    / f"{namespace_dir.name}.{name_dir.name}"
+                    / "MANIFEST.json"
+                )
+            if not manifest.exists():
+                msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
+                logger.debug(msg)
+                continue
+            with manifest.open() as manifest_file:
+                manifest_json = json.load(manifest_file)
+
+            cname = f"{namespace_dir.name}.{name_dir.name}"
+
+            collections[cname] = manifest_json
+            c_info = collections[cname].get("collection_info", {})
+            if not c_info:
+                collections[cname]["collection_info"] = {}
+                c_info = collections[cname]["collection_info"]
+            c_info["requirements"] = {"python": {}, "system": []}
+
+            python_requirements = c_info["requirements"]["python"]
+            system_requirements = c_info["requirements"]["system"]
+
+            for file in name_dir.iterdir():
+                if not file.is_file():
+                    continue
+                if not file.name.endswith(".txt"):
+                    continue
+                if "requirements" in file.name:
+                    with file.open() as requirements_file:
+                        requirements = requirements_file.read().splitlines()
+                        python_requirements[file.stem] = requirements
+                if file.stem == "bindep":
+                    with file.open() as requirements_file:
+                        requirements = requirements_file.read().splitlines()
+                        system_requirements.extend(requirements)
+
+    return sort_dict(collections)

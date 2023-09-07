@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .arg_parser import parse
+from .checker import Checker
 from .config import Config
 from .inspector import Inspector
 from .installer import Installer
@@ -97,6 +98,12 @@ class Cli:
         logger = logging.getLogger("pip4a")
 
         self.config = Config(args=self.args)
+
+        if self.config.args.subcommand == "check":
+            self.config.init()
+            checker = Checker(config=self.config)
+            checker.run()
+            sys.exit(0)
 
         if self.config.args.subcommand == "inspect":
             self.config.init()
