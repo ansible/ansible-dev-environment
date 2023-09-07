@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
@@ -95,8 +94,7 @@ class Config:
     @property
     def cache_dir(self: Config) -> Path:
         """Return the cache directory."""
-        cache_home = os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")
-        cache_dir = (Path(cache_home) / "pip4a").resolve()
+        cache_dir = self.venv / ".pip4a"
         if not cache_dir.exists():
             cache_dir.mkdir(parents=True)
         return cache_dir
@@ -114,18 +112,9 @@ class Config:
         sys.exit(1)
 
     @property
-    def vuuid(self: Config) -> str:
-        """Return the virtual environment uuid."""
-        result = hashlib.md5(str(self.venv).encode())  # noqa: S324
-        return result.hexdigest()
-
-    @property
     def venv_cache_dir(self: Config) -> Path:
         """Return the virtual environment cache directory."""
-        venv_cache_dir = self.cache_dir / self.vuuid
-        if not venv_cache_dir.exists():
-            venv_cache_dir.mkdir()
-        return venv_cache_dir
+        return self.cache_dir
 
     @property
     def collection_cache_dir(self: Config) -> Path:
