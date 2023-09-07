@@ -108,9 +108,14 @@ class Checker:
         with missing_file.open() as file:
             pip_report = json.load(file)
 
+        if self._collections_missing:
+            err = "Python packages required by missing collections are not included."
+            logger.warning(err)
+
         if "install" not in pip_report or not pip_report["install"]:
-            msg = "\N{check mark} All Python dependencies are installed."
-            note(msg)
+            if not self._collections_missing:
+                msg = "\N{check mark} All Python dependencies are installed."
+                note(msg)
             return
 
         missing = [
@@ -118,10 +123,7 @@ class Checker:
             for package in pip_report["install"]
         ]
 
-        err = f"Missing Python dependencies: {oxford_join(missing)}"
+        err = f"Missing python dependencies: {oxford_join(missing)}"
         logger.warning(err)
         msg = f"Try running `pip install {' '.join(missing)}`."
         hint(msg)
-        if self._collections_missing:
-            err = "Python packages required by missing collections are not included."
-            logger.warning(err)
