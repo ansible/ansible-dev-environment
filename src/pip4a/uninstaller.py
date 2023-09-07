@@ -7,6 +7,8 @@ import shutil
 
 from typing import TYPE_CHECKING
 
+from .utils import note
+
 
 if TYPE_CHECKING:
     from .config import Config
@@ -43,14 +45,14 @@ class UnInstaller:
                 self._config.site_pkg_collection_path.unlink()
             else:
                 shutil.rmtree(self._config.site_pkg_collection_path)
-            msg = f"Removed {self._config.collection_name}: {self._config.site_pkg_collection_path}"
-            logger.info(msg)
+            msg = f"Removed {self._config.collection_name}"
+            note(msg)
         else:
-            msg = (
+            err = (
                 f"Failed to find {self._config.collection_name}:"
                 f" {self._config.site_pkg_collection_path}"
             )
-            logger.debug(msg)
+            logger.warning(err)
 
         for entry in self._config.site_pkg_collections_path.iterdir():
             if all(
@@ -62,23 +64,23 @@ class UnInstaller:
             ):
                 shutil.rmtree(entry)
                 msg = f"Removed {self._config.collection_name}*.info: {entry}"
-                logger.info(msg)
+                logger.debug(msg)
 
         collection_namespace_root = self._config.site_pkg_collection_path.parent
         try:
             collection_namespace_root.rmdir()
             msg = f"Removed collection namespace root: {collection_namespace_root}"
-            logger.info(msg)
+            logger.debug(msg)
         except FileNotFoundError:
             pass
         except OSError as exc:
-            err = f"Failed to remove collection namespace root: {exc}"
-            logger.warning(err)
+            msg = f"Failed to remove collection namespace root: {exc}"
+            logger.debug(msg)
 
         try:
             self._config.site_pkg_collections_path.rmdir()
             msg = f"Removed collection root: {self._config.site_pkg_collections_path}"
-            logger.info(msg)
+            logger.debug(msg)
         except FileNotFoundError:
             pass
         except OSError as exc:

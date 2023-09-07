@@ -135,17 +135,12 @@ class Config:
     @property
     def discovered_python_reqs(self: Config) -> Path:
         """Return the discovered python requirements file."""
-        return self.collection_cache_dir / "discovered_requirements.txt"
+        return self.venv_cache_dir / "discovered_requirements.txt"
 
     @property
     def discovered_bindep_reqs(self: Config) -> Path:
         """Return the discovered system package requirements file."""
-        return self.collection_cache_dir / "discovered_bindep.txt"
-
-    @property
-    def installed_collections(self: Config) -> Path:
-        """Return the installed collections file."""
-        return self.collection_cache_dir / "installed_collections.txt"
+        return self.venv_cache_dir / "discovered_bindep.txt"
 
     @property
     def site_pkg_collections_path(self: Config) -> Path:
@@ -195,7 +190,7 @@ class Config:
             self.c_namespace = yaml_file["namespace"]
             self.c_name = yaml_file["name"]
             msg = f"Found collection name: {self.collection_name} from {file_name}."
-            logger.info(msg)
+            logger.debug(msg)
         except KeyError as exc:
             err = f"Failed to find collection name in {file_name}: {exc}"
             logger.critical(err)
@@ -210,7 +205,7 @@ class Config:
         if not self.venv.exists():
             if self._create_venv:
                 msg = f"Creating virtual environment: {self.venv}"
-                logger.info(msg)
+                logger.debug(msg)
                 command = f"python -m venv {self.venv}"
                 try:
                     subprocess_run(command=command, verbose=self.args.verbose)
@@ -221,14 +216,14 @@ class Config:
                 err = f"Cannot find virtual environment: {self.venv}."
                 logger.critical(err)
         msg = f"Virtual environment: {self.venv}"
-        logger.info(msg)
+        logger.debug(msg)
         venv_interpreter = self.venv / "bin" / "python"
         if not venv_interpreter.exists():
             err = f"Cannot find interpreter: {venv_interpreter}."
             logger.critical(err)
 
         msg = f"Virtual environment interpreter: {venv_interpreter}"
-        logger.info(msg)
+        logger.debug(msg)
         self.venv_interpreter = venv_interpreter
 
     def _set_site_pkg_path(self: Config) -> None:

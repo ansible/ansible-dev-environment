@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import re
 import subprocess
 
 from typing import TYPE_CHECKING
@@ -13,6 +15,8 @@ import subprocess_tee
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from .config import Config
 
 from typing import Any
 
@@ -113,6 +117,7 @@ def collect_manifests(  # noqa: C901
 
     Args:
         target: The target directory to collect manifests from.
+        venv_cache_dir: The directory to look for manifests in.
 
     Returns:
         A dictionary of manifests.
@@ -166,3 +171,63 @@ def collect_manifests(  # noqa: C901
                         system_requirements.extend(requirements)
 
     return sort_dict(collections)
+
+
+def builder_introspect(config: Config) -> None:
+    """Introspect a collection.
+
+    Args:
+        config: The configuration object.
+    """
+    command = (
+        f"ansible-builder introspect {config.site_pkg_path}"
+        f" --write-pip {config.discovered_python_reqs}"
+        f" --write-bindep {config.discovered_bindep_reqs}"
+        " --sanitize"
+    )
+    if hasattr(config.args, "collection_specifier"):
+        opt_deps = re.match(r".*\[msg(.*)\]", config.args.collection_specifier)
+        if opt_deps:
+            dep_paths = opt_deps_to_files(
+                collection_path=config.collection_path,
+                dep_str=opt_deps.group(1),
+            )
+            for dep_path in dep_paths:
+                command += f" --user-pip {dep_path}"
+    msg = f"Writing discovered python requirements to: {config.discovered_python_reqs}"
+    logger.debug(msg)
+    msg = f"Writing discovered system requirements to: {config.discovered_bindep_reqs}"
+    logger.debug(msg)
+    try:
+        subprocess_run(command=command, verbose=config.args.verbose)
+    except subprocess.CalledProcessError as exc:
+        err = f"Failed to discover requirements: {exc} {exc.stderr}"
+        logger.critical(err)
+
+
+def note(string: str) -> None:
+    """Print a green note.
+
+    Args:
+        string: The string to print.
+    """
+    logger.debug(string)
+    _note = f"NOTE: {string}"
+    if os.environ.get("NOCOLOR"):
+        print(_note)  # noqa: T201
+    else:
+        print(f"\033[92m{_note}\033[0m")  # noqa: T201
+
+
+def hint(string: str) -> None:
+    """Print a magenta hint.
+
+    Args:
+        string: The string to print.
+    """
+    logger.debug(string)
+    _hint = f"HINT: {string}"
+    if os.environ.get("NOCOLOR"):
+        print(_hint)  # noqa: T201
+    else:
+        print(f"\033[95m{_hint}\033[0m")  # noqa: T201
