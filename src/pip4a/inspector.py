@@ -32,6 +32,7 @@ class Inspector:
 
     def run(self: Inspector) -> None:  # noqa: C901, PLR0912
         """Run the Inspector."""
+        # pylint: disable=too-many-locals
         collections = {}
         for namespace_dir in self._config.site_pkg_collections_path.iterdir():
             if not namespace_dir.is_dir():
