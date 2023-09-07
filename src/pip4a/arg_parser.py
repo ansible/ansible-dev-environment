@@ -59,6 +59,13 @@ def parse() -> argparse.Namespace:
         help="List installed collections",
     )
 
+    _inspect = subparsers.add_parser(
+        "inspect",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[level1],
+        help="Inspect installed collections",
+    )
+
     level2 = argparse.ArgumentParser(add_help=False, parents=[level1])
 
     level2.add_argument(

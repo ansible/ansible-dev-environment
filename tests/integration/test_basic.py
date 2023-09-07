@@ -43,6 +43,20 @@ def test_venv(
     assert "ansible.utils" in captured.out
     assert "unknown" not in captured.out
 
+    monkeypatch.setattr("sys.argv", ["pip4a", "uninstall", "cisco.nxos", "--venv=venv"])
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "Removed cisco.nxos" in caplog.text
+
+    monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv"])
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "cisco.nxos" not in captured.out
+    assert "ansible.netcommon" in captured.out
+    assert "ansible.utils" in captured.out
+
 
 def test_non_local(
     caplog: pytest.LogCaptureFixture,
