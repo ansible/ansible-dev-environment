@@ -12,6 +12,7 @@ levelno
 netcommon
 pip4a
 reqs
+setenv
 specp
 uninstallation
 vuuid
