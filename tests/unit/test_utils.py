@@ -1,4 +1,4 @@
-"""Unit test for the utilties module."""
+"""Unit test for the utilities module."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ scenarios = (
         ),
     ),
     (
-        "/",  # noqa:
+        "/",
         CollectionSpec(
             specifier=None,
             local=True,
@@ -38,7 +38,7 @@ scenarios = (
         ),
     ),
     (
-        "/[test]",  # noqa:
+        "/[test]",
         CollectionSpec(
             specifier=None,
             local=True,
