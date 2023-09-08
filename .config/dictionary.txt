@@ -3,6 +3,7 @@ bindir
 bthornto
 caplog
 capsys
+cnamespace
 cpart
 fileh
 fqcn
@@ -11,6 +12,7 @@ levelno
 netcommon
 pip4a
 reqs
+setenv
 specp
 uninstallation
 vuuid

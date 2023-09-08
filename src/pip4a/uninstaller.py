@@ -34,7 +34,7 @@ class UnInstaller:
 
     def _remove_collection(self: UnInstaller) -> None:
         """Remove the collection."""
-        msg = f"Checking {self._config.collection_name} at {self._config.site_pkg_collection_path}"
+        msg = f"Checking {self._config.collection.name} at {self._config.site_pkg_collection_path}"
         logger.debug(msg)
 
         if self._config.site_pkg_collection_path.exists():
@@ -45,11 +45,11 @@ class UnInstaller:
                 self._config.site_pkg_collection_path.unlink()
             else:
                 shutil.rmtree(self._config.site_pkg_collection_path)
-            msg = f"Removed {self._config.collection_name}"
+            msg = f"Removed {self._config.collection.name}"
             note(msg)
         else:
             err = (
-                f"Failed to find {self._config.collection_name}:"
+                f"Failed to find {self._config.collection.name}:"
                 f" {self._config.site_pkg_collection_path}"
             )
             logger.warning(err)
@@ -58,12 +58,12 @@ class UnInstaller:
             if all(
                 (
                     entry.is_dir(),
-                    entry.name.startswith(self._config.collection_name),
+                    entry.name.startswith(self._config.collection.name),
                     entry.suffix == ".info",
                 ),
             ):
                 shutil.rmtree(entry)
-                msg = f"Removed {self._config.collection_name}*.info: {entry}"
+                msg = f"Removed {self._config.collection.name}*.info: {entry}"
                 logger.debug(msg)
 
         collection_namespace_root = self._config.site_pkg_collection_path.parent

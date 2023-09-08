@@ -7,17 +7,18 @@ import logging
 import os
 import re
 import subprocess
+import sys
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import subprocess_tee
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from .config import Config
 
+from pathlib import Path
 from typing import Any
 
 
@@ -185,15 +186,17 @@ def builder_introspect(config: Config) -> None:
         f" --write-bindep {config.discovered_bindep_reqs}"
         " --sanitize"
     )
-    if hasattr(config.args, "collection_specifier"):
-        opt_deps = re.match(r".*\[msg(.*)\]", config.args.collection_specifier)
-        if opt_deps:
-            dep_paths = opt_deps_to_files(
-                collection_path=config.collection_path,
-                dep_str=opt_deps.group(1),
-            )
-            for dep_path in dep_paths:
-                command += f" --user-pip {dep_path}"
+    if (
+        hasattr(config.args, "collection_specifier")
+        and config.collection.opt_deps
+        and config.collection.path
+    ):
+        dep_paths = opt_deps_to_files(
+            collection_path=config.collection.path,
+            dep_str=config.collection.opt_deps,
+        )
+        for dep_path in dep_paths:
+            command += f" --user-pip {dep_path}"
     msg = f"Writing discovered python requirements to: {config.discovered_python_reqs}"
     logger.debug(msg)
     msg = f"Writing discovered system requirements to: {config.discovered_bindep_reqs}"
@@ -231,3 +234,97 @@ def hint(string: str) -> None:
         print(_hint)  # noqa: T201
     else:
         print(f"\033[95m{_hint}\033[0m")  # noqa: T201
+
+
+@dataclass
+class CollectionSpec:
+    """A collection request specification."""
+
+    path: Path | None = None
+    opt_deps: str | None = None
+    local: bool | None = None
+    cnamespace: str | None = None
+    cname: str | None = None
+    specifier: str | None = None
+
+    @property
+    def name(self: CollectionSpec) -> str:
+        """Return the collection name."""
+        return f"{self.cnamespace}.{self.cname}"
+
+
+def parse_collection_request(string: str) -> CollectionSpec:  # noqa: PLR0915
+    """Parse a collection request str."""
+    collection_spec = CollectionSpec()
+    # spec with dep, local
+    if "[" in string and "]" in string:
+        msg = f"Found optional dependencies in collection request: {string}"
+        logger.debug(msg)
+        path = Path(string.split("[")[0]).expanduser().resolve()
+        if not path.exists():
+            msg = "Provide an existing path to a collection when specifying optional dependencies."
+            hint(msg)
+            msg = f"Failed to find collection path: {path}"
+            logger.critical(msg)
+        msg = f"Found local collection request with dependencies: {string}"
+        logger.debug(msg)
+        collection_spec.path = path
+        msg = f"Setting collection path: {collection_spec.path}"
+        collection_spec.opt_deps = string.split("[")[1].split("]")[0]
+        msg = f"Setting optional dependencies: {collection_spec.opt_deps}"
+        logger.debug(msg)
+        collection_spec.local = True
+        msg = "Setting request as local"
+        logger.debug(msg)
+        return collection_spec
+    # spec without dep, local
+    path = Path(string).expanduser().resolve()
+    if path.exists():
+        msg = f"Found local collection request without dependencies: {string}"
+        logger.debug(msg)
+        msg = f"Setting collection path: {path}"
+        logger.debug(msg)
+        collection_spec.path = path
+        msg = "Setting request as local"
+        logger.debug(msg)
+        collection_spec.local = True
+        return collection_spec
+    non_local_re = re.compile(
+        r"""
+        (?P<cnamespace>[A-Za-z0-9]+)    # collection name
+        \.                              # dot
+        (?P<cname>[A-Za-z0-9]+)         # collection name
+        (?P<specifier>[^A-Za-z0-9].*)?   # optional specifier
+        """,
+        re.VERBOSE,
+    )
+    matched = non_local_re.match(string)
+    if not matched:
+        msg = (
+            "Specify a valid collection name (ns.n) with an optional version specifier"
+        )
+        hint(msg)
+        msg = f"Failed to parse collection request: {string}"
+        logger.critical(msg)
+        sys.exit(1)
+    msg = f"Found non-local collection request: {string}"
+    logger.debug(msg)
+
+    collection_spec.cnamespace = matched.group("cnamespace")
+    msg = f"Setting collection namespace: {collection_spec.cnamespace}"
+    logger.debug(msg)
+
+    collection_spec.cname = matched.group("cname")
+    msg = f"Setting collection name: {collection_spec.cname}"
+    logger.debug(msg)
+
+    if matched.group("specifier"):
+        collection_spec.specifier = matched.group("specifier")
+        msg = f"Setting collection specifier: {collection_spec.specifier}"
+        logger.debug(msg)
+
+    collection_spec.local = False
+    msg = "Setting request as non-local"
+    logger.debug(msg)
+
+    return collection_spec

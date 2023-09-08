@@ -1,5 +1,7 @@
 """Basic smoke tests."""
 
+import json
+
 from pathlib import Path
 
 import pytest
@@ -14,6 +16,8 @@ def test_venv(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Basic smoke test."""
+    # disable color for json output
+    monkeypatch.setenv("NOCOLOR", "1")
     command = (
         "git clone https://github.com/ansible-collections/cisco.nxos.git"
         f" {tmp_path/ 'cisco.nxos'}"
@@ -27,7 +31,7 @@ def test_venv(
     )
     with pytest.raises(SystemExit):
         main()
-    string = "Installed collections: cisco.nxos, ansible.netcommon, and ansible.utils"
+    string = "Installed collections include: cisco.nxos, ansible.netcommon, and ansible.utils"
     captured = capsys.readouterr()
 
     assert string in captured.out
@@ -44,19 +48,23 @@ def test_venv(
     assert "ansible.utils" in captured.out
     assert "unknown" not in captured.out
 
-    monkeypatch.setattr("sys.argv", ["pip4a", "uninstall", "cisco.nxos", "--venv=venv"])
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pip4a", "uninstall", "ansible.utils", "--venv=venv"],
+    )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
-    assert "Removed cisco.nxos" in captured.out
+    assert "Removed ansible.utils" in captured.out
 
     monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv"])
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
-    assert "cisco.nxos" not in captured.out
-    assert "ansible.netcommon" in captured.out
-    assert "ansible.utils" in captured.out
+    captured_json = json.loads(captured.out)
+    assert "cisco.nxos" in captured_json
+    assert "ansible.netcommon" in captured_json
+    assert "ansible.utils" not in captured_json
 
     command = f"{tmp_path / 'venv' / 'bin' / 'python'} -m pip uninstall xmltodict -y"
     subprocess_run(command=command, verbose=True)
@@ -80,6 +88,6 @@ def test_non_local(
     )
     with pytest.raises(SystemExit):
         main()
-    string = "Installed collections: ansible.scm and ansible.utils"
+    string = "Installed collections include: ansible.scm and ansible.utils"
     captured = capsys.readouterr()
     assert string in captured.out

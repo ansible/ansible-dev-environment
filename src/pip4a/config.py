@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 import subprocess
 import sys
 
@@ -14,11 +13,13 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from .utils import subprocess_run
+from .utils import parse_collection_request, subprocess_run
 
 
 if TYPE_CHECKING:
     from argparse import Namespace
+
+    from .utils import CollectionSpec
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +36,10 @@ class Config:
         self._create_venv: bool
         self.args: Namespace = args
         self.bindir: Path
-        self.c_name: str
-        self.c_namespace: str
-        self.collection_local: bool
         self.python_path: Path
         self.site_pkg_path: Path
         self.venv_interpreter: Path
+        self.collection: CollectionSpec
 
     def init(self: Config, create_venv: bool = False) -> None:  # noqa: FBT001, FBT002
         """Initialize the configuration.
@@ -48,48 +47,17 @@ class Config:
         Args:
             create_venv: Create a virtual environment. Defaults to False.
         """
-        if self.args.subcommand == "install":
-            cpart = self.args.collection_specifier.split("[")[0]
-            if re.match(r"[a-z0-9]+\.[a-z0-9]+", cpart):
-                self.c_namespace, self.c_name = cpart.split(".")
-                self.collection_local = False
-            else:
-                self.collection_local = True
+        if self.args.subcommand in ("install", "uninstall"):
+            self.collection = parse_collection_request(self.args.collection_specifier)
+            if self.args.subcommand == "install" and self.collection.path:
                 self._get_galaxy()
-            if self.args.editable and not self.collection_local:
-                err = "Cannot use --editable with a non-local collection."
+            if self.args.subcommand == "uninstall" and self.collection.path:
+                err = "Please use a collection name for uninstallation."
                 logger.critical(err)
 
-        elif self.args.subcommand == "uninstall":
-            parts = self.args.collection_specifier.split(".")
-            fqcn_parts = 2
-            if len(parts) != fqcn_parts:
-                err = (
-                    "The collection specifier must be in the form of"
-                    " 'namespace.collection'"
-                )
-                logger.critical(err)
-            self.c_namespace = parts[0]
-            self.c_name = parts[1]
         self._create_venv = create_venv
         self._set_interpreter()
         self._set_site_pkg_path()
-
-    @property
-    def collection_path(self: Config) -> Path:
-        """Set the collection root directory."""
-        spec = self.args.collection_specifier.split("[")[0]
-        specp = Path(spec).expanduser().resolve()
-        if specp.is_dir():
-            return specp
-        err = f"Cannot find collection root directory. {specp}"
-        logger.critical(err)
-        sys.exit(1)
-
-    @property
-    def collection_name(self: Config) -> str:
-        """Return the collection name."""
-        return f"{self.c_namespace}.{self.c_name}"
 
     @property
     def cache_dir(self: Config) -> Path:
@@ -119,7 +87,7 @@ class Config:
     @property
     def collection_cache_dir(self: Config) -> Path:
         """Return the collection cache directory."""
-        collection_cache_dir = self.venv_cache_dir / self.collection_name
+        collection_cache_dir = self.venv_cache_dir / self.collection.name
         if not collection_cache_dir.exists():
             collection_cache_dir.mkdir()
         return collection_cache_dir
@@ -153,7 +121,14 @@ class Config:
     @property
     def site_pkg_collection_path(self: Config) -> Path:
         """Return the site packages collection path."""
-        return self.site_pkg_collections_path / self.c_namespace / self.c_name
+        if not self.collection.cnamespace or not self.collection.cname:
+            msg = "Collection namespace or name not set."
+            raise RuntimeError(msg)
+        return (
+            self.site_pkg_collections_path
+            / self.collection.cnamespace
+            / self.collection.cname
+        )
 
     @property
     def venv_bindir(self: Config) -> Path:
@@ -174,9 +149,12 @@ class Config:
         Raises:
             SystemExit: If the collection name is not found
         """
-        file_name = self.collection_path / "galaxy.yml"
+        if self.collection is None or self.collection.path is None:
+            msg = "_get_galaxy called without a collection or path"
+            raise RuntimeError(msg)
+        file_name = self.collection.path / "galaxy.yml"
         if not file_name.exists():
-            err = f"Failed to find {file_name} in {self.collection_path}"
+            err = f"Failed to find {file_name} in {self.collection.path}"
             logger.critical(err)
 
         with file_name.open(encoding="utf-8") as fileh:
@@ -187,9 +165,9 @@ class Config:
                 logger.critical(err)
 
         try:
-            self.c_namespace = yaml_file["namespace"]
-            self.c_name = yaml_file["name"]
-            msg = f"Found collection name: {self.collection_name} from {file_name}."
+            self.collection.cnamespace = yaml_file["namespace"]
+            self.collection.cname = yaml_file["name"]
+            msg = f"Found collection name: {self.collection.name} from {file_name}."
             logger.debug(msg)
         except KeyError as exc:
             err = f"Failed to find collection name in {file_name}: {exc}"
