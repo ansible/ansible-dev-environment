@@ -34,7 +34,7 @@ class Installer:
     def run(self: Installer) -> None:
         """Run the installer."""
         self._install_core()
-        if self._config.collection_local:
+        if self._config.collection.local:
             self._install_local_collection()
             if self._config.args.editable:
                 self._swap_editable_collection()
@@ -82,7 +82,7 @@ class Installer:
 
         command = (
             f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
-            f" install {self._config.collection_name}"
+            f" install '{self._config.args.collection_specifier}'"
             f" -p {self._config.site_pkg_path}"
             " --force"
         )
@@ -102,11 +102,15 @@ class Installer:
             logger.critical(err)
             return
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
-        msg = f"Installed collections: {oxford_join(installed)}"
+        msg = f"Installed collections include: {oxford_join(installed)}"
         note(msg)
 
     def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912
-        """Install the collection from the build directory."""
+        """Install the collection from the build directory.
+
+        Raises:
+            RuntimeError: If tarball is not found or if more than one tarball is found.
+        """
         command = (
             "cp -r --parents $(git ls-files 2> /dev/null || ls)"
             f" {self._config.collection_build_dir}"
@@ -116,7 +120,7 @@ class Installer:
         try:
             subprocess_run(
                 command=command,
-                cwd=self._config.collection_path,
+                cwd=self._config.collection.path,
                 verbose=self._config.args.verbose,
             )
         except subprocess.CalledProcessError as exc:
@@ -165,7 +169,7 @@ class Installer:
             for entry in self._config.site_pkg_collections_path.iterdir()
             if entry.is_dir()
             and entry.name.endswith(".info")
-            and entry.name.startswith(self._config.collection_name)
+            and entry.name.startswith(self._config.collection.name)
         ]
         for info_dir in info_dirs:
             msg = f"Removing installed {info_dir}"
@@ -208,11 +212,18 @@ class Installer:
             )
 
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
-        msg = f"Installed collections: {oxford_join(installed)}"
+        msg = f"Installed collections include: {oxford_join(installed)}"
         note(msg)
 
     def _swap_editable_collection(self: Installer) -> None:
-        """Swap the installed collection with the current working directory."""
+        """Swap the installed collection with the current working directory.
+
+        Raises:
+            RuntimeError: If the collection path is not set.
+        """
+        if self._config.collection.path is None:
+            msg = "Collection path not set"
+            raise RuntimeError(msg)
         msg = f"Removing installed {self._config.site_pkg_collection_path}"
         logger.debug(msg)
         if self._config.site_pkg_collection_path.exists():
@@ -223,10 +234,10 @@ class Installer:
 
         msg = (
             f"Symlinking {self._config.site_pkg_collection_path}"
-            f" to {self._config.collection_path}"
+            f" to {self._config.collection.path}"
         )
         logger.debug(msg)
-        self._config.site_pkg_collection_path.symlink_to(self._config.collection_path)
+        self._config.site_pkg_collection_path.symlink_to(self._config.collection.path)
 
     def _pip_install(self: Installer) -> None:
         """Install the dependencies."""
@@ -244,9 +255,9 @@ class Installer:
         except subprocess.CalledProcessError as exc:
             err = (
                 "Failed to install requirements from"
-                f" {self._config.discovered_python_reqs}: {exc}"
+                f" {self._config.discovered_python_reqs}: {exc} {exc.stderr}"
             )
-            raise RuntimeError(err) from exc
+            logger.critical(err)
         else:
             msg = "All python requirements are installed."
             note(msg)
