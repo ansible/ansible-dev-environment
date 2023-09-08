@@ -16,6 +16,8 @@ def test_venv(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Basic smoke test."""
+    # disable color for json output
+    monkeypatch.setenv("NOCOLOR", "1")
     command = (
         "git clone https://github.com/ansible-collections/cisco.nxos.git"
         f" {tmp_path/ 'cisco.nxos'}"
