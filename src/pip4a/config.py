@@ -47,11 +47,13 @@ class Config:
         Args:
             create_venv: Create a virtual environment. Defaults to False.
         """
-        if self.args.subcommand in ("install", "uninstall"):
+        if self.args.subcommand == "install" and not self.args.requirement:
             self.collection = parse_collection_request(self.args.collection_specifier)
-            if self.args.subcommand == "install" and self.collection.path:
+            if self.collection.path:
                 self._get_galaxy()
-            if self.args.subcommand == "uninstall" and self.collection.path:
+        elif self.args.subcommand == "uninstall" and not self.args.requirement:
+            self.collection = parse_collection_request(self.args.collection_specifier)
+            if self.collection.path:
                 err = "Please use a collection name for uninstallation."
                 logger.critical(err)
 

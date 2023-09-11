@@ -5,6 +5,7 @@ caplog
 capsys
 cnamespace
 cpart
+cpath
 fileh
 fqcn
 levelname

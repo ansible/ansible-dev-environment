@@ -58,34 +58,46 @@ class Cli:
         """Initialize the CLI and parse CLI args."""
         self.args: Namespace
         self.config: Config
+        self.logger: logging.Logger
 
     def parse_args(self: Cli) -> None:
         """Parse the command line arguments."""
         self.args = parse()
+        if hasattr(self.args, "requirement") and self.args.requirement:
+            self.args.requirement = Path(self.args.requirement).expanduser().resolve()
 
     def init_logger(self: Cli) -> None:
         """Initialize the logger."""
-        logger = logging.getLogger("pip4a")
+        self.logger = logging.getLogger("pip4a")
         count = LogCount()
-        logger.addHandler(count)
+        self.logger.addHandler(count)
 
         ch = ExitOnExceptionHandler()
         cf = ColoredFormatter(
             "%(levelname)s %(message)s",
         )
         ch.setFormatter(cf)
-        logger.addHandler(ch)
+        self.logger.addHandler(ch)
 
         max_verbosity = 3
         if self.args.verbose > max_verbosity:
             self.args.verbose = 3
 
         log_level = logging.ERROR - (self.args.verbose * 10)
-        logger.setLevel(log_level)
+        self.logger.setLevel(log_level)
+
+    def args_sanity(self: Cli) -> None:
+        """Perform some sanity checking on the args."""
+        if (
+            hasattr(self.args, "requirement")
+            and self.args.requirement
+            and not self.args.requirement.exists()
+        ):
+            err = f"Requirements file not found: {self.args.requirement}"
+            self.logger.critical(err)
 
     def ensure_isolated(self: Cli) -> None:
         """Ensure the environment is isolated."""
-        logger = logging.getLogger("pip4a")
         env_vars = os.environ
         errors = []
         if "ANSIBLE_COLLECTIONS_PATHS" in env_vars:
@@ -117,16 +129,16 @@ class Cli:
                 "The development environment is not isolated,"
                 " please resolve the following errors:"
             )
-            logger.error(err)
+            self.logger.error(err)
             for error in errors:
                 err = f"- {error}"
-                logger.error(err)
+                self.logger.error(err)
             err = "Exiting."
-            logger.critical(err)
+            self.logger.critical(err)
 
     def run(self: Cli) -> None:
         """Run the application."""
-        logger = logging.getLogger("pip4a")
+        logging.getLogger("pip4a")
 
         self.config = Config(args=self.args)
 
@@ -147,10 +159,6 @@ class Cli:
             lister = Lister(config=self.config, output_format="list")
             lister.run()
             self._exit()
-
-        if "," in self.config.args.collection_specifier:
-            err = "Multiple optional dependencies are not supported at this time."
-            logger.critical(err)
 
         if self.config.args.subcommand == "install":
             self.config.init(create_venv=True)
@@ -179,6 +187,7 @@ def main() -> None:
     cli = Cli()
     cli.parse_args()
     cli.init_logger()
+    cli.args_sanity()
     cli.ensure_isolated()
     cli.run()
 

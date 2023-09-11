@@ -74,10 +74,17 @@ def parse() -> argparse.Namespace:
     )
 
     level2 = argparse.ArgumentParser(add_help=False, parents=[level1])
-
-    level2.add_argument(
+    spec_or_req = level2.add_mutually_exclusive_group(required=True)
+    spec_or_req.add_argument(
         "collection_specifier",
         help="Collection name or path to collection with extras.",
+        nargs="?",
+    )
+    spec_or_req.add_argument(
+        "-r",
+        "--requirement",
+        help="Install from the given requirements file.",
+        required=False,
     )
 
     install_usage = """Usage:
@@ -99,6 +106,7 @@ def parse() -> argparse.Namespace:
         action="store_true",
         help="Install editable.",
     )
+
     _uninstall = subparsers.add_parser(
         "uninstall",
         epilog=install_usage,
