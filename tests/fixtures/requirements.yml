@@ -1,4 +1,4 @@
 ---
 collections:
-- ansible.scm
-- name: ansible.netcommon
+  - ansible.scm
+  - name: ansible.netcommon
