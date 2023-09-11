@@ -10,7 +10,13 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .utils import builder_introspect, note, oxford_join, subprocess_run
+from .utils import (
+    builder_introspect,
+    collections_from_requirements,
+    note,
+    oxford_join,
+    subprocess_run,
+)
 
 
 if TYPE_CHECKING:
@@ -33,15 +39,26 @@ class Installer:
 
     def run(self: Installer) -> None:
         """Run the installer."""
+        if self._config.args.editable and not self._config.collection.local:
+            err = "Editable installs are only supported for local collections."
+            logger.critical(err)
+
+        if (
+            self._config.args.collection_specifier
+            and "," in self._config.args.collection_specifier
+        ):
+            err = "Multiple optional dependencies are not supported at this time."
+            logger.critical(err)
+
         self._install_core()
-        if self._config.collection.local:
+
+        if self._config.args.requirement:
+            self._install_galaxy_requirements()
+        elif self._config.collection.local:
             self._install_local_collection()
             if self._config.args.editable:
                 self._swap_editable_collection()
-        else:
-            if self._config.args.editable:
-                err = "Editable installs are only supported for local collections."
-                logger.critical(err)
+        elif not self._config.collection.local:
             self._install_galaxy_collection()
 
         builder_introspect(config=self._config)
@@ -61,6 +78,9 @@ class Installer:
 
     def _install_core(self: Installer) -> None:
         """Install ansible-core if not installed already."""
+        msg = "Installing ansible-core."
+        logger.info(msg)
+
         core = self._config.venv_bindir / "ansible"
         if core.exists():
             return
@@ -75,6 +95,9 @@ class Installer:
 
     def _install_galaxy_collection(self: Installer) -> None:
         """Install the collection from galaxy."""
+        msg = f"Installing collection from galaxy: {self._config.args.collection_specifier}"
+        logger.info(msg)
+
         if self._config.site_pkg_collection_path.exists():
             msg = f"Removing installed {self._config.site_pkg_collection_path}"
             logger.debug(msg)
@@ -108,12 +131,49 @@ class Installer:
         msg = f"Installed collections include: {oxford_join(installed)}"
         note(msg)
 
-    def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912
+    def _install_galaxy_requirements(self: Installer) -> None:
+        """Install the collections using requirements.yml."""
+        msg = f"Installing collections from requirements file: {self._config.args.requirement}"
+        logger.info(msg)
+
+        collections = collections_from_requirements(file=self._config.args.requirement)
+        for collection in collections:
+            cnamespace = collection["name"].split(".")[0]
+            cname = collection["name"].split(".")[1]
+            cpath = self._config.site_pkg_collections_path / cnamespace / cname
+            if cpath.exists():
+                msg = f"Removing installed {cpath}"
+                logger.debug(msg)
+                if cpath.is_symlink():
+                    cpath.unlink()
+                else:
+                    shutil.rmtree(cpath)
+
+        command = (
+            f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
+            f" install -r {self._config.args.requirement}"
+            f" -p {self._config.site_pkg_path}"
+            " --force"
+        )
+        try:
+            proc = subprocess_run(command=command, verbose=self._config.args.verbose)
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to install collections: {exc} {exc.stderr}"
+            logger.critical(err)
+
+        installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
+        msg = f"Installed collections include: {oxford_join(installed)}"
+        note(msg)
+
+    def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912, PLR0915
         """Install the collection from the build directory.
 
         Raises:
             RuntimeError: If tarball is not found or if more than one tarball is found.
         """
+        msg = f"Installing local collection from: {self._config.collection_build_dir}"
+        logger.info(msg)
+
         command = (
             "cp -r --parents $(git ls-files 2> /dev/null || ls)"
             f" {self._config.collection_build_dir}"
@@ -224,6 +284,9 @@ class Installer:
         Raises:
             RuntimeError: If the collection path is not set.
         """
+        msg = f"Swapping {self._config.collection.name} with {self._config.collection.path}"
+        logger.info(msg)
+
         if self._config.collection.path is None:
             msg = "Collection path not set"
             raise RuntimeError(msg)
@@ -244,6 +307,9 @@ class Installer:
 
     def _pip_install(self: Installer) -> None:
         """Install the dependencies."""
+        msg = "Installing python requirements."
+        logger.info(msg)
+
         command = (
             f"{self._config.venv_interpreter} -m pip install"
             f" -r {self._config.discovered_python_reqs}"
@@ -267,6 +333,9 @@ class Installer:
 
     def _check_bindep(self: Installer) -> None:
         """Check the bindep file."""
+        msg = "Checking system packages."
+        logger.info(msg)
+
         command = f"bindep -b -f {self._config.discovered_bindep_reqs}"
         try:
             subprocess_run(command=command, verbose=self._config.args.verbose)

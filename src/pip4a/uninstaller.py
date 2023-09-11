@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import shutil
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .utils import note
+from .utils import collections_from_requirements, note, parse_collection_request
 
 
 if TYPE_CHECKING:
@@ -30,7 +31,19 @@ class UnInstaller:
 
     def run(self: UnInstaller) -> None:
         """Run the uninstaller."""
-        self._remove_collection()
+        if self._config.args.requirement:
+            requirements_path = Path(self._config.args.requirement)
+            if not requirements_path.exists():
+                err = f"Failed to find requirements file: {requirements_path}"
+                logger.critical(err)
+            collections = collections_from_requirements(requirements_path)
+            for collection in collections:
+                self._config.collection = parse_collection_request(
+                    collection["name"],
+                )
+                self._remove_collection()
+        else:
+            self._remove_collection()
 
     def _remove_collection(self: UnInstaller) -> None:
         """Remove the collection."""

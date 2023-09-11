@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import subprocess_tee
+import yaml
 
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ def subprocess_run(
 ) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command."""
     msg = f"Running command: {command}"
-    logger.info(msg)
+    logger.debug(msg)
     log_level = logging.ERROR - (verbose * 10)
     if log_level == logging.DEBUG:
         return subprocess_tee.run(
@@ -61,6 +62,7 @@ def oxford_join(words: list[str]) -> str:
     :param words: A list of words to join
     :return: A string of words joined with commas and an oxford comma
     """
+    words.sort()
     if not words:
         return ""
     if len(words) == 1:
@@ -189,6 +191,7 @@ def builder_introspect(config: Config) -> None:
     )
     if (
         hasattr(config.args, "collection_specifier")
+        and hasattr(config, "collection")
         and config.collection.opt_deps
         and config.collection.path
     ):
@@ -215,7 +218,6 @@ def note(string: str) -> None:
     Args:
         string: The string to print.
     """
-    logger.debug(string)
     _note = f"{'Note:':<9} {string}"
     if os.environ.get("NOCOLOR"):
         print(_note)  # noqa: T201
@@ -229,7 +231,6 @@ def hint(string: str) -> None:
     Args:
         string: The string to print.
     """
-    logger.debug(string)
     _hint = f"{'Hint:':<9} {string}"
     if os.environ.get("NOCOLOR"):
         print(_hint)  # noqa: T201
@@ -329,3 +330,21 @@ def parse_collection_request(string: str) -> CollectionSpec:  # noqa: PLR0915
     logger.debug(msg)
 
     return collection_spec
+
+
+def collections_from_requirements(file: Path) -> list[dict[str, str]]:
+    """Build a list of collections from a requirements file."""
+    collections = []
+    try:
+        with file.open() as requirements_file:
+            requirements = yaml.safe_load(requirements_file)
+    except yaml.YAMLError as exc:
+        err = f"Failed to load yaml file: {exc}"
+        logger.critical(err)
+
+    for requirement in requirements["collections"]:
+        if isinstance(requirement, str):
+            collections.append({"name": requirement})
+        elif isinstance(requirement, dict):
+            collections.append(requirement)
+    return collections

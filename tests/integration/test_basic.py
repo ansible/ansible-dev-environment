@@ -31,7 +31,7 @@ def test_venv(
     )
     with pytest.raises(SystemExit):
         main()
-    string = "Installed collections include: cisco.nxos, ansible.netcommon, and ansible.utils"
+    string = "Installed collections include: ansible.netcommon, ansible.utils, and cisco.nxos"
     captured = capsys.readouterr()
 
     assert string in captured.out
@@ -91,3 +91,43 @@ def test_non_local(
     string = "Installed collections include: ansible.scm and ansible.utils"
     captured = capsys.readouterr()
     assert string in captured.out
+
+
+def test_requirements(
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Install non-local collection."""
+    requirements = Path(__file__).parent.parent / "fixtures" / "requirements.yml"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pip4a", "install", f"--venv={tmp_path / 'venv'}", "-r", str(requirements)],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    string = "Installed collections include: ansible.netcommon, ansible.scm, and ansible.utils"
+    captured = capsys.readouterr()
+    assert string in captured.out
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pip4a", "uninstall", f"--venv={tmp_path / 'venv'}", "-r", str(requirements)],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    string = "Removed ansible.netcommon"
+    assert string in captured.out
+    string = "Removed ansible.scm"
+    assert string in captured.out
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pip4a", "list", f"--venv={tmp_path / 'venv'}"],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "ansible.netcommon" not in captured.out
+    assert "ansible.scm" not in captured.out
+    assert "ansible.utils" in captured.out
