@@ -39,6 +39,9 @@ class Installer:
             if self._config.args.editable:
                 self._swap_editable_collection()
         else:
+            if self._config.args.editable:
+                err = "Editable installs are only supported for local collections."
+                logger.critical(err)
             self._install_galaxy_collection()
 
         builder_introspect(config=self._config)
