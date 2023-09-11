@@ -27,14 +27,15 @@ logger = logging.getLogger(__name__)
 
 def subprocess_run(
     command: str,
-    verbose: bool,  # noqa: FBT001
+    verbose: int,
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command."""
     msg = f"Running command: {command}"
-    logger.debug(msg)
-    if verbose:
+    logger.info(msg)
+    log_level = logging.ERROR - (verbose * 10)
+    if log_level == logging.DEBUG:
         return subprocess_tee.run(
             command,
             check=True,
@@ -91,7 +92,7 @@ def opt_deps_to_files(collection_path: Path, dep_str: str) -> list[Path]:
             f"Failed to find optional dependency file for '{_dep}'."
             f" Checked for '{variant1.name}' and '{variant2.name}'. Skipping."
         )
-        logger.warning(msg)
+        logger.error(msg)
     return files
 
 
@@ -215,7 +216,7 @@ def note(string: str) -> None:
         string: The string to print.
     """
     logger.debug(string)
-    _note = f"NOTE: {string}"
+    _note = f"{'Note:':<9} {string}"
     if os.environ.get("NOCOLOR"):
         print(_note)  # noqa: T201
     else:
@@ -229,7 +230,7 @@ def hint(string: str) -> None:
         string: The string to print.
     """
     logger.debug(string)
-    _hint = f"HINT: {string}"
+    _hint = f"{'Hint:':<9} {string}"
     if os.environ.get("NOCOLOR"):
         print(_hint)  # noqa: T201
     else:

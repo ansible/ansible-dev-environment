@@ -65,12 +65,12 @@ class Checker:
                             f"Collection {collection_name} requires {dep} {version}"
                             f" but {dep} {dep_version} is installed."
                         )
-                        logger.warning(err)
+                        logger.error(err)
                         missing = True
 
                     else:
                         msg = (
-                            f"\N{check mark} Collection {collection_name} requires {dep} {version}"
+                            f"Collection {collection_name} requires {dep} {version}"
                             f" and {dep} {dep_version} is installed."
                         )
                         logger.debug(msg)
@@ -79,13 +79,13 @@ class Checker:
                         f"Collection {collection_name} requires"
                         f" {dep} {version} but it is not installed."
                     )
-                    logger.warning(err)
+                    logger.error(err)
                     msg = f"Try running `pip4a install {dep}`"
                     hint(msg)
                     missing = True
 
         if not missing:
-            msg = "\N{check mark} All dependant collections are installed."
+            msg = "All dependant collections are installed."
             note(msg)
         self._collections_missing = missing
 
@@ -109,12 +109,12 @@ class Checker:
             pip_report = json.load(file)
 
         if self._collections_missing:
-            err = "Python packages required by missing collections are not included."
-            logger.warning(err)
+            msg = "Python packages required by missing collections are not included."
+            note(msg)
 
         if "install" not in pip_report or not pip_report["install"]:
             if not self._collections_missing:
-                msg = "\N{check mark} All Python dependencies are installed."
+                msg = "All python dependencies are installed."
                 note(msg)
             return
 
@@ -124,6 +124,6 @@ class Checker:
         ]
 
         err = f"Missing python dependencies: {oxford_join(missing)}"
-        logger.warning(err)
+        logger.error(err)
         msg = f"Try running `pip install {' '.join(missing)}`."
         hint(msg)

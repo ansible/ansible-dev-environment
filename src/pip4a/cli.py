@@ -24,6 +24,33 @@ if TYPE_CHECKING:
     from argparse import Namespace
 
 
+class LogType:
+    """A log type."""
+
+    def __init__(self: LogType) -> None:
+        """Initialize the log type."""
+        self.errors = 0
+
+
+class LogCount(logging.Handler):
+    """A log counter."""
+
+    def __init__(self: LogCount) -> None:
+        """Initialize the log counter."""
+        super().__init__()
+        self.count = LogType()
+        self.name = "counter"
+
+    def emit(self: LogCount, record: logging.LogRecord) -> None:
+        """Emit the log record.
+
+        Args:
+            record: The log record
+        """
+        if record.levelname == "ERROR":
+            self.count.errors += 1
+
+
 class Cli:
     """The Cli class."""
 
@@ -39,18 +66,22 @@ class Cli:
     def init_logger(self: Cli) -> None:
         """Initialize the logger."""
         logger = logging.getLogger("pip4a")
+        count = LogCount()
+        logger.addHandler(count)
+
         ch = ExitOnExceptionHandler()
-        ch.setLevel(logging.DEBUG)
         cf = ColoredFormatter(
             "%(levelname)s %(message)s",
         )
         ch.setFormatter(cf)
         logger.addHandler(ch)
 
-        if self.args.verbose:
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.INFO)
+        max_verbosity = 3
+        if self.args.verbose > max_verbosity:
+            self.args.verbose = 3
+
+        log_level = logging.ERROR - (self.args.verbose * 10)
+        logger.setLevel(log_level)
 
     def ensure_isolated(self: Cli) -> None:
         """Ensure the environment is isolated."""
@@ -86,10 +117,10 @@ class Cli:
                 "The development environment is not isolated,"
                 " please resolve the following errors:"
             )
-            logger.warning(err)
+            logger.error(err)
             for error in errors:
                 err = f"- {error}"
-                logger.warning(err)
+                logger.error(err)
             err = "Exiting."
             logger.critical(err)
 
@@ -103,36 +134,44 @@ class Cli:
             self.config.init()
             checker = Checker(config=self.config)
             checker.run()
-            sys.exit(0)
+            self._exit()
 
         if self.config.args.subcommand == "inspect":
             self.config.init()
             inspector = Inspector(config=self.config)
             inspector.run()
-            sys.exit(0)
+            self._exit()
 
         if self.config.args.subcommand == "list":
             self.config.init()
             lister = Lister(config=self.config, output_format="list")
             lister.run()
-            sys.exit(0)
+            self._exit()
 
         if "," in self.config.args.collection_specifier:
             err = "Multiple optional dependencies are not supported at this time."
             logger.critical(err)
-            sys.exit(1)
 
         if self.config.args.subcommand == "install":
             self.config.init(create_venv=True)
             installer = Installer(self.config)
             installer.run()
-            sys.exit(0)
+            self._exit()
 
         if self.config.args.subcommand == "uninstall":
             self.config.init()
             uninstaller = UnInstaller(self.config)
             uninstaller.run()
-            sys.exit(0)
+            self._exit()
+
+    def _exit(self: Cli) -> None:
+        """Exit the application setting the return code."""
+        logger = logging.getLogger("pip4a")
+        status = 0
+        for handler in logger.handlers:
+            if handler.name == "counter":
+                status = int(bool(handler.count.errors))  # type: ignore[attr-defined]
+        sys.exit(status)
 
 
 def main() -> None:
