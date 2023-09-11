@@ -45,7 +45,9 @@ class ColoredFormatter(logging.Formatter):
         colored_record = copy(record)
         levelname = colored_record.levelname
         seq = MAPPING.get(levelname, 37)  # default white
-        colored_levelname = f"{PREFIX}{seq}m{levelname:}:{SUFFIX}"
+        colored_levelname = (
+            f"{PREFIX}{seq}m{levelname.lower().capitalize() + ':':<9}{SUFFIX}"
+        )
         colored_record.levelname = colored_levelname
         colored_msg = f"{PREFIX}{seq}m{record.msg}{SUFFIX}"
         colored_record.msg = colored_msg
@@ -65,5 +67,5 @@ class ExitOnExceptionHandler(logging.StreamHandler):  # type: ignore[type-arg]
             SystemExit: If the log record is an error or critical
         """
         super().emit(record)
-        if record.levelno in (logging.ERROR, logging.CRITICAL):
+        if record.levelno == logging.CRITICAL:
             raise SystemExit(1)

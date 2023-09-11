@@ -49,12 +49,12 @@ class Installer:
             self._config.interpreter != self._config.venv_interpreter
         ):
             msg = "A virtual environment was specified but has not been activated."
-            logger.warning(msg)
+            note(msg)
             msg = (
                 "Please activate the virtual environment:"
                 f"\nsource {self._config.args.venv}/bin/activate"
             )
-            logger.warning(msg)
+            note(msg)
 
     def _install_core(self: Installer) -> None:
         """Install ansible-core if not installed already."""
@@ -273,12 +273,12 @@ class Installer:
                 "Required system packages are missing."
                 " Please use the system package manager to install them."
             )
-            logger.warning(msg)
+            logger.error(msg)  # noqa: TRY400
             for line in lines:
                 msg = f"Missing: {line}"
-                logger.warning(msg)
+                logger.error(msg)  # noqa: TRY400
                 pass
         else:
             msg = "All required system packages are installed."
-            logger.debug(msg)
+            note(msg)
             return

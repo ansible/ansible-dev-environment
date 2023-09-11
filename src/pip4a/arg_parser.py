@@ -43,9 +43,9 @@ def parse() -> argparse.Namespace:
     level1.add_argument(
         "-v",
         "--verbose",
-        action="store_true",
-        default=False,
-        help="Increase output verbosity.",
+        action="count",
+        default=0,
+        help="Give more output. Option is additive, and can be used up to 3 times.",
     )
     level1.add_argument(
         "--venv",
