@@ -80,19 +80,12 @@ class Tree:  # pylint: disable=R0902
             "yellow",
         )
         start = ""
-        if val == "four":
-            pass
+        val_str = str(val)
         for ansi in ansis:
             matches = getattr(self, ansi)
-            try:
-                index = matches.index(val)
-            except ValueError:
-                continue
-
-            if isinstance(val, type(matches[index])):
+            if val_str in [str(match) for match in matches]:
                 start += getattr(Ansi, ansi.upper())
-
-        return f"{start}{val}{Ansi.RESET}"
+        return f"{start}{val_str}{Ansi.RESET}"
 
     @staticmethod
     def is_scalar(obj: JSONVal) -> bool:

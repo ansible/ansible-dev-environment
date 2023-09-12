@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from pip4a.tree import JSONVal
 
 
-sample: JSONVal = {
+sample_1: JSONVal = {
     "key_one": "one",
     "key_two": 42,
     "key_three": True,
@@ -100,10 +100,11 @@ key_six
 def test_tree_large(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test the tree generator."""
     monkeypatch.setenv("NO_COLOR", "true")
-    assert Tree(sample).render() == result
+
+    assert Tree(sample_1).render() == result
 
 
-sample = {
+sample_2: JSONVal = {
     "key_one": True,
     "key_two": 42,
     "key_three": None,
@@ -132,7 +133,7 @@ expected = [
 
 def test_tree_color() -> None:
     """Test the tree generator."""
-    tree = Tree(sample)
+    tree = Tree(sample_2)
     tree.blue = ["key_one", "key_two", "key_three", "key_four"]
     tree.green = [True, 42, None, "four"]
     rendered = tree.render().splitlines()
