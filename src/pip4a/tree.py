@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 
+from typing import Union
+
 
 class Ansi:
     """ANSI escape codes."""
@@ -21,8 +23,8 @@ class Ansi:
     YELLOW = "\x1B[33m"
 
 
-ScalarVal = bool | str | float | int | None
-JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
+ScalarVal = Union[bool, str, float, int, None]
+JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
 
 
 class Tree:  # pylint: disable=R0902
@@ -30,7 +32,6 @@ class Tree:  # pylint: disable=R0902
 
     PIPE = "│"
     ELBOW = "└──"
-    UEBLOW = "┌──"
     TEE = "├──"
     PIPE_PREFIX = "│  "
     SPACE_PREFIX = "   "
@@ -58,7 +59,10 @@ class Tree:  # pylint: disable=R0902
         """Colorize the string.
 
         Args:
-            string: The string to colorize
+            val: The thing to colorize
+
+        Returns:
+            The colorized string
         """
         if os.environ.get("NO_COLOR"):
             return str(val)

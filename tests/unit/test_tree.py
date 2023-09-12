@@ -1,3 +1,4 @@
+# cspell:ignore mkey, mfour
 """Test the tree generator."""
 
 from __future__ import annotations
