@@ -41,9 +41,11 @@ sample_1: JSONVal = {
             },
         },
     },
+    "key_seven": [{"foo": [1, 2, 3]}],
+    "key_eight": [1, 2, 3],
 }
 
-result = """key_one
+result = r"""key_one
 └──one
 key_two
 └──42
@@ -94,6 +96,15 @@ key_six
          ├──one
          ├──two
          └──three
+key_seven
+└──foo
+   ├──1
+   ├──2
+   └──3
+key_eight
+├──1
+├──2
+└──3
 """
 
 
@@ -121,13 +132,13 @@ expected = [
     "└──\x1b[32mNone\x1b[0m",
     "\x1b[34mkey_four\x1b[0m",
     "└──\x1b[32mfour\x1b[0m",
-    "key_five\x1b[0m",
-    "├──\x1b[3m0\x1b[0m\x1b[0m",
-    "│  └──a\x1b[0m",
-    "│     └──1\x1b[0m",
-    "└──\x1b[3m1\x1b[0m\x1b[0m",
-    "   └──b\x1b[0m",
-    "      └──2\x1b[0m",
+    "key_five",
+    "├──\x1b[3m0\x1b[0m",
+    "│  └──a",
+    "│     └──1",
+    "└──\x1b[3m1\x1b[0m",
+    "   └──b",
+    "      └──2",
 ]
 
 

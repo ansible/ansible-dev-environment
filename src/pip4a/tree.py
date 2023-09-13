@@ -85,60 +85,84 @@ class Tree:  # pylint: disable=R0902
             matches = getattr(self, ansi)
             if val_str in [str(match) for match in matches]:
                 start += getattr(Ansi, ansi.upper())
-        return f"{start}{val_str}{Ansi.RESET}"
+        if start:
+            return f"{start}{val_str}{Ansi.RESET}"
+        return val_str
 
     @staticmethod
     def is_scalar(obj: JSONVal) -> bool:
         """Check if the object is a scalar."""
         return isinstance(obj, (str, int, float, bool)) or obj is None
 
-    def _print_tree(  # noqa: C901
+    def _print_tree(  # noqa: C901, PLR0913, PLR0912
         self: Tree,
         obj: JSONVal,
+        is_last: bool,  # noqa: FBT001
+        is_root: bool,  # noqa: FBT001
+        was_list: bool,  # noqa: FBT001
         prefix: str = "",
-        is_last: bool = True,  # noqa: FBT001, FBT002
-        was_list: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
+        """Print the tree.
+
+        Args:
+            obj: The object to print
+            is_last: Whether the object is the last in the list | dict
+            is_root: Whether the object is the root of the tree
+            was_list: Whether the object was a list
+            prefix: The prefix to use
+
+        Raises:
+            TypeError: If the object is not a dict, list, or scalar
+        """
+        # pylint: disable=R0914
         if isinstance(obj, dict):
-            if len(obj) > 1:
-                for key, value in list(obj.items())[:-1]:
-                    _key = f"{Ansi.ITALIC}{key}{Ansi.RESET}" if was_list else key
-                    self.append(f"{prefix}{self.TEE}{self.in_color(_key)}")
-                    self._print_tree(
-                        obj=value,
-                        prefix=prefix + self.PIPE_PREFIX,
-                        is_last=not isinstance(value, (dict, list)),
-                    )
-            key, value = list(obj.items())[-1]
-            if was_list:
-                key = f"{Ansi.ITALIC}{key}{Ansi.RESET}"
-            self.append(f"{prefix}{self.ELBOW}{self.in_color(key)}")
-            self._print_tree(
-                obj=value,
-                prefix=prefix + self.SPACE_PREFIX,
-                is_last=True,
-            )
-        elif isinstance(obj, list):
-            if any(isinstance(item, (dict, list)) for item in obj) and len(obj) > 1:
-                repl_obj = {str(i): item for i, item in enumerate(obj)}
+            for i, (key, value) in enumerate(obj.items()):
+                is_last = i == len(obj) - 1
+                key_repr = f"{Ansi.ITALIC}{key}{Ansi.RESET}" if was_list else key
+                if is_root:
+                    decorator = ""
+                elif is_last:
+                    decorator = self.ELBOW
+                else:
+                    decorator = self.TEE
+                self.append(f"{prefix}{decorator}{self.in_color(key_repr)}")
+
+                if is_root:
+                    prefix_rev = prefix
+                elif is_last:
+                    prefix_rev = prefix + self.SPACE_PREFIX
+                else:
+                    prefix_rev = prefix + self.PIPE_PREFIX
                 self._print_tree(
-                    obj=repl_obj,
+                    obj=value,
+                    prefix=prefix_rev,
+                    is_last=self.is_scalar(value),
+                    is_root=False,
+                    was_list=False,
+                )
+
+        elif isinstance(obj, list):
+            is_complex = any(isinstance(item, (dict, list)) for item in obj)
+            is_long = len(obj) > 1
+            if is_complex and is_long:
+                repr_obj = {str(i): item for i, item in enumerate(obj)}
+                self._print_tree(
+                    obj=repr_obj,
                     prefix=prefix,
                     is_last=is_last,
+                    is_root=False,
                     was_list=True,
                 )
-            elif isinstance(obj[0], (dict, list)):
-                self._print_tree(obj=obj[0], prefix=prefix, is_last=True)
-            elif isinstance(obj[0], (str, int, float, bool)):
+            else:
                 for i, item in enumerate(obj):
                     is_last = i == len(obj) - 1
-                    _item = str(item)
-                    self.append(
-                        f"{prefix}{self.ELBOW if is_last else self.TEE}{self.in_color(_item)}",
+                    self._print_tree(
+                        obj=item,
+                        prefix=prefix,
+                        is_last=is_last,
+                        is_root=False,
+                        was_list=False,
                     )
-            else:
-                err = f"Invalid type in list {type(obj[0])}"
-                raise TypeError(err)
 
         elif self.is_scalar(obj):
             self.append(
@@ -154,21 +178,6 @@ class Tree:  # pylint: disable=R0902
 
     def render(self: Tree) -> str:
         """Render the root of the tree."""
-        if not isinstance(self.obj, dict):
-            msg = "The root of the tree must be a dict"
-            raise TypeError(msg)
-        for k, v in list(self.obj.items())[:-1]:
-            if isinstance(v, (dict, list)):
-                self.append(self.in_color(k))
-                self._print_tree(v, is_last=not isinstance(v, (dict, list)))
-            else:
-                self.append(self.in_color(k))
-                self.append(f"{self.ELBOW}{self.in_color(v)}")
-        k, v = list(self.obj.items())[-1]
-        if isinstance(v, (dict, list)):
-            self.append(self.in_color(k))
-            self._print_tree(v, is_last=not isinstance(v, (dict, list)))
-        else:
-            self.append(self.in_color(k))
-            self.append(f"{self.ELBOW}{self.in_color(v)}")
+        # if not isinstance(self.obj, dict):
+        self._print_tree(self.obj, is_last=False, is_root=True, was_list=False)
         return "\n".join(self._lines) + "\n"
