@@ -10,7 +10,7 @@ import yaml
 
 
 if TYPE_CHECKING:
-    from .config import Config
+    from pip4a.config import Config
 
 
 logger = logging.getLogger(__name__)
