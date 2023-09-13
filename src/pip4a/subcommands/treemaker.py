@@ -28,7 +28,7 @@ class TreeMaker:
         """Initialize the object."""
         self._config = config
 
-    def run(self: TreeMaker) -> None:
+    def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912
         """Run the command."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
@@ -61,6 +61,12 @@ class TreeMaker:
                     raise TypeError(msg)
 
                 target[dep] = tree_dict[dep]
+
+        if self._config.args.verbose:
+            tree = Tree(tree_dict)
+            rendered = tree.render()
+            print(rendered)  # noqa: T201
+            return
 
         pruned_tree_dict: JSONVal = {}
         if not isinstance(pruned_tree_dict, dict):
