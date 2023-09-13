@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .arg_parser import parse
-from .checker import Checker
 from .config import Config
-from .inspector import Inspector
-from .installer import Installer
-from .lister import Lister
 from .logger import ColoredFormatter, ExitOnExceptionHandler
-from .uninstaller import UnInstaller
+from .subcommands.checker import Checker
+from .subcommands.inspector import Inspector
+from .subcommands.installer import Installer
+from .subcommands.lister import Lister
+from .subcommands.uninstaller import UnInstaller
 
 
 if TYPE_CHECKING:

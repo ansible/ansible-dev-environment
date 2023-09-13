@@ -8,11 +8,11 @@ import os
 
 from typing import TYPE_CHECKING
 
-from .utils import collect_manifests
+from ..utils import collect_manifests
 
 
 if TYPE_CHECKING:
-    from .config import Config
+    from ..config import Config
 
 try:
     from pip._vendor.rich import print_json

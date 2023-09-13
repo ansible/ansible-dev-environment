@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .utils import (
+from ..utils import (
     builder_introspect,
     collect_manifests,
     hint,
@@ -22,7 +22,7 @@ from .utils import (
 
 
 if TYPE_CHECKING:
-    from .config import Config
+    from ..config import Config
 
 
 logger = logging.getLogger(__name__)

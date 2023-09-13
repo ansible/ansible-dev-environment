@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .utils import (
+from ..utils import (
     builder_introspect,
     collections_from_requirements,
     note,
@@ -20,7 +20,7 @@ from .utils import (
 
 
 if TYPE_CHECKING:
-    from .config import Config
+    from ..config import Config
 
 
 logger = logging.getLogger(__name__)

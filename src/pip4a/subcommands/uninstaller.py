@@ -8,11 +8,11 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .utils import collections_from_requirements, note, parse_collection_request
+from ..utils import collections_from_requirements, note, parse_collection_request
 
 
 if TYPE_CHECKING:
-    from .config import Config
+    from ..config import Config
 
 
 logger = logging.getLogger(__name__)
