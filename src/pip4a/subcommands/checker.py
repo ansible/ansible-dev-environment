@@ -41,24 +41,57 @@ class Checker:
         self._collection_deps()
         self._python_deps()
 
-    def _collection_deps(self: Checker) -> None:
+    def _collection_deps(self: Checker) -> None:  # noqa: C901, PLR0912, PLR0915
+        """Check collection dependencies."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,
         )
         missing = False
         for collection_name, details in collections.items():
+            error = "Collection {collection_name} has malformed metadata."
+            if not isinstance(details, dict):
+                logger.error(error)
+                continue
+            if not isinstance(details["collection_info"], dict):
+                logger.error(error)
+                continue
+            if not isinstance(details["collection_info"]["dependencies"], dict):
+                logger.error(error)
+                continue
+
             msg = f"Checking dependencies for {collection_name}."
             logger.debug(msg)
+
             deps = details["collection_info"]["dependencies"]
+
             if not deps:
                 msg = f"Collection {collection_name} has no dependencies."
                 logger.debug(msg)
                 continue
             for dep, version in deps.items():
+                if not isinstance(version, str):
+                    err = (
+                        f"Collection {collection_name} has malformed"
+                        f" dependency version for {dep}."
+                    )
+                    logger.error(err)
+                    continue
                 spec = SpecifierSet(version)
                 if dep in collections:
-                    dep_version = collections[dep]["collection_info"]["version"]
+                    dependency = collections[dep]
+                    error = "Collection {dep} has malformed metadata."
+                    if not isinstance(dependency, dict):
+                        logger.error(error)
+                        continue
+                    if not isinstance(dependency["collection_info"], dict):
+                        logger.error(error)
+                        continue
+
+                    dep_version = dependency["collection_info"]["version"]
+                    if not isinstance(dep_version, str):
+                        logger.error(error)
+                        continue
                     dep_spec = Version(dep_version)
                     if not spec.contains(dep_spec):
                         err = (

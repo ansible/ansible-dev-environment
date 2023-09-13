@@ -73,6 +73,13 @@ def parse() -> argparse.Namespace:
         help="List installed collections",
     )
 
+    _tree = subparsers.add_parser(
+        "tree",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[level1],
+        help="Generate a dependency tree",
+    )
+
     level2 = argparse.ArgumentParser(add_help=False, parents=[level1])
     spec_or_req = level2.add_mutually_exclusive_group(required=True)
     spec_or_req.add_argument(

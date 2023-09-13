@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 import subprocess_tee
 import yaml
@@ -24,6 +24,10 @@ from typing import Any
 
 
 logger = logging.getLogger(__name__)
+
+
+ScalarVal = Union[bool, str, float, int, None]
+JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
 
 
 def subprocess_run(
@@ -115,7 +119,7 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
 def collect_manifests(  # noqa: C901
     target: Path,
     venv_cache_dir: Path,
-) -> dict[str, Any]:
+) -> dict[str, JSONVal]:
     # pylint: disable=too-many-locals
     """Collect manifests from a target directory.
 
@@ -347,4 +351,59 @@ def collections_from_requirements(file: Path) -> list[dict[str, str]]:
             collections.append({"name": requirement})
         elif isinstance(requirement, dict):
             collections.append(requirement)
+    return collections
+
+
+def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
+    """Collect metadata about installed collections.
+
+    Args:
+        config: The configuration object.
+    Returns:
+        A dictionary of metadata about installed collections.
+    """
+    all_info_dirs = [
+        entry
+        for entry in config.site_pkg_collections_path.iterdir()
+        if entry.name.endswith(".info")
+    ]
+
+    collections = {}
+    for namespace_dir in config.site_pkg_collections_path.iterdir():
+        if not namespace_dir.is_dir():
+            continue
+
+        for name_dir in namespace_dir.iterdir():
+            if not name_dir.is_dir():
+                continue
+            some_info_dirs = [
+                info_dir
+                for info_dir in all_info_dirs
+                if f"{namespace_dir.name}.{name_dir.name}" in info_dir.name
+            ]
+            file = None
+            if some_info_dirs:
+                file = some_info_dirs[0] / "GALAXY.yml"
+                editable_location = ""
+
+            elif (name_dir / "galaxy.yml").exists():
+                file = name_dir / "galaxy.yml"
+                editable_location = (
+                    str(name_dir.resolve()) if name_dir.is_symlink() else ""
+                )
+
+            if file:
+                with file.open() as info_file:
+                    info = yaml.safe_load(info_file)
+                    collections[f"{namespace_dir.name}.{name_dir.name}"] = {
+                        "version": info.get("version", "unknown"),
+                        "editable_location": editable_location,
+                        "dependencies": info.get("dependencies", []),
+                    }
+            else:
+                collections[f"{namespace_dir.name}.{name_dir.name}"] = {
+                    "version": "unknown",
+                    "editable_location": "",
+                    "dependencies": [],
+                }
     return collections
