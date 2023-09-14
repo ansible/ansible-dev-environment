@@ -15,6 +15,7 @@ pip4a
 reqs
 setenv
 specp
+treemaker
 uninstallation
 vuuid
 xmltodict

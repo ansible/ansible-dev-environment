@@ -52,6 +52,13 @@ def parse() -> argparse.Namespace:
         help="Target virtual environment.",
     )
 
+    level1.add_argument(
+        "--no-ansi",
+        action="store_true",
+        default=False,
+        help="Disable the use of ANSI codes for terminal hyperlink generation and color.",
+    )
+
     _check = subparsers.add_parser(
         "check",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -71,6 +78,13 @@ def parse() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         parents=[level1],
         help="List installed collections",
+    )
+
+    _tree = subparsers.add_parser(
+        "tree",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        parents=[level1],
+        help="Generate a dependency tree",
     )
 
     level2 = argparse.ArgumentParser(add_help=False, parents=[level1])

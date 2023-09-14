@@ -1,26 +1,9 @@
 """An ascii tree generator."""
 from __future__ import annotations
 
-import os
-
 from typing import Union
 
-
-class Ansi:
-    """ANSI escape codes."""
-
-    BLUE = "\x1B[34m"
-    BOLD = "\x1B[1m"
-    CYAN = "\x1B[36m"
-    GREEN = "\x1B[32m"
-    ITALIC = "\x1B[3m"
-    MAGENTA = "\x1B[35m"
-    RED = "\x1B[31m"
-    RESET = "\x1B[0m"
-    REVERSED = "\x1B[7m"
-    UNDERLINE = "\x1B[4m"
-    WHITE = "\x1B[37m"
-    YELLOW = "\x1B[33m"
+from .utils import Ansi, TermFeatures, term_link
 
 
 ScalarVal = Union[bool, str, float, int, None]
@@ -39,6 +22,7 @@ class Tree:  # pylint: disable=R0902
     def __init__(
         self: Tree,
         obj: JSONVal,
+        term_features: TermFeatures,
     ) -> None:
         """Initialize the renderer."""
         self.obj = obj
@@ -54,6 +38,8 @@ class Tree:  # pylint: disable=R0902
         self.underline: list[ScalarVal] = []
         self.white: list[ScalarVal] = []
         self.yellow: list[ScalarVal] = []
+        self.links: dict[str, str] = {}
+        self.term_features = term_features
 
     def in_color(self: Tree, val: ScalarVal) -> str:
         """Colorize the string.
@@ -64,8 +50,9 @@ class Tree:  # pylint: disable=R0902
         Returns:
             The colorized string
         """
-        if os.environ.get("NO_COLOR"):
+        if not self.term_features.color:
             return str(val)
+
         ansis = (
             "blue",
             "bold",
@@ -85,8 +72,16 @@ class Tree:  # pylint: disable=R0902
             matches = getattr(self, ansi)
             if val_str in [str(match) for match in matches]:
                 start += getattr(Ansi, ansi.upper())
+        if val_str in self.links:
+            val_str = term_link(
+                uri=self.links[val_str],
+                term_features=self.term_features,
+                label=val_str,
+            )
+
         if start:
             return f"{start}{val_str}{Ansi.RESET}"
+
         return val_str
 
     @staticmethod

@@ -17,7 +17,9 @@ from .subcommands.checker import Checker
 from .subcommands.inspector import Inspector
 from .subcommands.installer import Installer
 from .subcommands.lister import Lister
+from .subcommands.treemaker import TreeMaker
 from .subcommands.uninstaller import UnInstaller
+from .utils import TermFeatures
 
 
 if TYPE_CHECKING:
@@ -140,7 +142,12 @@ class Cli:
         """Run the application."""
         logging.getLogger("pip4a")
 
-        self.config = Config(args=self.args)
+        term_features = TermFeatures(
+            color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
+            links=not self.args.no_ansi,
+        )
+
+        self.config = Config(args=self.args, term_features=term_features)
 
         if self.config.args.subcommand == "check":
             self.config.init()
@@ -154,16 +161,22 @@ class Cli:
             inspector.run()
             self._exit()
 
+        if self.config.args.subcommand == "install":
+            self.config.init(create_venv=True)
+            installer = Installer(self.config)
+            installer.run()
+            self._exit()
+
         if self.config.args.subcommand == "list":
             self.config.init()
             lister = Lister(config=self.config, output_format="list")
             lister.run()
             self._exit()
 
-        if self.config.args.subcommand == "install":
-            self.config.init(create_venv=True)
-            installer = Installer(self.config)
-            installer.run()
+        if self.config.args.subcommand == "tree":
+            self.config.init()
+            treemaker = TreeMaker(self.config)
+            treemaker.run()
             self._exit()
 
         if self.config.args.subcommand == "uninstall":

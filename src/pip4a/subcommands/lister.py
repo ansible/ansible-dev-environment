@@ -6,7 +6,7 @@ import logging
 
 from typing import TYPE_CHECKING
 
-import yaml
+from pip4a.utils import collect_manifests, term_link
 
 
 if TYPE_CHECKING:
@@ -32,46 +32,10 @@ class Lister:
     def run(self: Lister) -> None:
         """Run the Lister."""
         # pylint: disable=too-many-locals
-        all_info_dirs = [
-            entry
-            for entry in self._config.site_pkg_collections_path.iterdir()
-            if entry.name.endswith(".info")
-        ]
-
-        collections = {}
-        for namespace_dir in self._config.site_pkg_collections_path.iterdir():
-            if not namespace_dir.is_dir():
-                continue
-
-            for name_dir in namespace_dir.iterdir():
-                if not name_dir.is_dir():
-                    continue
-                some_info_dirs = [
-                    info_dir
-                    for info_dir in all_info_dirs
-                    if f"{namespace_dir.name}.{name_dir.name}" in info_dir.name
-                ]
-                if some_info_dirs:
-                    info_dir = some_info_dirs[0]
-                    with (info_dir / "GALAXY.yml").open() as info_file:
-                        info = yaml.safe_load(info_file)
-                        collections[f"{namespace_dir.name}.{name_dir.name}"] = {
-                            "version": info["version"],
-                            "editable_location": "",
-                        }
-                elif (name_dir / "galaxy.yml").exists():
-                    location = name_dir.resolve() if name_dir.is_symlink() else ""
-                    with (name_dir / "galaxy.yml").open() as info_file:
-                        info = yaml.safe_load(info_file)
-                        collections[f"{namespace_dir.name}.{name_dir.name}"] = {
-                            "version": info["version"],
-                            "editable_location": f"{location}",
-                        }
-                else:
-                    collections[f"{namespace_dir.name}.{name_dir.name}"] = {
-                        "version": "unknown",
-                        "editable_location": "",
-                    }
+        collections = collect_manifests(
+            target=self._config.site_pkg_collections_path,
+            venv_cache_dir=self._config.venv_cache_dir,
+        )
 
         if self._output_format == "list":
             column1_width = 30
@@ -89,11 +53,51 @@ class Lister:
                 f" {'-' * (column3_width)}",
             )
 
-            sorted_keys = sorted(collections.keys())
-            for collection_name in sorted_keys:
-                details = collections[collection_name]
+            for fqcn, collection in collections.items():
+                err = f"Collection {fqcn} has malformed metadata."
+                ci = collection["collection_info"]
+                if not isinstance(ci, dict):
+                    logger.error(err)
+                    continue
+                collection_name = ci["name"]
+                collection_namespace = ci["namespace"]
+                collection_version = ci["version"]
+                if not isinstance(collection_name, str):
+                    logger.error(err)
+                    continue
+                if not isinstance(collection_namespace, str):
+                    logger.error(err)
+                    continue
+                if not isinstance(collection_version, str):
+                    logger.error(err)
+                    continue
+
+                collection_path = (
+                    self._config.site_pkg_collections_path
+                    / collection_namespace
+                    / collection_name
+                )
+                if collection_path.is_symlink():
+                    editable_location = str(collection_path.resolve())
+                else:
+                    editable_location = ""
+
+                docs = ci.get("documentation")
+                homepage = ci.get("homepage")
+                repository = ci.get("repository")
+                issues = ci.get("issues")
+                link = docs or homepage or repository or issues or "http://ansible.com"
+                if not isinstance(link, str):
+                    msg = "Link is not a string."
+                    raise TypeError(msg)
+                fqcn_linked = term_link(
+                    uri=link,
+                    label=fqcn,
+                    term_features=self._config.term_features,
+                )
+
                 print(  # noqa: T201
-                    f"{collection_name: <{column1_width}}"
-                    f" {details['version']: <{column2_width}}",
-                    f" {details['editable_location']: <{column3_width}}",
+                    fqcn_linked + " " * (column1_width - len(fqcn)),
+                    f"{ci['version']: <{column2_width}}",
+                    f"{editable_location: <{column3_width}}",
                 )
