@@ -8,7 +8,7 @@ import subprocess
 
 from typing import TYPE_CHECKING
 
-from packaging.specifiers import SpecifierSet, InvalidSpecifier
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
 
 from pip4a.utils import (

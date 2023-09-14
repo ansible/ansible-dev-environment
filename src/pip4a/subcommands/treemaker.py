@@ -30,6 +30,7 @@ class TreeMaker:
 
     def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
         """Run the command."""
+        # pylint: disable=too-many-locals
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,

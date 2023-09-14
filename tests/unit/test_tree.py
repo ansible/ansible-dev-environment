@@ -6,11 +6,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pip4a.tree import Tree
+from pip4a.utils import TermFeatures
 
 
 if TYPE_CHECKING:
-    import pytest
-
     from pip4a.tree import JSONVal
 
 
@@ -108,11 +107,11 @@ key_eight
 """
 
 
-def test_tree_large(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_tree_large() -> None:
     """Test the tree generator."""
-    monkeypatch.setenv("NO_COLOR", "true")
+    term_features = TermFeatures(color=False, links=False)
 
-    assert Tree(sample_1).render() == result
+    assert Tree(obj=sample_1, term_features=term_features).render() == result
 
 
 sample_2: JSONVal = {
@@ -138,14 +137,16 @@ expected = [
     "│     └──1",
     "└──\x1b[3m1\x1b[0m",
     "   └──b",
-    "      └──2",
+    "      └──\x1b[34m\x1b]8;;http://red.ht\x1b\\2\x1b]8;;\x1b\\\x1b[0m",
 ]
 
 
 def test_tree_color() -> None:
     """Test the tree generator."""
-    tree = Tree(sample_2)
+    term_features = TermFeatures(color=True, links=True)
+    tree = Tree(obj=sample_2, term_features=term_features)
     tree.blue = ["key_one", "key_two", "key_three", "key_four"]
     tree.green = [True, 42, None, "four"]
+    tree.links = {"2": "http://red.ht"}
     rendered = tree.render().splitlines()
     assert rendered == expected

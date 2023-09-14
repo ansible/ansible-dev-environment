@@ -47,6 +47,7 @@ def term_link(uri: str, term_features: TermFeatures, label: str) -> str:
 
     Args:
         uri: The URI to link to
+        term_features: The terminal features to enable
         label: The label to use for the link
     Returns:
         The link
@@ -159,13 +160,7 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
     Args:
         item: The dictionary to sort.
 
-    Returns:     homepage = collection["collection_info"].get("homepage")
-                repository = collection["collection_info"].get("repository")
-                issues = collection["collection_info"].get("issues")
-                link = docs or homepage or repository or issues or "http://ansible.com"
-                if not isinstance(link, str):
-                    msg = "Link is not a string."
-                    raise TypeError(msg)
+    Returns:
         The sorted dictionary.
     """
     return {

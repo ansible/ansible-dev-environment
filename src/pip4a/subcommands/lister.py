@@ -31,6 +31,7 @@ class Lister:
 
     def run(self: Lister) -> None:
         """Run the Lister."""
+        # pylint: disable=too-many-locals
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,
