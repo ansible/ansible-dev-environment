@@ -19,7 +19,7 @@ from .utils import parse_collection_request, subprocess_run
 if TYPE_CHECKING:
     from argparse import Namespace
 
-    from .utils import CollectionSpec
+    from .utils import CollectionSpec, TermFeatures
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ class Config:
     def __init__(
         self: Config,
         args: Namespace,
+        term_features: TermFeatures,
     ) -> None:
         """Initialize the configuration."""
         self._create_venv: bool
@@ -40,6 +41,7 @@ class Config:
         self.site_pkg_path: Path
         self.venv_interpreter: Path
         self.collection: CollectionSpec
+        self.term_features: TermFeatures = term_features
 
     def init(self: Config, create_venv: bool = False) -> None:  # noqa: FBT001, FBT002
         """Initialize the configuration.

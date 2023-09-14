@@ -28,7 +28,7 @@ class TreeMaker:
         """Initialize the object."""
         self._config = config
 
-    def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912
+    def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
         """Run the command."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
@@ -38,11 +38,10 @@ class TreeMaker:
         if not isinstance(tree_dict, dict):
             msg = "Tree dict is not a dict."
             raise TypeError(msg)
+
+        links: dict[str, str] = {}
         for collection_name, collection in collections.items():
             err = f"Collection {collection_name} has malformed metadata."
-            if not isinstance(collection, dict):
-                logger.error(err)
-                continue
             if not isinstance(collection["collection_info"], dict):
                 logger.error(err)
                 continue
@@ -62,8 +61,19 @@ class TreeMaker:
 
                 target[dep] = tree_dict[dep]
 
+            docs = collection["collection_info"].get("documentation")
+            homepage = collection["collection_info"].get("homepage")
+            repository = collection["collection_info"].get("repository")
+            issues = collection["collection_info"].get("issues")
+            link = docs or homepage or repository or issues or "http://ansible.com"
+            if not isinstance(link, str):
+                msg = "Link is not a string."
+                raise TypeError(msg)
+            links[collection_name] = link
+
         if self._config.args.verbose:
-            tree = Tree(tree_dict)
+            tree = Tree(obj=tree_dict, term_features=self._config.term_features)
+            tree.links = links
             rendered = tree.render()
             print(rendered)  # noqa: T201
             return
@@ -72,17 +82,18 @@ class TreeMaker:
         if not isinstance(pruned_tree_dict, dict):
             msg = "Tree dict is not a dict."
             raise TypeError(msg)
-        for collection in list(tree_dict.keys()):
+        for collection_name in list(tree_dict.keys()):
             found = False
             for value in tree_dict.values():
                 if not isinstance(value, dict):
                     msg = "Tree dict is not a dict."
                     raise TypeError(msg)
-                if collection in value:
+                if collection_name in value:
                     found = True
             if not found:
-                pruned_tree_dict[collection] = tree_dict[collection]
+                pruned_tree_dict[collection_name] = tree_dict[collection_name]
 
-        tree = Tree(pruned_tree_dict)
+        tree = Tree(obj=pruned_tree_dict, term_features=self._config.term_features)
+        tree.links = links
         rendered = tree.render()
         print(rendered)  # noqa: T201

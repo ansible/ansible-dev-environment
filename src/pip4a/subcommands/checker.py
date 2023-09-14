@@ -8,7 +8,7 @@ import subprocess
 
 from typing import TYPE_CHECKING
 
-from packaging.specifiers import SpecifierSet
+from packaging.specifiers import SpecifierSet, InvalidSpecifier
 from packaging.version import Version
 
 from pip4a.utils import (
@@ -77,7 +77,12 @@ class Checker:
                     )
                     logger.error(err)
                     continue
-                spec = SpecifierSet(version)
+                try:
+                    spec = SpecifierSet(version)
+                except InvalidSpecifier:
+                    spec = SpecifierSet(">=0.0.0")
+                    msg = f"Invalid version specifier {version}, assuming >=0.0.0."
+                    logger.debug(msg)
                 if dep in collections:
                     dependency = collections[dep]
                     error = "Collection {dep} has malformed metadata."

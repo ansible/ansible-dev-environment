@@ -30,6 +30,57 @@ ScalarVal = Union[bool, str, float, int, None]
 JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
 
 
+@dataclass
+class TermFeatures:
+    """Terminal features."""
+
+    color: bool
+    links: bool
+
+    def any_enabled(self: TermFeatures) -> bool:
+        """Return True if any features are enabled."""
+        return any((self.color, self.links))
+
+
+def term_link(uri: str, term_features: TermFeatures, label: str) -> str:
+    """Return a link.
+
+    Args:
+        uri: The URI to link to
+        label: The label to use for the link
+    Returns:
+        The link
+    """
+    if not term_features.links:
+        return label
+
+    parameters = ""
+
+    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST
+    escape_mask = "\x1b]8;{};{}\x1b\\{}\x1b]8;;\x1b\\"
+    link_str = escape_mask.format(parameters, uri, label)
+    if not term_features.color:
+        return link_str
+    return f"{Ansi.BLUE}{link_str}{Ansi.RESET}"
+
+
+class Ansi:
+    """ANSI escape codes."""
+
+    BLUE = "\x1B[34m"
+    BOLD = "\x1B[1m"
+    CYAN = "\x1B[36m"
+    GREEN = "\x1B[32m"
+    ITALIC = "\x1B[3m"
+    MAGENTA = "\x1B[35m"
+    RED = "\x1B[31m"
+    RESET = "\x1B[0m"
+    REVERSED = "\x1B[7m"
+    UNDERLINE = "\x1B[4m"
+    WHITE = "\x1B[37m"
+    YELLOW = "\x1B[33m"
+
+
 def subprocess_run(
     command: str,
     verbose: int,
@@ -108,7 +159,13 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
     Args:
         item: The dictionary to sort.
 
-    Returns:
+    Returns:     homepage = collection["collection_info"].get("homepage")
+                repository = collection["collection_info"].get("repository")
+                issues = collection["collection_info"].get("issues")
+                link = docs or homepage or repository or issues or "http://ansible.com"
+                if not isinstance(link, str):
+                    msg = "Link is not a string."
+                    raise TypeError(msg)
         The sorted dictionary.
     """
     return {
@@ -119,7 +176,7 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
 def collect_manifests(  # noqa: C901
     target: Path,
     venv_cache_dir: Path,
-) -> dict[str, JSONVal]:
+) -> dict[str, dict[str, JSONVal]]:
     # pylint: disable=too-many-locals
     """Collect manifests from a target directory.
 

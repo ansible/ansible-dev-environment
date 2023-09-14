@@ -19,6 +19,7 @@ from .subcommands.installer import Installer
 from .subcommands.lister import Lister
 from .subcommands.treemaker import TreeMaker
 from .subcommands.uninstaller import UnInstaller
+from .utils import TermFeatures
 
 
 if TYPE_CHECKING:
@@ -141,7 +142,12 @@ class Cli:
         """Run the application."""
         logging.getLogger("pip4a")
 
-        self.config = Config(args=self.args)
+        term_features = TermFeatures(
+            color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
+            links=not self.args.no_ansi,
+        )
+
+        self.config = Config(args=self.args, term_features=term_features)
 
         if self.config.args.subcommand == "check":
             self.config.init()
