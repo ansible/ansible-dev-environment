@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 
 from typing import TYPE_CHECKING
 
@@ -41,7 +40,7 @@ class Inspector:
         )
 
         output = json.dumps(collections, indent=4, sort_keys=True)
-        if HAS_RICH and not os.environ.get("NOCOLOR"):
+        if HAS_RICH and self._config.term_features.color:
             print_json(output)
         else:
             print(output)  # noqa: T201
