@@ -57,7 +57,7 @@ def test_venv(
     captured = capsys.readouterr()
     assert "Removed ansible.utils" in captured.out
 
-    monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv"])
+    monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv", "--no-ansi"])
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
