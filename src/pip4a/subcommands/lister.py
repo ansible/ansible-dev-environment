@@ -24,7 +24,6 @@ class Lister:
 
         Args:
             config: The application configuration.
-            output_format: The output format to use.
         """
         self._config: Config = config
 
