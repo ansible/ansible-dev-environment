@@ -49,7 +49,6 @@ class Config:
         Args:
             create_venv: Create a virtual environment. Defaults to False.
         """
-        breakpoint()
         if self.args.venv:
             self._create_venv = True
         if self.args.subcommand == "install" and not self.args.requirement:
