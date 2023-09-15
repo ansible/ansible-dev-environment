@@ -26,9 +26,9 @@ def parse() -> argparse.Namespace:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--version",
+        "-V" "--version",
         action="version",
-        help="Version specifier.",
+        help="Show version and exit.",
         version=__version__,
     )
 

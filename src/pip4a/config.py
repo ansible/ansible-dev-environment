@@ -34,7 +34,7 @@ class Config:
         term_features: TermFeatures,
     ) -> None:
         """Initialize the configuration."""
-        self._create_venv: bool
+        self._create_venv: bool = False
         self.args: Namespace = args
         self.bindir: Path
         self.python_path: Path
@@ -43,23 +43,26 @@ class Config:
         self.collection: CollectionSpec
         self.term_features: TermFeatures = term_features
 
-    def init(self: Config, create_venv: bool = False) -> None:  # noqa: FBT001, FBT002
+    def init(self: Config) -> None:
         """Initialize the configuration.
 
         Args:
             create_venv: Create a virtual environment. Defaults to False.
         """
+        breakpoint()
+        if self.args.venv:
+            self._create_venv = True
         if self.args.subcommand == "install" and not self.args.requirement:
             self.collection = parse_collection_request(self.args.collection_specifier)
             if self.collection.path:
                 self._get_galaxy()
+
         elif self.args.subcommand == "uninstall" and not self.args.requirement:
             self.collection = parse_collection_request(self.args.collection_specifier)
             if self.collection.path:
                 err = "Please use a collection name for uninstallation."
                 logger.critical(err)
 
-        self._create_venv = create_venv
         self._set_interpreter()
         self._set_site_pkg_path()
 
@@ -191,6 +194,8 @@ class Config:
                 command = f"python -m venv {self.venv}"
                 try:
                     subprocess_run(command=command, verbose=self.args.verbose)
+                    msg = f"Created virtual environment: {self.venv}"
+                    logger.info(msg)
                 except subprocess.CalledProcessError as exc:
                     err = f"Failed to create virtual environment: {exc}"
                     logger.critical(err)
