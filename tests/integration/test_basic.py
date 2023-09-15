@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from pip4a.cli import main
-from pip4a.utils import subprocess_run
+from pip4a.utils import TermFeatures, subprocess_run
 
 
 def test_venv(
@@ -17,12 +17,12 @@ def test_venv(
 ) -> None:
     """Basic smoke test."""
     # disable color for json output
-    monkeypatch.setenv("NOCOLOR", "1")
+    term_features = TermFeatures(color=False, links=False)
     command = (
         "git clone https://github.com/ansible-collections/cisco.nxos.git"
         f" {tmp_path/ 'cisco.nxos'}"
     )
-    subprocess_run(command=command, verbose=True)
+    subprocess_run(command=command, verbose=True, msg="", term_features=term_features)
     monkeypatch.chdir(tmp_path)
 
     monkeypatch.setattr(
@@ -67,7 +67,7 @@ def test_venv(
     assert "ansible.utils" not in captured_json
 
     command = f"{tmp_path / 'venv' / 'bin' / 'python'} -m pip uninstall xmltodict -y"
-    subprocess_run(command=command, verbose=True)
+    subprocess_run(command=command, verbose=True, msg="", term_features=term_features)
 
     monkeypatch.setattr("sys.argv", ["pip4a", "check", "--venv=venv"])
     with pytest.raises(SystemExit):

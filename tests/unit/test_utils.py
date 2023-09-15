@@ -2,18 +2,28 @@
 
 from __future__ import annotations
 
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
 
-from pip4a.utils import CollectionSpec, parse_collection_request
+from pip4a.collection import Collection, parse_collection_request
+from pip4a.config import Config
+from pip4a.utils import TermFeatures
 
 
+config = Config(args=Namespace(), term_features=TermFeatures(color=False, links=False))
+
+FIXTURE_DIR = Path(__file__).parent.parent.resolve() / "fixtures"
 scenarios = (
-    ("ansible.utils", CollectionSpec(cname="utils", cnamespace="ansible", local=False)),
+    (
+        "ansible.utils",
+        Collection(config=config, cname="utils", cnamespace="ansible", local=False),
+    ),
     (
         "ansible.utils:1.0.0",
-        CollectionSpec(
+        Collection(
+            config=config,
             cname="utils",
             cnamespace="ansible",
             specifier=":1.0.0",
@@ -22,7 +32,8 @@ scenarios = (
     ),
     (
         "ansible.utils>=1.0.0",
-        CollectionSpec(
+        Collection(
+            config=config,
             cname="utils",
             cnamespace="ansible",
             specifier=">=1.0.0",
@@ -30,20 +41,26 @@ scenarios = (
         ),
     ),
     (
-        "/",
-        CollectionSpec(
-            specifier=None,
+        str(FIXTURE_DIR),
+        Collection(
+            cname="cname",
+            cnamespace="cnamespace",
+            config=config,
             local=True,
-            path=Path("/"),
+            path=FIXTURE_DIR,
+            specifier=None,
         ),
     ),
     (
-        "/[test]",
-        CollectionSpec(
-            specifier=None,
+        str(FIXTURE_DIR) + "/[test]",
+        Collection(
+            cname="cname",
+            cnamespace="cnamespace",
+            config=config,
             local=True,
-            path=Path("/"),
             opt_deps="test",
+            path=FIXTURE_DIR,
+            specifier=None,
         ),
     ),
     (
@@ -58,11 +75,11 @@ scenarios = (
 
 
 @pytest.mark.parametrize("scenario", scenarios)
-def test_parse_collection_request(scenario: tuple[str, CollectionSpec | None]) -> None:
+def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> None:
     """Test that the parse_collection_request function works as expected."""
     string, spec = scenario
     if spec is None:
         with pytest.raises(SystemExit):
-            parse_collection_request(string)
+            parse_collection_request(string=string, config=config)
     else:
-        assert parse_collection_request(string) == spec
+        assert parse_collection_request(string=string, config=config) == spec

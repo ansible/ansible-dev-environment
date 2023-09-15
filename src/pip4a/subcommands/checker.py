@@ -137,9 +137,15 @@ class Checker:
             f" {self._config.discovered_python_reqs} --dry-run"
             f" --report {missing_file}"
         )
+        work = "Building python package dependency tree"
 
         try:
-            subprocess_run(command=command, verbose=self._config.args.verbose)
+            subprocess_run(
+                command=command,
+                verbose=self._config.args.verbose,
+                msg=work,
+                term_features=self._config.term_features,
+            )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to check python dependencies: {exc}"
             logger.critical(err)
