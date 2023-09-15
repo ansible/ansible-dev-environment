@@ -148,9 +148,8 @@ def parse_collection_request(  # noqa: PLR0915
 def get_galaxy(collection: Collection) -> None:
     """Retrieve the collection name from the galaxy.yml file.
 
-    Returns:
-        str: The collection name and dependencies
-
+    Args:
+        collection: A collection object
     Raises:
         SystemExit: If the collection name is not found
     """

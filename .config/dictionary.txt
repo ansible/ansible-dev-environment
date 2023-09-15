@@ -3,9 +3,12 @@ bindir
 bthornto
 caplog
 capsys
+cauthor
+cdescription
 cnamespace
 cpart
 cpath
+crepository
 fileh
 fqcn
 levelname
