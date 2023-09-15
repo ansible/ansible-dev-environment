@@ -479,14 +479,14 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
 
 
         """
-        # delay if less than 1 second has elapsed
+        # delay if less than n seconds has elapsed
         if not self._term_features.any_enabled():
             return
-        min_show_time = 1
+        min_show_time = 0.5
         if self._start_time:
             elapsed = time.time() - self._start_time
             if elapsed < min_show_time:
-                time.sleep(1 - elapsed)
+                time.sleep(min_show_time - elapsed)
         if self._term_features.any_enabled():
             self.busy = False
             self.remove_spinner(cleanup=True)
