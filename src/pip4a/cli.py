@@ -10,15 +10,11 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pip4a import subcommands
+
 from .arg_parser import parse
 from .config import Config
 from .logger import ColoredFormatter, ExitOnExceptionHandler
-from .subcommands.checker import Checker
-from .subcommands.inspector import Inspector
-from .subcommands.installer import Installer
-from .subcommands.lister import Lister
-from .subcommands.treemaker import TreeMaker
-from .subcommands.uninstaller import UnInstaller
 from .utils import TermFeatures
 
 
@@ -148,42 +144,12 @@ class Cli:
         )
 
         self.config = Config(args=self.args, term_features=term_features)
+        self.config.init()
 
-        if self.config.args.subcommand == "check":
-            self.config.init()
-            checker = Checker(config=self.config)
-            checker.run()
-            self._exit()
-
-        if self.config.args.subcommand == "inspect":
-            self.config.init()
-            inspector = Inspector(config=self.config)
-            inspector.run()
-            self._exit()
-
-        if self.config.args.subcommand == "install":
-            self.config.init(create_venv=True)
-            installer = Installer(self.config)
-            installer.run()
-            self._exit()
-
-        if self.config.args.subcommand == "list":
-            self.config.init()
-            lister = Lister(config=self.config, output_format="list")
-            lister.run()
-            self._exit()
-
-        if self.config.args.subcommand == "tree":
-            self.config.init()
-            treemaker = TreeMaker(self.config)
-            treemaker.run()
-            self._exit()
-
-        if self.config.args.subcommand == "uninstall":
-            self.config.init()
-            uninstaller = UnInstaller(self.config)
-            uninstaller.run()
-            self._exit()
+        subcommand_cls = getattr(subcommands, self.config.args.subcommand.capitalize())
+        subcommand = subcommand_cls(config=self.config)
+        subcommand.run()
+        self._exit()
 
     def _exit(self: Cli) -> None:
         """Exit the application setting the return code."""
