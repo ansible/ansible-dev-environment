@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from typing import TYPE_CHECKING, Union
 
 from pip4a.tree import Tree
@@ -13,9 +11,7 @@ from pip4a.utils import collect_manifests
 
 if TYPE_CHECKING:
     from pip4a.config import Config
-
-
-logger = logging.getLogger(__name__)
+    from pip4a.output import Output
 
 ScalarVal = Union[bool, str, float, int, None]
 JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
@@ -24,9 +20,15 @@ JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
 class TreeMaker:
     """Generate a dependency tree."""
 
-    def __init__(self: TreeMaker, config: Config) -> None:
-        """Initialize the object."""
+    def __init__(self: TreeMaker, config: Config, output: Output) -> None:
+        """Initialize the object.
+
+        Args:
+            config: The application configuration.
+            output: The application output object.
+        """
         self._config = config
+        self._output = output
 
     def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
         """Run the command."""
@@ -44,16 +46,16 @@ class TreeMaker:
         for collection_name, collection in collections.items():
             err = f"Collection {collection_name} has malformed metadata."
             if not isinstance(collection["collection_info"], dict):
-                logger.error(err)
+                self._output.error(err)
                 continue
             if not isinstance(collection["collection_info"]["dependencies"], dict):
-                logger.error(err)
+                self._output.error(err)
                 continue
 
             for dep in collection["collection_info"]["dependencies"]:
                 if not isinstance(dep, str):
                     err = f"Collection {collection_name} has malformed dependency."
-                    logger.error(err)
+                    self._output.error(err)
                     continue
                 target = tree_dict[collection_name]
                 if not isinstance(target, dict):

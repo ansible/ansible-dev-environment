@@ -5,7 +5,6 @@ from __future__ import annotations
 import itertools
 import json
 import logging
-import os
 import subprocess
 import sys
 import threading
@@ -280,32 +279,6 @@ def builder_introspect(config: Config) -> None:
     except subprocess.CalledProcessError as exc:
         err = f"Failed to discover requirements: {exc} {exc.stderr}"
         logger.critical(err)
-
-
-def note(string: str) -> None:
-    """Print a green note.
-
-    Args:
-        string: The string to print.
-    """
-    _note = f"{'Note:':<9} {string}"
-    if os.environ.get("NOCOLOR"):
-        print(_note)  # noqa: T201
-    else:
-        print(f"\033[92m{_note}\033[0m")  # noqa: T201
-
-
-def hint(string: str) -> None:
-    """Print a magenta hint.
-
-    Args:
-        string: The string to print.
-    """
-    _hint = f"{'Hint:':<9} {string}"
-    if os.environ.get("NOCOLOR"):
-        print(_hint)  # noqa: T201
-    else:
-        print(f"\033[95m{_hint}\033[0m")  # noqa: T201
 
 
 def collections_from_requirements(file: Path) -> list[dict[str, str]]:

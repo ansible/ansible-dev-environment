@@ -1,7 +1,6 @@
 """A collection abstraction."""
 from __future__ import annotations
 
-import logging
 import re
 import sys
 
@@ -11,14 +10,10 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from .utils import hint
-
 
 if TYPE_CHECKING:
     from .config import Config
-
-
-logger = logging.getLogger(__name__)
+    from .output import Output
 
 
 @dataclass
@@ -66,43 +61,52 @@ class Collection:
 def parse_collection_request(  # noqa: PLR0915
     string: str,
     config: Config,
+    output: Output,
 ) -> Collection:
-    """Parse a collection request str."""
+    """Parse a collection request str.
+
+    Args:
+        string: The collection request string
+        config: The configuration object
+        output: The output object
+    Returns:
+        A collection object
+    """
     collection = Collection(config=config)
     # spec with dep, local
     if "[" in string and "]" in string:
         msg = f"Found optional dependencies in collection request: {string}"
-        logger.debug(msg)
+        output.debug(msg)
         path = Path(string.split("[")[0]).expanduser().resolve()
         if not path.exists():
             msg = "Provide an existing path to a collection when specifying optional dependencies."
-            hint(msg)
+            output.hint(msg)
             msg = f"Failed to find collection path: {path}"
-            logger.critical(msg)
+            output.critical(msg)
         msg = f"Found local collection request with dependencies: {string}"
-        logger.debug(msg)
+        output.debug(msg)
         collection.path = path
         msg = f"Setting collection path: {collection.path}"
         collection.opt_deps = string.split("[")[1].split("]")[0]
         msg = f"Setting optional dependencies: {collection.opt_deps}"
-        logger.debug(msg)
+        output.debug(msg)
         collection.local = True
         msg = "Setting request as local"
-        logger.debug(msg)
-        get_galaxy(collection)
+        output.debug(msg)
+        get_galaxy(collection=collection, output=output)
         return collection
     # spec without dep, local
     path = Path(string).expanduser().resolve()
     if path.exists():
         msg = f"Found local collection request without dependencies: {string}"
-        logger.debug(msg)
+        output.debug(msg)
         msg = f"Setting collection path: {path}"
-        logger.debug(msg)
+        output.debug(msg)
         collection.path = path
         msg = "Setting request as local"
-        logger.debug(msg)
+        output.debug(msg)
         collection.local = True
-        get_galaxy(collection)
+        get_galaxy(collection=collection, output=output)
         return collection
     non_local_re = re.compile(
         r"""
@@ -118,38 +122,39 @@ def parse_collection_request(  # noqa: PLR0915
         msg = (
             "Specify a valid collection name (ns.n) with an optional version specifier"
         )
-        hint(msg)
+        output.hint(msg)
         msg = f"Failed to parse collection request: {string}"
-        logger.critical(msg)
+        output.critical(msg)
         sys.exit(1)
     msg = f"Found non-local collection request: {string}"
-    logger.debug(msg)
+    output.debug(msg)
 
     collection.cnamespace = matched.group("cnamespace")
     msg = f"Setting collection namespace: {collection.cnamespace}"
-    logger.debug(msg)
+    output.debug(msg)
 
     collection.cname = matched.group("cname")
     msg = f"Setting collection name: {collection.cname}"
-    logger.debug(msg)
+    output.debug(msg)
 
     if matched.group("specifier"):
         collection.specifier = matched.group("specifier")
         msg = f"Setting collection specifier: {collection.specifier}"
-        logger.debug(msg)
+        output.debug(msg)
 
     collection.local = False
     msg = "Setting request as non-local"
-    logger.debug(msg)
+    output.debug(msg)
 
     return collection
 
 
-def get_galaxy(collection: Collection) -> None:
+def get_galaxy(collection: Collection, output: Output) -> None:
     """Retrieve the collection name from the galaxy.yml file.
 
     Args:
         collection: A collection object
+        output: The output object
     Raises:
         SystemExit: If the collection name is not found
     """
@@ -159,23 +164,23 @@ def get_galaxy(collection: Collection) -> None:
     file_name = collection.path / "galaxy.yml"
     if not file_name.exists():
         err = f"Failed to find {file_name} in {collection.path}"
-        logger.critical(err)
+        output.critical(err)
 
     with file_name.open(encoding="utf-8") as fileh:
         try:
             yaml_file = yaml.safe_load(fileh)
         except yaml.YAMLError as exc:
             err = f"Failed to load yaml file: {exc}"
-            logger.critical(err)
+            output.critical(err)
 
     try:
         collection.cnamespace = yaml_file["namespace"]
         collection.cname = yaml_file["name"]
         msg = f"Found collection name: {collection.name} from {file_name}."
-        logger.debug(msg)
+        output.debug(msg)
     except KeyError as exc:
         err = f"Failed to find collection name in {file_name}: {exc}"
-        logger.critical(err)
+        output.critical(err)
     else:
         return
     raise SystemExit(1)  # We shouldn't be here

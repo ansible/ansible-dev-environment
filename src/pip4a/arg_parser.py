@@ -1,6 +1,8 @@
 """Parse the command line arguments."""
 import argparse
 
+from pathlib import Path
+
 
 try:
     from ._version import version as __version__
@@ -58,6 +60,30 @@ def parse() -> argparse.Namespace:
         action="store_true",
         default=False,
         help="Disable the use of ANSI codes for terminal hyperlink generation and color.",
+    )
+
+    level1.add_argument(
+        "--lf",
+        "--log-file",
+        dest="log_file",
+        default=Path.cwd() / "pip4a.log",
+        help="Log file to write to.",
+    )
+    level1.add_argument(
+        "--ll",
+        "--log-level",
+        dest="log_level",
+        default="notset",
+        choices=["notset", "debug", "info", "warning", "error", "critical"],
+        help="Log level for file output.",
+    )
+    level1.add_argument(
+        "--la",
+        "--log-append",
+        dest="log_append",
+        choices=["true", "false"],
+        default="true",
+        help="Append to log file.",
     )
 
     _check = subparsers.add_parser(

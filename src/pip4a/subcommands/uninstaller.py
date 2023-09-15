@@ -2,33 +2,32 @@
 
 from __future__ import annotations
 
-import logging
 import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pip4a.collection import Collection, parse_collection_request
-from pip4a.utils import collections_from_requirements, note
+from pip4a.utils import collections_from_requirements
 
 
 if TYPE_CHECKING:
     from pip4a.config import Config
-
-
-logger = logging.getLogger(__name__)
+    from pip4a.output import Output
 
 
 class UnInstaller:
     """The uninstaller class."""
 
-    def __init__(self: UnInstaller, config: Config) -> None:
+    def __init__(self: UnInstaller, config: Config, output: Output) -> None:
         """Initialize the installer.
 
         Args:
             config: The application configuration.
+            output: The application output object.
         """
         self._config = config
+        self._output = output
         self._collection: Collection
 
     def run(self: UnInstaller) -> None:
@@ -37,42 +36,44 @@ class UnInstaller:
             requirements_path = Path(self._config.args.requirement)
             if not requirements_path.exists():
                 err = f"Failed to find requirements file: {requirements_path}"
-                logger.critical(err)
+                self._output.critical(err)
             collections = collections_from_requirements(requirements_path)
             for collection in collections:
                 self._collection = parse_collection_request(
                     string=collection["name"],
                     config=self._config,
+                    output=self._output,
                 )
                 self._remove_collection()
         else:
             self._collection = parse_collection_request(
                 string=self._config.args.collection_specifier,
                 config=self._config,
+                output=self._output,
             )
             self._remove_collection()
 
     def _remove_collection(self: UnInstaller) -> None:
         """Remove the collection."""
         msg = f"Checking {self._collection.name} at {self._collection.site_pkg_path}"
-        logger.debug(msg)
+        self._output.debug(msg)
 
         if self._collection.site_pkg_path.exists():
             msg = f"Exists: {self._collection.site_pkg_path}"
-            logger.debug(msg)
+            self._output.debug(msg)
 
             if self._collection.site_pkg_path.is_symlink():
                 self._collection.site_pkg_path.unlink()
             else:
                 shutil.rmtree(self._collection.site_pkg_path)
             msg = f"Removed {self._collection.name}"
-            note(msg)
+            self._output.note(msg)
         else:
             err = (
                 f"Failed to find {self._collection.name}:"
                 f" {self._collection.site_pkg_path}"
             )
-            logger.warning(err)
+            self._output.warning(err)
 
         for entry in self._config.site_pkg_collections_path.iterdir():
             if all(
@@ -84,25 +85,25 @@ class UnInstaller:
             ):
                 shutil.rmtree(entry)
                 msg = f"Removed {self._collection.name}*.info: {entry}"
-                logger.debug(msg)
+                self._output.debug(msg)
 
         collection_namespace_root = self._collection.site_pkg_path.parent
         try:
             collection_namespace_root.rmdir()
             msg = f"Removed collection namespace root: {collection_namespace_root}"
-            logger.debug(msg)
+            self._output.debug(msg)
         except FileNotFoundError:
             pass
         except OSError as exc:
             msg = f"Failed to remove collection namespace root: {exc}"
-            logger.debug(msg)
+            self._output.debug(msg)
 
         try:
             self._config.site_pkg_collections_path.rmdir()
             msg = f"Removed collection root: {self._config.site_pkg_collections_path}"
-            logger.debug(msg)
+            self._output.debug(msg)
         except FileNotFoundError:
             pass
         except OSError as exc:
             msg = f"Failed to remove collection root: {exc}"
-            logger.debug(msg)
+            self._output.debug(msg)

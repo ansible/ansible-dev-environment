@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 
 from typing import TYPE_CHECKING
 
@@ -12,6 +11,7 @@ from pip4a.utils import collect_manifests
 
 if TYPE_CHECKING:
     from pip4a.config import Config
+    from pip4a.output import Output
 
 try:
     from pip._vendor.rich import print_json
@@ -21,15 +21,18 @@ except ImportError:
     HAS_RICH = False
 
 
-logger = logging.getLogger(__name__)
-
-
 class Inspector:
     """The Inspector class."""
 
-    def __init__(self: Inspector, config: Config) -> None:
-        """Initialize the Inspector."""
-        self._config: Config = config
+    def __init__(self: Inspector, config: Config, output: Output) -> None:
+        """Initialize the Inspector.
+
+        Args:
+            config: The application configuration.
+            output: The application output object.
+        """
+        self._config = config
+        self._output = output
 
     def run(self: Inspector) -> None:
         """Run the Inspector."""
