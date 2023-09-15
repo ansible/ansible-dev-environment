@@ -405,11 +405,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
         self._screen_lock = threading.Lock()
         self._start_time: float | None = None
         self.thread: threading.Thread
-        msg = message.rstrip(".").rstrip(":").rstrip()
-        if term_features.color:
-            sys.stdout.write(f"{Ansi.GREY}{msg}:{Ansi.RESET} ")
-        else:
-            sys.stdout.write(message)
+        self.msg: str = message.rstrip(".").rstrip(":").rstrip()
 
     def write_next(self: Spinner) -> None:
         """Write the next char."""
@@ -455,6 +451,12 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
         """Enter the context handler."""
         # set the start time
         self._start_time = time.time()
+        if not self._term_features.any_enabled():
+            return
+        if self._term_features.color:
+            sys.stdout.write(f"{Ansi.GREY}{self.msg}:{Ansi.RESET} ")
+        else:
+            sys.stdout.write(f"{self.msg}: ")
         # hide the cursor
         sys.stdout.write("\033[?25l")
         if self._term_features.any_enabled():
@@ -478,6 +480,8 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
 
         """
         # delay if less than 1 second has elapsed
+        if not self._term_features.any_enabled():
+            return
         min_show_time = 1
         if self._start_time:
             elapsed = time.time() - self._start_time

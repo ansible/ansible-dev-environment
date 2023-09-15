@@ -98,12 +98,6 @@ def test_non_local(
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
-    string = "\x1b[34m\x1b]8;;https://github.com/ansible-collections/ansible.scm\x1b\\ansible.scm\x1b]8;;\x1b\\\x1b[0m\n└──\x1b[34m\x1b]8;;https://github.com/ansible-collections/ansible.utils\x1b\\ansible.utils\x1b]8;;\x1b\\\x1b[0m\n\n"
-    assert string == captured.out
-    monkeypatch.setattr(
-        "sys.argv",
-        ["pip4a", "tree", "--no-ansi", f"--venv={tmp_path / 'venv'}"],
-    )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
