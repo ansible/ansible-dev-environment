@@ -1,0 +1,10 @@
+name: cname
+namespace: cnamespace
+version: 0.0.1
+license:
+  - MIT
+description: cdescription
+readme: README.md
+authors:
+  - cauthor
+repository: crepository

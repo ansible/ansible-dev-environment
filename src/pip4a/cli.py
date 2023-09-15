@@ -138,10 +138,13 @@ class Cli:
         """Run the application."""
         logging.getLogger("pip4a")
 
-        term_features = TermFeatures(
-            color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
-            links=not self.args.no_ansi,
-        )
+        if not sys.stdout.isatty():
+            term_features = TermFeatures(color=False, links=False)
+        else:
+            term_features = TermFeatures(
+                color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
+                links=not self.args.no_ansi,
+            )
 
         self.config = Config(args=self.args, term_features=term_features)
         self.config.init()

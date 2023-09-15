@@ -11,15 +11,13 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import yaml
-
-from .utils import parse_collection_request, subprocess_run
+from .utils import subprocess_run
 
 
 if TYPE_CHECKING:
     from argparse import Namespace
 
-    from .utils import CollectionSpec, TermFeatures
+    from .utils import TermFeatures
 
 logger = logging.getLogger(__name__)
 
@@ -40,23 +38,12 @@ class Config:
         self.python_path: Path
         self.site_pkg_path: Path
         self.venv_interpreter: Path
-        self.collection: CollectionSpec
         self.term_features: TermFeatures = term_features
 
     def init(self: Config) -> None:
         """Initialize the configuration."""
         if self.args.venv:
             self._create_venv = True
-        if self.args.subcommand == "install" and not self.args.requirement:
-            self.collection = parse_collection_request(self.args.collection_specifier)
-            if self.collection.path:
-                self._get_galaxy()
-
-        elif self.args.subcommand == "uninstall" and not self.args.requirement:
-            self.collection = parse_collection_request(self.args.collection_specifier)
-            if self.collection.path:
-                err = "Please use a collection name for uninstallation."
-                logger.critical(err)
 
         self._set_interpreter()
         self._set_site_pkg_path()
@@ -87,22 +74,6 @@ class Config:
         return self.cache_dir
 
     @property
-    def collection_cache_dir(self: Config) -> Path:
-        """Return the collection cache directory."""
-        collection_cache_dir = self.venv_cache_dir / self.collection.name
-        if not collection_cache_dir.exists():
-            collection_cache_dir.mkdir()
-        return collection_cache_dir
-
-    @property
-    def collection_build_dir(self: Config) -> Path:
-        """Return the collection cache directory."""
-        collection_build_dir = self.collection_cache_dir / "build"
-        if not collection_build_dir.exists():
-            collection_build_dir.mkdir()
-        return collection_build_dir
-
-    @property
     def discovered_python_reqs(self: Config) -> Path:
         """Return the discovered python requirements file."""
         return self.venv_cache_dir / "discovered_requirements.txt"
@@ -121,18 +92,6 @@ class Config:
         return site_pkg_collections_path
 
     @property
-    def site_pkg_collection_path(self: Config) -> Path:
-        """Return the site packages collection path."""
-        if not self.collection.cnamespace or not self.collection.cname:
-            msg = "Collection namespace or name not set."
-            raise RuntimeError(msg)
-        return (
-            self.site_pkg_collections_path
-            / self.collection.cnamespace
-            / self.collection.cname
-        )
-
-    @property
     def venv_bindir(self: Config) -> Path:
         """Return the virtual environment bin directory."""
         return self.venv / "bin"
@@ -141,42 +100,6 @@ class Config:
     def interpreter(self: Config) -> Path:
         """Return the current interpreter."""
         return Path(sys.executable)
-
-    def _get_galaxy(self: Config) -> None:
-        """Retrieve the collection name from the galaxy.yml file.
-
-        Returns:
-            str: The collection name and dependencies
-
-        Raises:
-            SystemExit: If the collection name is not found
-        """
-        if self.collection is None or self.collection.path is None:
-            msg = "_get_galaxy called without a collection or path"
-            raise RuntimeError(msg)
-        file_name = self.collection.path / "galaxy.yml"
-        if not file_name.exists():
-            err = f"Failed to find {file_name} in {self.collection.path}"
-            logger.critical(err)
-
-        with file_name.open(encoding="utf-8") as fileh:
-            try:
-                yaml_file = yaml.safe_load(fileh)
-            except yaml.YAMLError as exc:
-                err = f"Failed to load yaml file: {exc}"
-                logger.critical(err)
-
-        try:
-            self.collection.cnamespace = yaml_file["namespace"]
-            self.collection.cname = yaml_file["name"]
-            msg = f"Found collection name: {self.collection.name} from {file_name}."
-            logger.debug(msg)
-        except KeyError as exc:
-            err = f"Failed to find collection name in {file_name}: {exc}"
-            logger.critical(err)
-        else:
-            return
-        raise SystemExit(1)  # We shouldn't be here
 
     def _set_interpreter(
         self: Config,
@@ -187,8 +110,14 @@ class Config:
                 msg = f"Creating virtual environment: {self.venv}"
                 logger.debug(msg)
                 command = f"python -m venv {self.venv}"
+                work = "Creating virtual environment"
                 try:
-                    subprocess_run(command=command, verbose=self.args.verbose)
+                    subprocess_run(
+                        command=command,
+                        verbose=self.args.verbose,
+                        msg=work,
+                        term_features=self.term_features,
+                    )
                     msg = f"Created virtual environment: {self.venv}"
                     logger.info(msg)
                 except subprocess.CalledProcessError as exc:
@@ -214,8 +143,14 @@ class Config:
             f"{self.venv_interpreter} -c"
             " 'import json,site; print(json.dumps(site.getsitepackages()))'"
         )
+        work = "Locating site packages directory"
         try:
-            proc = subprocess_run(command=command, verbose=self.args.verbose)
+            proc = subprocess_run(
+                command=command,
+                verbose=self.args.verbose,
+                msg=work,
+                term_features=self.term_features,
+            )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to find site packages path: {exc}"
             logger.critical(err)

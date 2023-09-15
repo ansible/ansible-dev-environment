@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from pip4a.cli import main
-from pip4a.utils import subprocess_run
+from pip4a.utils import TermFeatures, subprocess_run
 
 
 def test_venv(
@@ -17,12 +17,12 @@ def test_venv(
 ) -> None:
     """Basic smoke test."""
     # disable color for json output
-    monkeypatch.setenv("NOCOLOR", "1")
+    term_features = TermFeatures(color=False, links=False)
     command = (
         "git clone https://github.com/ansible-collections/cisco.nxos.git"
         f" {tmp_path/ 'cisco.nxos'}"
     )
-    subprocess_run(command=command, verbose=True)
+    subprocess_run(command=command, verbose=True, msg="", term_features=term_features)
     monkeypatch.chdir(tmp_path)
 
     monkeypatch.setattr(
@@ -57,7 +57,7 @@ def test_venv(
     captured = capsys.readouterr()
     assert "Removed ansible.utils" in captured.out
 
-    monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv"])
+    monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv", "--no-ansi"])
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
@@ -67,7 +67,7 @@ def test_venv(
     assert "ansible.utils" not in captured_json
 
     command = f"{tmp_path / 'venv' / 'bin' / 'python'} -m pip uninstall xmltodict -y"
-    subprocess_run(command=command, verbose=True)
+    subprocess_run(command=command, verbose=True, msg="", term_features=term_features)
 
     monkeypatch.setattr("sys.argv", ["pip4a", "check", "--venv=venv"])
     with pytest.raises(SystemExit):
@@ -98,12 +98,6 @@ def test_non_local(
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
-    string = "\x1b[34m\x1b]8;;https://github.com/ansible-collections/ansible.scm\x1b\\ansible.scm\x1b]8;;\x1b\\\x1b[0m\n└──\x1b[34m\x1b]8;;https://github.com/ansible-collections/ansible.utils\x1b\\ansible.utils\x1b]8;;\x1b\\\x1b[0m\n\n"
-    assert string == captured.out
-    monkeypatch.setattr(
-        "sys.argv",
-        ["pip4a", "tree", "--no-ansi", f"--venv={tmp_path / 'venv'}"],
-    )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
