@@ -1,5 +1,11 @@
 """Parse the command line arguments."""
+
+from __future__ import annotations
+
 import argparse
+
+from argparse import HelpFormatter
+from pathlib import Path
 
 
 try:
@@ -21,9 +27,40 @@ def parse() -> argparse.Namespace:
     Returns:
         The arguments
     """
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description="A pip-like ansible collection installer.",
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=CustomHelpFormatter,
+    )
+
+    parser.add_argument(
+        "--lf",
+        "--log-file <file>",
+        dest="log_file",
+        default=str(Path.cwd() / "pip4a.log"),
+        help="Log file to write to.",
+    )
+    parser.add_argument(
+        "--ll",
+        "--log-level <level>",
+        dest="log_level",
+        default="notset",
+        choices=["notset", "debug", "info", "warning", "error", "critical"],
+        help="Log level for file output.",
+    )
+    parser.add_argument(
+        "--la",
+        "--log-append <bool>",
+        dest="log_append",
+        choices=["true", "false"],
+        default="true",
+        help="Append to log file.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Give more CLI output. Option is additive, and can be used up to 3 times.",
     )
     parser.add_argument(
         "-V",
@@ -34,61 +71,59 @@ def parse() -> argparse.Namespace:
     )
 
     subparsers = parser.add_subparsers(
-        title="subcommands",
-        description="valid subcommands",
+        title="Commands",
         dest="subcommand",
+        metavar="",
         required=True,
     )
 
-    level1 = argparse.ArgumentParser(add_help=False)
+    level1 = ArgumentParser(add_help=False)
+
     level1.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Give more output. Option is additive, and can be used up to 3 times.",
-    )
-    level1.add_argument(
-        "--venv",
+        "--ve",
+        "--venv <directory>",
         help="Target virtual environment.",
+        dest="venv",
     )
 
     level1.add_argument(
+        "--na",
         "--no-ansi",
         action="store_true",
         default=False,
+        dest="no_ansi",
         help="Disable the use of ANSI codes for terminal hyperlink generation and color.",
     )
 
     _check = subparsers.add_parser(
         "check",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CustomHelpFormatter,
         parents=[level1],
         help="Check installed collections",
     )
 
     _inspect = subparsers.add_parser(
         "inspect",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CustomHelpFormatter,
         parents=[level1],
         help="Inspect installed collections",
     )
 
     _list = subparsers.add_parser(
         "list",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CustomHelpFormatter,
         parents=[level1],
         help="List installed collections",
     )
 
     _tree = subparsers.add_parser(
         "tree",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CustomHelpFormatter,
         parents=[level1],
         help="Generate a dependency tree",
     )
 
-    level2 = argparse.ArgumentParser(add_help=False, parents=[level1])
+    level2 = ArgumentParser(add_help=False, parents=[level1])
     spec_or_req = level2.add_mutually_exclusive_group(required=True)
     spec_or_req.add_argument(
         "collection_specifier",
@@ -97,21 +132,15 @@ def parse() -> argparse.Namespace:
     )
     spec_or_req.add_argument(
         "-r",
-        "--requirement",
+        "--requirement <file>",
+        dest="requirement",
         help="Install from the given requirements file.",
         required=False,
     )
 
-    install_usage = """Usage:
-        pip4a install .
-        pip4a install -e .
-        pip4a install -e .[test]
-        python -m pip4a install ansible.utils"""
-
     install = subparsers.add_parser(
         "install",
-        epilog=install_usage,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CustomHelpFormatter,
         parents=[level2],
         help="Install a collection.",
     )
@@ -124,10 +153,86 @@ def parse() -> argparse.Namespace:
 
     _uninstall = subparsers.add_parser(
         "uninstall",
-        epilog=install_usage,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CustomHelpFormatter,
         parents=[level2],
         help="Uninstall a collection.",
     )
 
+    # pylint: disable=protected-access
+    for grp in parser._action_groups:  # noqa: SLF001
+        if grp.title is None:
+            continue
+        grp.title = grp.title.capitalize()
+    for subparser in subparsers.choices.values():
+        for grp in subparser._action_groups:  # noqa: SLF001
+            if grp.title is None:
+                continue
+            grp.title = grp.title.capitalize()
+    # pylint: enable=protected-access
+
     return parser.parse_args()
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    """A custom argument parser."""
+
+    def add_argument(  # type: ignore[no-untyped-def, override]
+        self: ArgumentParser,
+        *args,  # noqa: ANN002
+        **kwargs,  # noqa: ANN003
+    ) -> None:
+        """Add an argument."""
+        if "choices" in kwargs:
+            kwargs["help"] += f" (choices: {', '.join(kwargs['choices'])})"
+        if "default" in kwargs and kwargs["default"] != "==SUPPRESS==":
+            kwargs["help"] += f" (default: {kwargs['default']})"
+        kwargs["help"] = kwargs["help"][0].upper() + kwargs["help"][1:]
+        super().add_argument(*args, **kwargs)
+
+
+class CustomHelpFormatter(HelpFormatter):
+    """A custom help formatter."""
+
+    def __init__(self: CustomHelpFormatter, prog: str) -> None:
+        """Initialize the help formatter.
+
+        :param prog: The program name
+        """
+        long_string = "--abc  --really_really_really_log"
+        # 3 here accounts for the spaces in the ljust(6) below
+        HelpFormatter.__init__(
+            self,
+            prog=prog,
+            indent_increment=1,
+            max_help_position=len(long_string) + 3,
+        )
+
+    def _format_action_invocation(
+        self: CustomHelpFormatter,
+        action: argparse.Action,
+    ) -> str:
+        """Format the action invocation.
+
+        Args:
+            action: The action to format
+
+        Raises:
+            ValueError: If more than 2 options are given
+
+        Returns:
+            The formatted action invocation
+        """
+        if not action.option_strings:
+            default = self._get_default_metavar_for_positional(action)
+            (metavar,) = self._metavar_formatter(action, default)(1)
+            return metavar
+
+        if len(action.option_strings) == 1:
+            return action.option_strings[0]
+
+        max_variations = 2
+        if len(action.option_strings) == max_variations:
+            # Account for a --1234 --long-option-name
+            return f"{action.option_strings[0].ljust(6)} {action.option_strings[1]}"
+        msg = "Too many option strings"
+        raise ValueError(msg)

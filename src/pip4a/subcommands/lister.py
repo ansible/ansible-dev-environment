@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from typing import TYPE_CHECKING
 
 from pip4a.utils import collect_manifests, term_link
@@ -11,21 +9,21 @@ from pip4a.utils import collect_manifests, term_link
 
 if TYPE_CHECKING:
     from pip4a.config import Config
-
-
-logger = logging.getLogger(__name__)
+    from pip4a.output import Output
 
 
 class Lister:
     """The Lister class."""
 
-    def __init__(self: Lister, config: Config) -> None:
+    def __init__(self: Lister, config: Config, output: Output) -> None:
         """Initialize the Lister.
 
         Args:
             config: The application configuration.
+            output: The application output object.
         """
-        self._config: Config = config
+        self._config = config
+        self._output = output
 
     def run(self: Lister) -> None:
         """Run the Lister."""
@@ -54,19 +52,19 @@ class Lister:
             err = f"Collection {fqcn} has malformed metadata."
             ci = collection["collection_info"]
             if not isinstance(ci, dict):
-                logger.error(err)
+                self._output.error(err)
                 continue
             collection_name = ci["name"]
             collection_namespace = ci["namespace"]
             collection_version = ci["version"]
             if not isinstance(collection_name, str):
-                logger.error(err)
+                self._output.error(err)
                 continue
             if not isinstance(collection_namespace, str):
-                logger.error(err)
+                self._output.error(err)
                 continue
             if not isinstance(collection_version, str):
-                logger.error(err)
+                self._output.error(err)
                 continue
 
             collection_path = (

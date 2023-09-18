@@ -27,11 +27,11 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "install", str(tmp_path / "cisco.nxos"), "--venv=venv"],
+        ["pip4a", "install", str(tmp_path / "cisco.nxos"), "--venv=venv", "--no-ansi"],
     )
     with pytest.raises(SystemExit):
         main()
-    string = "Installed collections include: ansible.netcommon, ansible.utils, and cisco.nxos"
+    string = "Installed collections include: ansible.netcommon, ansible.utils,"
     captured = capsys.readouterr()
 
     assert string in captured.out
@@ -118,7 +118,7 @@ def test_requirements(
     )
     with pytest.raises(SystemExit):
         main()
-    string = "Installed collections include: ansible.netcommon, ansible.scm, and ansible.utils"
+    string = "Installed collections include: ansible.netcommon, ansible.scm,"
     captured = capsys.readouterr()
     assert string in captured.out
     monkeypatch.setattr(

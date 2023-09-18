@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import subprocess
 import sys
@@ -17,9 +16,8 @@ from .utils import subprocess_run
 if TYPE_CHECKING:
     from argparse import Namespace
 
+    from .output import Output
     from .utils import TermFeatures
-
-logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -29,12 +27,14 @@ class Config:
     def __init__(
         self: Config,
         args: Namespace,
+        output: Output,
         term_features: TermFeatures,
     ) -> None:
         """Initialize the configuration."""
         self._create_venv: bool = False
         self.args: Namespace = args
         self.bindir: Path
+        self._output: Output = output
         self.python_path: Path
         self.site_pkg_path: Path
         self.venv_interpreter: Path
@@ -65,7 +65,7 @@ class Config:
         if venv_str:
             return Path(venv_str).expanduser().resolve()
         err = "Failed to find a virtual environment."
-        logger.critical(err)
+        self._output.critical(err)
         sys.exit(1)
 
     @property
@@ -108,7 +108,7 @@ class Config:
         if not self.venv.exists():
             if self._create_venv:
                 msg = f"Creating virtual environment: {self.venv}"
-                logger.debug(msg)
+                self._output.debug(msg)
                 command = f"python -m venv {self.venv}"
                 work = "Creating virtual environment"
                 try:
@@ -119,22 +119,22 @@ class Config:
                         term_features=self.term_features,
                     )
                     msg = f"Created virtual environment: {self.venv}"
-                    logger.info(msg)
+                    self._output.info(msg)
                 except subprocess.CalledProcessError as exc:
                     err = f"Failed to create virtual environment: {exc}"
-                    logger.critical(err)
+                    self._output.critical(err)
             else:
                 err = f"Cannot find virtual environment: {self.venv}."
-                logger.critical(err)
+                self._output.critical(err)
         msg = f"Virtual environment: {self.venv}"
-        logger.debug(msg)
+        self._output.debug(msg)
         venv_interpreter = self.venv / "bin" / "python"
         if not venv_interpreter.exists():
             err = f"Cannot find interpreter: {venv_interpreter}."
-            logger.critical(err)
+            self._output.critical(err)
 
         msg = f"Virtual environment interpreter: {venv_interpreter}"
-        logger.debug(msg)
+        self._output.debug(msg)
         self.venv_interpreter = venv_interpreter
 
     def _set_site_pkg_path(self: Config) -> None:
@@ -153,19 +153,19 @@ class Config:
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to find site packages path: {exc}"
-            logger.critical(err)
+            self._output.critical(err)
 
         try:
             site_pkg_dirs = json.loads(proc.stdout)
         except json.JSONDecodeError as exc:
             err = f"Failed to decode json: {exc}"
-            logger.critical(err)
+            self._output.critical(err)
 
         if not site_pkg_dirs:
             err = "Failed to find site packages path."
-            logger.critical(err)
+            self._output.critical(err)
 
         msg = f"Found site packages path: {site_pkg_dirs[0]}"
-        logger.debug(msg)
+        self._output.debug(msg)
 
         self.site_pkg_path = Path(site_pkg_dirs[0])

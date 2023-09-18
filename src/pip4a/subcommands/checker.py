@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import subprocess
 
 from typing import TYPE_CHECKING
@@ -14,8 +13,6 @@ from packaging.version import Version
 from pip4a.utils import (
     builder_introspect,
     collect_manifests,
-    hint,
-    note,
     oxford_join,
     subprocess_run,
 )
@@ -23,18 +20,22 @@ from pip4a.utils import (
 
 if TYPE_CHECKING:
     from pip4a.config import Config
-
-
-logger = logging.getLogger(__name__)
+    from pip4a.output import Output
 
 
 class Checker:
     """The dependency checker."""
 
-    def __init__(self: Checker, config: Config) -> None:
-        """Initialize the checker."""
+    def __init__(self: Checker, config: Config, output: Output) -> None:
+        """Initialize the checker.
+
+        Args:
+            config: The application configuration.
+            output: The application output object.
+        """
         self._config: Config = config
         self._collections_missing: bool
+        self._output: Output = output
 
     def run(self: Checker) -> None:
         """Run the checker."""
@@ -51,23 +52,23 @@ class Checker:
         for collection_name, details in collections.items():
             error = "Collection {collection_name} has malformed metadata."
             if not isinstance(details, dict):
-                logger.error(error)
+                self._output.error(error)
                 continue
             if not isinstance(details["collection_info"], dict):
-                logger.error(error)
+                self._output.error(error)
                 continue
             if not isinstance(details["collection_info"]["dependencies"], dict):
-                logger.error(error)
+                self._output.error(error)
                 continue
 
             msg = f"Checking dependencies for {collection_name}."
-            logger.debug(msg)
+            self._output.debug(msg)
 
             deps = details["collection_info"]["dependencies"]
 
             if not deps:
                 msg = f"Collection {collection_name} has no dependencies."
-                logger.debug(msg)
+                self._output.debug(msg)
                 continue
             for dep, version in deps.items():
                 if not isinstance(version, str):
@@ -75,27 +76,27 @@ class Checker:
                         f"Collection {collection_name} has malformed"
                         f" dependency version for {dep}."
                     )
-                    logger.error(err)
+                    self._output.error(err)
                     continue
                 try:
                     spec = SpecifierSet(version)
                 except InvalidSpecifier:
                     spec = SpecifierSet(">=0.0.0")
                     msg = f"Invalid version specifier {version}, assuming >=0.0.0."
-                    logger.debug(msg)
+                    self._output.debug(msg)
                 if dep in collections:
                     dependency = collections[dep]
                     error = "Collection {dep} has malformed metadata."
                     if not isinstance(dependency, dict):
-                        logger.error(error)
+                        self._output.error(error)
                         continue
                     if not isinstance(dependency["collection_info"], dict):
-                        logger.error(error)
+                        self._output.error(error)
                         continue
 
                     dep_version = dependency["collection_info"]["version"]
                     if not isinstance(dep_version, str):
-                        logger.error(error)
+                        self._output.error(error)
                         continue
                     dep_spec = Version(dep_version)
                     if not spec.contains(dep_spec):
@@ -103,7 +104,7 @@ class Checker:
                             f"Collection {collection_name} requires {dep} {version}"
                             f" but {dep} {dep_version} is installed."
                         )
-                        logger.error(err)
+                        self._output.error(err)
                         missing = True
 
                     else:
@@ -111,20 +112,20 @@ class Checker:
                             f"Collection {collection_name} requires {dep} {version}"
                             f" and {dep} {dep_version} is installed."
                         )
-                        logger.debug(msg)
+                        self._output.debug(msg)
                 else:
                     err = (
                         f"Collection {collection_name} requires"
                         f" {dep} {version} but it is not installed."
                     )
-                    logger.error(err)
+                    self._output.error(err)
                     msg = f"Try running `pip4a install {dep}`"
-                    hint(msg)
+                    self._output.hint(msg)
                     missing = True
 
         if not missing:
             msg = "All dependant collections are installed."
-            note(msg)
+            self._output.note(msg)
         self._collections_missing = missing
 
     def _python_deps(self: Checker) -> None:
@@ -148,18 +149,18 @@ class Checker:
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to check python dependencies: {exc}"
-            logger.critical(err)
+            self._output.critical(err)
         with missing_file.open() as file:
             pip_report = json.load(file)
 
         if self._collections_missing:
             msg = "Python packages required by missing collections are not included."
-            note(msg)
+            self._output.note(msg)
 
         if "install" not in pip_report or not pip_report["install"]:
             if not self._collections_missing:
                 msg = "All python dependencies are installed."
-                note(msg)
+                self._output.note(msg)
             return
 
         missing = [
@@ -168,6 +169,6 @@ class Checker:
         ]
 
         err = f"Missing python dependencies: {oxford_join(missing)}"
-        logger.error(err)
+        self._output.error(err)
         msg = f"Try running `pip install {' '.join(missing)}`."
-        hint(msg)
+        self._output.hint(msg)
