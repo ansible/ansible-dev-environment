@@ -280,6 +280,12 @@ def builder_introspect(config: Config) -> None:
         err = f"Failed to discover requirements: {exc} {exc.stderr}"
         logger.critical(err)
 
+    if not config.discovered_python_reqs.exists():
+        config.discovered_python_reqs.touch()
+
+    if not config.discovered_bindep_reqs.exists():
+        config.discovered_bindep_reqs.touch()
+
 
 def collections_from_requirements(file: Path) -> list[dict[str, str]]:
     """Build a list of collections from a requirements file."""

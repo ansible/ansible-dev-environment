@@ -29,6 +29,7 @@ class Cli:
         self.args: Namespace
         self.config: Config
         self.output: Output
+        self.term_features: TermFeatures
 
     def parse_args(self: Cli) -> None:
         """Parse the command line arguments."""
@@ -38,10 +39,19 @@ class Cli:
 
     def init_output(self: Cli) -> None:
         """Initialize the output object."""
+        if not sys.stdout.isatty():
+            self.term_features = TermFeatures(color=False, links=False)
+        else:
+            self.term_features = TermFeatures(
+                color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
+                links=not self.args.no_ansi,
+            )
+
         self.output = Output(
             log_append=self.args.log_append,
             log_file=self.args.log_file,
             log_level=self.args.log_level,
+            term_features=self.term_features,
             verbosity=self.args.verbose,
         )
 
@@ -97,18 +107,10 @@ class Cli:
 
     def run(self: Cli) -> None:
         """Run the application."""
-        if not sys.stdout.isatty():
-            term_features = TermFeatures(color=False, links=False)
-        else:
-            term_features = TermFeatures(
-                color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
-                links=not self.args.no_ansi,
-            )
-
         self.config = Config(
             args=self.args,
             output=self.output,
-            term_features=term_features,
+            term_features=self.term_features,
         )
         self.config.init()
 
@@ -123,6 +125,7 @@ class Cli:
             sys.exit(1)
         if self.output.call_count["warning"]:
             sys.exit(2)
+        sys.exit(0)
 
 
 def main() -> None:

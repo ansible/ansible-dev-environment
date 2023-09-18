@@ -9,10 +9,24 @@ import pytest
 
 from pip4a.collection import Collection, parse_collection_request
 from pip4a.config import Config
+from pip4a.output import Output
 from pip4a.utils import TermFeatures
 
 
-config = Config(args=Namespace(), term_features=TermFeatures(color=False, links=False))
+term_features = TermFeatures(color=False, links=False)
+
+output = Output(
+    log_file=str(Path.cwd() / "pip4a.log"),
+    log_level="notset",
+    log_append="true",
+    term_features=term_features,
+    verbosity=0,
+)
+config = Config(
+    args=Namespace(),
+    term_features=term_features,
+    output=output,
+)
 
 FIXTURE_DIR = Path(__file__).parent.parent.resolve() / "fixtures"
 scenarios = (
@@ -80,6 +94,9 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
     string, spec = scenario
     if spec is None:
         with pytest.raises(SystemExit):
-            parse_collection_request(string=string, config=config)
+            parse_collection_request(string=string, config=config, output=output)
     else:
-        assert parse_collection_request(string=string, config=config) == spec
+        assert (
+            parse_collection_request(string=string, config=config, output=output)
+            == spec
+        )

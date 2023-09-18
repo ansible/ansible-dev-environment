@@ -10,7 +10,11 @@ import textwrap
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
+
+
+if TYPE_CHECKING:
+    from .utils import TermFeatures
 
 
 T = TypeVar("T", bound="Level")
@@ -168,11 +172,12 @@ class Msg:
 class Output:
     """Output functionality."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self: Output,
         log_file: str,
         log_level: str,
         log_append: str,
+        term_features: TermFeatures,
         verbosity: int,
     ) -> None:
         """Initialize the output object.
@@ -181,6 +186,7 @@ class Output:
             log_file: The path to the los.get_terminal_size()og file
             log_level: The log level
             log_append: Whether to append to the log file
+            term_features: Terminal features
             verbosity: The verbosity level
         """
         self._verbosity = verbosity
@@ -193,6 +199,7 @@ class Output:
             "note": 0,
             "warning": 0,
         }
+        self.term_features = term_features
         self.logger = logging.getLogger("pip4a")
         if log_level != "notset":
             self.logger.setLevel(log_level.upper())
@@ -277,12 +284,15 @@ class Output:
         if self.log_to_file:
             self.logger.log(level.log_level, msg, stacklevel=3)
 
-        width = float(os.get_terminal_size()[0])
+        try:
+            width = float(os.get_terminal_size()[0])
+        except OSError:
+            width = 80
         narrow = 80
         wide = 120
         if width <= narrow:
             set_width = width - 2
-        elif width >= narrow and width <= wide:
+        elif wide >= width >= narrow:
             set_width = width * 0.9
         elif width > wide:
             set_width = width * 0.8
@@ -295,8 +305,11 @@ class Output:
             return
 
         lines = Msg(message=msg, prefix=level).to_lines(
-            color=True,
+            color=self.term_features.color,
             width=int(set_width),
             with_prefix=True,
         )
-        print("\n".join(lines))  # noqa: T201
+        if level in (Level.CRITICAL, Level.ERROR):
+            print("\n".join(lines), file=sys.stderr)  # noqa: T201
+        else:
+            print("\n".join(lines))  # noqa: T201
