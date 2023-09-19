@@ -17,6 +17,8 @@ from pip4a.utils import (
     subprocess_run,
 )
 
+from .checker import Checker
+
 
 if TYPE_CHECKING:
     from pip4a.config import Config
@@ -69,7 +71,7 @@ class Installer:
 
         builder_introspect(config=self._config)
         self._pip_install()
-        self._check_bindep()
+        Checker(config=self._config, output=self._output).system_deps()
 
         if self._config.args.venv and (
             self._config.interpreter != self._config.venv_interpreter
@@ -248,10 +250,10 @@ class Installer:
         if self._collection.site_pkg_path.exists():
             msg = f"Removing installed {self._collection.site_pkg_path}"
             self._output.debug(msg)
-            if self._config.site_pkg_path.is_symlink():
-                self._config.site_pkg_path.unlink()
+            if self._collection.site_pkg_path.is_symlink():
+                self._collection.site_pkg_path.unlink()
             else:
-                shutil.rmtree(self._config.site_pkg_path)
+                shutil.rmtree(self._collection.site_pkg_path)
 
         info_dirs = [
             entry
@@ -361,33 +363,3 @@ class Installer:
         else:
             msg = "All python requirements are installed."
             self._output.note(msg)
-
-    def _check_bindep(self: Installer) -> None:
-        """Check the bindep file."""
-        msg = "Checking system packages."
-        self._output.info(msg)
-
-        command = f"bindep -b -f {self._config.discovered_bindep_reqs}"
-        work = "Checking system package requirements"
-        try:
-            subprocess_run(
-                command=command,
-                verbose=self._config.args.verbose,
-                msg=work,
-                term_features=self._config.term_features,
-            )
-        except subprocess.CalledProcessError as exc:
-            lines = exc.stdout.splitlines()
-            msg = (
-                "Required system packages are missing."
-                " Please use the system package manager to install them."
-            )
-            self._output.error(msg)
-            for line in lines:
-                msg = f"Missing: {line}"
-                self._output.error(msg)
-                pass
-        else:
-            msg = "All required system packages are installed."
-            self._output.note(msg)
-            return

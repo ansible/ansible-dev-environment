@@ -36,10 +36,13 @@ class Checker:
         self._config: Config = config
         self._collections_missing: bool
         self._output: Output = output
+        self._system_dep_missing: bool
 
     def run(self: Checker) -> None:
         """Run the checker."""
+        builder_introspect(config=self._config)
         self._collection_deps()
+        self.system_deps()
         self._python_deps()
 
     def _collection_deps(self: Checker) -> None:  # noqa: C901, PLR0912, PLR0915
@@ -130,8 +133,11 @@ class Checker:
 
     def _python_deps(self: Checker) -> None:
         """Check Python dependencies."""
-        builder_introspect(config=self._config)
-
+        if self._system_dep_missing:
+            msg = "System packages are missing. Python dependency checking may fail."
+            self._output.warning(msg)
+            msg = "Install system packages and re-run `pip4a check`."
+            self._output.hint(msg)
         missing_file = self._config.venv_cache_dir / "pip-report.txt"
         command = (
             f"{self._config.venv_interpreter} -m pip install -r"
@@ -172,3 +178,40 @@ class Checker:
         self._output.error(err)
         msg = f"Try running `pip install {' '.join(missing)}`."
         self._output.hint(msg)
+
+    def system_deps(self: Checker) -> None:
+        """Check the bindep file."""
+        msg = "Checking system packages."
+        self._output.info(msg)
+
+        command = f"bindep -b -f {self._config.discovered_bindep_reqs}"
+        work = "Checking system package requirements"
+        try:
+            subprocess_run(
+                command=command,
+                verbose=self._config.args.verbose,
+                msg=work,
+                term_features=self._config.term_features,
+            )
+        except subprocess.CalledProcessError as exc:
+            if exc.stderr:
+                msg = f"Bindep failed to find required system packages. {exc.stderr}"
+                self._output.error(msg)
+                msg = "Check the format of the bindep.txt file."
+                self._output.hint(msg)
+                self._system_dep_missing = True
+                return
+            lines = exc.stdout.splitlines()
+            msg = (
+                "Required system packages are missing."
+                " Please use the system package manager to install them."
+                "\n- "
+            )
+            msg += "\n- ".join(lines)
+            self._output.warning(msg)
+            self._system_dep_missing = True
+        else:
+            msg = "All required system packages are installed."
+            self._output.note(msg)
+            self._system_dep_missing = False
+            return
