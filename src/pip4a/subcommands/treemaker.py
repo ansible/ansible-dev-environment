@@ -80,7 +80,11 @@ class TreeMaker:
             links[collection_name] = link
 
             if self._config.args.verbose >= 1:
-                add_python_reqs(tree_dict=tree_dict, collection_name=collection_name, python_deps=python_deps)
+                add_python_reqs(
+                    tree_dict=tree_dict,
+                    collection_name=collection_name,
+                    python_deps=python_deps,
+                )
 
         if self._config.args.verbose >= 1:
             green = ["python requirements"]
@@ -90,7 +94,6 @@ class TreeMaker:
                 green.append(line.split("#", 1)[0].strip())
         else:
             green = []
-
 
         more_verbose = 2
         if self._config.args.verbose >= more_verbose:
@@ -121,14 +124,16 @@ class TreeMaker:
             rendered = tree.render()
             print(rendered)  # noqa: T201
 
-        if self._config.args.verbose  >= 1:
+        if self._config.args.verbose >= 1:
             msg = "Only direct python dependencies are shown."
             self._output.info(msg)
             hint = "Run `pip show <pkg>` to see indirect dependencies."
             self._output.hint(hint)
 
 
-def add_python_reqs(tree_dict: dict[str, JSONVal], collection_name: str, python_deps: list[str]) -> None:
+def add_python_reqs(
+    tree_dict: dict[str, JSONVal], collection_name: str, python_deps: list[str],
+) -> None:
     """Add Python dependencies to the tree.
 
     Args:
@@ -141,5 +146,3 @@ def add_python_reqs(tree_dict: dict[str, JSONVal], collection_name: str, python_
             if "python requirements" not in tree_dict[collection_name]:
                 tree_dict[collection_name]["python requirements"] = []
             tree_dict[collection_name]["python requirements"].append(name.strip())
-
-
