@@ -376,7 +376,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
             term_features: Terminal features
             delay: The delay between characters
         """
-        self.spinner = itertools.cycle(["-", "/", "|", "\\"])
+        self.spinner = itertools.cycle(("|", "/", "-", "\\", "|", "/", "-"))
         self.delay = delay
         self.busy = False
         self.spinner_visible = False
