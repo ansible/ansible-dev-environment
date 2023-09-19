@@ -21,17 +21,12 @@ except ImportError:  # pragma: no cover
         __version__ = "0.1.dev1"
 
 
-def parse() -> argparse.Namespace:
-    """Parse the command line arguments.
+def common_args(parser: ArgumentParser) -> None:
+    """Add common arguments to the parser.
 
-    Returns:
-        The arguments
+    Args:
+        parser: The parser to add the arguments to
     """
-    parser = ArgumentParser(
-        description="A pip-like ansible collection installer.",
-        formatter_class=CustomHelpFormatter,
-    )
-
     parser.add_argument(
         "--lf",
         "--log-file <file>",
@@ -62,6 +57,21 @@ def parse() -> argparse.Namespace:
         default=0,
         help="Give more CLI output. Option is additive, and can be used up to 3 times.",
     )
+
+
+def parse() -> argparse.Namespace:
+    """Parse the command line arguments.
+
+    Returns:
+        The arguments
+    """
+    parser = ArgumentParser(
+        description="A pip-like ansible collection installer.",
+        formatter_class=CustomHelpFormatter,
+    )
+
+    common_args(parser)
+
     parser.add_argument(
         "-V",
         "--version",
@@ -94,6 +104,8 @@ def parse() -> argparse.Namespace:
         dest="no_ansi",
         help="Disable the use of ANSI codes for terminal hyperlink generation and color.",
     )
+
+    common_args(level1)
 
     _check = subparsers.add_parser(
         "check",

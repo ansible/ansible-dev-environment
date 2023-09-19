@@ -17,6 +17,8 @@ from pip4a.utils import (
     subprocess_run,
 )
 
+from .checker import Checker
+
 
 if TYPE_CHECKING:
     from pip4a.config import Config
@@ -39,10 +41,6 @@ class Installer:
 
     def run(self: Installer) -> None:
         """Run the installer."""
-        if self._config.args.editable and not self._collection.local:
-            err = "Editable installs are only supported for local collections."
-            self._output.critical(err)
-
         if (
             self._config.args.collection_specifier
             and "," in self._config.args.collection_specifier
@@ -65,11 +63,14 @@ class Installer:
                 if self._config.args.editable:
                     self._swap_editable_collection()
             elif not self._collection.local:
+                if self._config.args.editable:
+                    msg = "Editable installs are only supported for local collections."
+                    self._output.critical(msg)
                 self._install_galaxy_collection()
 
         builder_introspect(config=self._config)
         self._pip_install()
-        self._check_bindep()
+        Checker(config=self._config, output=self._output).system_deps()
 
         if self._config.args.venv and (
             self._config.interpreter != self._config.venv_interpreter
@@ -248,10 +249,10 @@ class Installer:
         if self._collection.site_pkg_path.exists():
             msg = f"Removing installed {self._collection.site_pkg_path}"
             self._output.debug(msg)
-            if self._config.site_pkg_path.is_symlink():
-                self._config.site_pkg_path.unlink()
+            if self._collection.site_pkg_path.is_symlink():
+                self._collection.site_pkg_path.unlink()
             else:
-                shutil.rmtree(self._config.site_pkg_path)
+                shutil.rmtree(self._collection.site_pkg_path)
 
         info_dirs = [
             entry
@@ -294,11 +295,11 @@ class Installer:
         if not self._config.args.editable:
             shutil.copy(
                 self._collection.build_dir / "galaxy.yml",
-                self._config.site_pkg_path / "galaxy.yml",
+                self._collection.site_pkg_path / "galaxy.yml",
             )
         else:
             shutil.copy(
-                self._config.site_pkg_path / "MANIFEST.json",
+                self._collection.site_pkg_path / "MANIFEST.json",
                 self._collection.cache_dir / "MANIFEST.json",
             )
 
@@ -318,13 +319,13 @@ class Installer:
         if self._collection.path is None:
             msg = "Collection path not set"
             raise RuntimeError(msg)
-        msg = f"Removing installed {self._config.site_pkg_path}"
+        msg = f"Removing installed {self._collection.site_pkg_path}"
         self._output.debug(msg)
-        if self._config.site_pkg_path.exists():
-            if self._config.site_pkg_path.is_symlink():
-                self._config.site_pkg_path.unlink()
+        if self._collection.site_pkg_path.exists():
+            if self._collection.site_pkg_path.is_symlink():
+                self._collection.site_pkg_path.unlink()
             else:
-                shutil.rmtree(self._config.site_pkg_path)
+                shutil.rmtree(self._collection.site_pkg_path)
 
         msg = f"Symlinking {self._collection.site_pkg_path} to {self._collection.path}"
         self._output.debug(msg)
@@ -361,33 +362,3 @@ class Installer:
         else:
             msg = "All python requirements are installed."
             self._output.note(msg)
-
-    def _check_bindep(self: Installer) -> None:
-        """Check the bindep file."""
-        msg = "Checking system packages."
-        self._output.info(msg)
-
-        command = f"bindep -b -f {self._config.discovered_bindep_reqs}"
-        work = "Checking system package requirements"
-        try:
-            subprocess_run(
-                command=command,
-                verbose=self._config.args.verbose,
-                msg=work,
-                term_features=self._config.term_features,
-            )
-        except subprocess.CalledProcessError as exc:
-            lines = exc.stdout.splitlines()
-            msg = (
-                "Required system packages are missing."
-                " Please use the system package manager to install them."
-            )
-            self._output.error(msg)
-            for line in lines:
-                msg = f"Missing: {line}"
-                self._output.error(msg)
-                pass
-        else:
-            msg = "All required system packages are installed."
-            self._output.note(msg)
-            return
