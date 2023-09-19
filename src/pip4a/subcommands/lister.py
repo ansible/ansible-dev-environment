@@ -81,7 +81,7 @@ class Lister:
             homepage = ci.get("homepage")
             repository = ci.get("repository")
             issues = ci.get("issues")
-            link = docs or homepage or repository or issues or "http://ansible.com"
+            link = repository or homepage or docs or issues or "http://ansible.com"
             if not isinstance(link, str):
                 msg = "Link is not a string."
                 raise TypeError(msg)
