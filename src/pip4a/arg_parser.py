@@ -20,6 +20,7 @@ except ImportError:  # pragma: no cover
         # information is not available.
         __version__ = "0.1.dev1"
 
+
 def common_args(parser: ArgumentParser) -> None:
     """Add common arguments to the parser.
 
