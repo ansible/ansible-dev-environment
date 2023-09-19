@@ -85,21 +85,19 @@ class TreeMaker:
                     collection_name=collection_name,
                     python_deps=python_deps,
                 )
-
+        green: list[str] = []
         if self._config.args.verbose >= 1:
-            green = ["python requirements"]
+            green.append("python requirements")
             for line in python_deps:
                 if "#" not in line:
-                    green.append(line).strip()
+                    green.append(line.strip())
                 green.append(line.split("#", 1)[0].strip())
-        else:
-            green = []
 
         more_verbose = 2
         if self._config.args.verbose >= more_verbose:
             tree = Tree(obj=tree_dict, term_features=self._config.term_features)
             tree.links = links
-            tree.green = green
+            tree.green.extend(green)
             rendered = tree.render()
             print(rendered)  # noqa: T201
         else:
@@ -120,7 +118,7 @@ class TreeMaker:
 
             tree = Tree(obj=pruned_tree_dict, term_features=self._config.term_features)
             tree.links = links
-            tree.green = green
+            tree.green.extend(green)
             rendered = tree.render()
             print(rendered)  # noqa: T201
 
@@ -132,17 +130,33 @@ class TreeMaker:
 
 
 def add_python_reqs(
-    tree_dict: dict[str, JSONVal], collection_name: str, python_deps: list[str],
+    tree_dict: dict[str, JSONVal],
+    collection_name: str,
+    python_deps: list[str],
 ) -> None:
     """Add Python dependencies to the tree.
 
     Args:
         tree_dict: The tree dict.
+        collection_name: The collection name.
         python_deps: The Python dependencies.
+
+    Raises:
+        TypeError: If the tree dict is not a dict.
     """
+    if not isinstance(tree_dict, dict):
+        msg = "Tree dict is not a dict."
+        raise TypeError(msg)
+    collection = tree_dict[collection_name]
+    if not isinstance(collection, dict):
+        msg = "Tree dict is not a dict."
+        raise TypeError(msg)
+    collection["python requirements"] = []
+
     for dep in sorted(python_deps):
         name, comment = dep.split("#", 1)
         if collection_name in comment:
-            if "python requirements" not in tree_dict[collection_name]:
-                tree_dict[collection_name]["python requirements"] = []
-            tree_dict[collection_name]["python requirements"].append(name.strip())
+            if not isinstance(collection["python requirements"], list):
+                msg = "Python requirements is not a list."
+                raise TypeError(msg)
+            collection["python requirements"].append(name.strip())
