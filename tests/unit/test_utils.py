@@ -32,7 +32,13 @@ FIXTURE_DIR = Path(__file__).parent.parent.resolve() / "fixtures"
 scenarios = (
     (
         "ansible.utils",
-        Collection(config=config, cname="utils", cnamespace="ansible", local=False),
+        Collection(
+            config=config,
+            cname="utils",
+            cnamespace="ansible",
+            local=False,
+            original="ansible.utils",
+        ),
     ),
     (
         "ansible.utils:1.0.0",
@@ -42,6 +48,7 @@ scenarios = (
             cnamespace="ansible",
             specifier=":1.0.0",
             local=False,
+            original="ansible.utils:1.0.0",
         ),
     ),
     (
@@ -52,6 +59,7 @@ scenarios = (
             cnamespace="ansible",
             specifier=">=1.0.0",
             local=False,
+            original="ansible.utils>=1.0.0",
         ),
     ),
     (
@@ -63,6 +71,7 @@ scenarios = (
             local=True,
             path=FIXTURE_DIR,
             specifier=None,
+            original=str(FIXTURE_DIR),
         ),
     ),
     (
@@ -75,6 +84,7 @@ scenarios = (
             opt_deps="test",
             path=FIXTURE_DIR,
             specifier=None,
+            original=str(FIXTURE_DIR) + "/[test]",
         ),
     ),
     (
