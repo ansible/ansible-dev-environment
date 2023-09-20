@@ -20,7 +20,7 @@ def test_venv(
     # disable color for json output
     term_features = TermFeatures(color=False, links=False)
     output = Output(
-        log_file="",
+        log_file=f"/{tmp_path}/pip4a.log",
         log_level="INFO",
         log_append="false",
         term_features=term_features,

@@ -70,13 +70,19 @@ class Cli:
         if (
             hasattr(self.args, "collection_specifier")
             and len(self.args.collection_specifier) > 1
+            and hasattr(self.args, "editable")
             and self.args.editable
         ):
             err = "Editable can only be used with a single collection specifier."
             self.output.critical(err)
 
         # Editable with requirements file
-        if hasattr(self.args, "requirement") and self.args.editable:
+        if (
+            hasattr(self.args, "requirement")
+            and self.args.requirement
+            and hasattr(self.args, "editable")
+            and self.args.editable
+        ):
             err = "Editable can not be used with a requirements file."
             self.output.critical(err)
 
