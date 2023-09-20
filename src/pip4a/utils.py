@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from .config import Config
+    from .output import Output
 
 from typing import Any
 
@@ -90,13 +91,13 @@ def subprocess_run(  # noqa: PLR0913
     command: str,
     verbose: int,
     msg: str,
-    term_features: TermFeatures,
+    output: Output,
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command."""
     cmd = f"Running command: {command}"
-    logger.debug(cmd)
+    output.debug(cmd)
     log_level = logging.ERROR - (verbose * 10)
     if log_level == logging.DEBUG:
         return subprocess_tee.run(
@@ -107,7 +108,7 @@ def subprocess_run(  # noqa: PLR0913
             shell=True,  # noqa: S604
             text=True,
         )
-    with Spinner(message=msg, term_features=term_features):
+    with Spinner(message=msg, term_features=output.term_features):
         return subprocess.run(
             command,
             check=True,
@@ -240,11 +241,12 @@ def collect_manifests(  # noqa: C901
     return sort_dict(collections)
 
 
-def builder_introspect(config: Config) -> None:
+def builder_introspect(config: Config, output: Output) -> None:
     """Introspect a collection.
 
     Args:
         config: The configuration object.
+        output: The output object.
     """
     command = (
         f"ansible-builder introspect {config.site_pkg_path}"
@@ -274,7 +276,7 @@ def builder_introspect(config: Config) -> None:
             command=command,
             verbose=config.args.verbose,
             msg=work,
-            term_features=config.term_features,
+            output=output,
         )
     except subprocess.CalledProcessError as exc:
         err = f"Failed to discover requirements: {exc} {exc.stderr}"

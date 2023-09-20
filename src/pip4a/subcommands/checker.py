@@ -40,7 +40,7 @@ class Checker:
 
     def run(self: Checker) -> None:
         """Run the checker."""
-        builder_introspect(config=self._config)
+        builder_introspect(config=self._config, output=self._output)
         self._collection_deps()
         self.system_deps()
         self._python_deps()
@@ -151,7 +151,7 @@ class Checker:
                 command=command,
                 verbose=self._config.args.verbose,
                 msg=work,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to check python dependencies: {exc}"
@@ -191,7 +191,7 @@ class Checker:
                 command=command,
                 verbose=self._config.args.verbose,
                 msg=work,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             if exc.stderr:

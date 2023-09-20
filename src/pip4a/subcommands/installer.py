@@ -36,8 +36,8 @@ class Installer:
             output: The application output object.
         """
         self._config = config
-        self._collection: Collection
         self._output = output
+        self._current_collection_spec: str
 
     def run(self: Installer) -> None:
         """Run the installer."""
@@ -52,23 +52,32 @@ class Installer:
 
         if self._config.args.requirement:
             self._install_galaxy_requirements()
-        elif self._config.args.collection_specifier:
-            self._collection = parse_collection_request(
-                string=self._config.args.collection_specifier,
-                config=self._config,
-                output=self._output,
-            )
-            if self._collection.local:
-                self._install_local_collection()
+        if self._config.args.collection_specifier:
+            collections = [
+                parse_collection_request(
+                    string=entry,
+                    config=self._config,
+                    output=self._output,
+                )
+                for entry in self._config.args.collection_specifier
+            ]
+            local_collections = [
+                collection for collection in collections if collection.local
+            ]
+            for local_collection in local_collections:
+                self._install_local_collection(collection=local_collection)
                 if self._config.args.editable:
-                    self._swap_editable_collection()
-            elif not self._collection.local:
+                    self._swap_editable_collection(collection=local_collection)
+            distant_collections = [
+                collection for collection in collections if not collection.local
+            ]
+            if distant_collections:
                 if self._config.args.editable:
                     msg = "Editable installs are only supported for local collections."
                     self._output.critical(msg)
-                self._install_galaxy_collection()
+                self._install_galaxy_collections(collections=distant_collections)
 
-        builder_introspect(config=self._config)
+        builder_introspect(config=self._config, output=self._output)
         self._pip_install()
         Checker(config=self._config, output=self._output).system_deps()
 
@@ -99,28 +108,35 @@ class Installer:
                 command=command,
                 verbose=self._config.args.verbose,
                 msg=msg,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install ansible-core: {exc}"
             self._output.critical(err)
 
-    def _install_galaxy_collection(self: Installer) -> None:
+    def _install_galaxy_collections(
+        self: Installer,
+        collections: list[Collection],
+    ) -> None:
         """Install the collection from galaxy."""
-        msg = f"Installing collection from galaxy: {self._config.args.collection_specifier}"
+        collections_str = " ".join(
+            [f"'{collection.original}'" for collection in collections],
+        )
+        msg = f"Installing collections from galaxy: {collections_str}"
         self._output.info(msg)
 
-        if self._collection.site_pkg_path.exists():
-            msg = f"Removing installed {self._collection.site_pkg_path}"
-            self._output.debug(msg)
-            if self._collection.site_pkg_path.is_symlink():
-                self._collection.site_pkg_path.unlink()
-            else:
-                shutil.rmtree(self._collection.site_pkg_path)
+        for collection in collections:
+            if collection.site_pkg_path.exists():
+                msg = f"Removing installed {collection.site_pkg_path}"
+                self._output.debug(msg)
+                if collection.site_pkg_path.is_symlink():
+                    collection.site_pkg_path.unlink()
+                else:
+                    shutil.rmtree(collection.site_pkg_path)
 
         command = (
             f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
-            f" install '{self._config.args.collection_specifier}'"
+            f" install {collections_str}"
             f" -p {self._config.site_pkg_path}"
             " --force"
         )
@@ -135,7 +151,7 @@ class Installer:
                 env=env,
                 verbose=self._config.args.verbose,
                 msg=msg,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collection: {exc}\n{exc.stderr}"
@@ -175,7 +191,7 @@ class Installer:
                 command=command,
                 verbose=self._config.args.verbose,
                 msg=work,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collections: {exc} {exc.stderr}"
@@ -185,37 +201,44 @@ class Installer:
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
-    def _install_local_collection(self: Installer) -> None:  # noqa: PLR0912, PLR0915
+    def _install_local_collection(  # noqa: PLR0915, PLR0912
+        self: Installer,
+        collection: Collection,
+    ) -> None:
         """Install the collection from the build directory.
+
+        Args:
+            collection: The collection object.
 
         Raises:
             RuntimeError: If tarball is not found or if more than one tarball is found.
         """
-        msg = f"Installing local collection from: {self._collection.build_dir}"
+        # pylint: disable=too-many-instance-attributes
+        msg = f"Installing local collection from: {collection.build_dir}"
         self._output.info(msg)
 
         command = (
             "cp -r --parents $(git ls-files 2> /dev/null || ls)"
-            f" {self._collection.build_dir}"
+            f" {collection.build_dir}"
         )
         msg = "Copying collection to build directory using git ls-files."
         self._output.debug(msg)
         try:
             subprocess_run(
                 command=command,
-                cwd=self._collection.path,
+                cwd=collection.path,
                 verbose=self._config.args.verbose,
                 msg=msg,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to copy collection to build directory: {exc} {exc.stderr}"
             self._output.critical(err)
 
         command = (
-            f"cd {self._collection.build_dir} &&"
+            f"cd {collection.build_dir} &&"
             f" {self._config.venv_bindir / 'ansible-galaxy'} collection build"
-            f" --output-path {self._collection.build_dir}"
+            f" --output-path {collection.build_dir}"
             " --force"
         )
 
@@ -227,7 +250,7 @@ class Installer:
                 command=command,
                 verbose=self._config.args.verbose,
                 msg=msg,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to build collection: {exc} {exc.stderr}"
@@ -235,31 +258,31 @@ class Installer:
 
         built = [
             f
-            for f in Path(self._collection.build_dir).iterdir()
+            for f in Path(collection.build_dir).iterdir()
             if f.is_file() and f.name.endswith(".tar.gz")
         ]
         if len(built) != 1:
             err = (
                 "Expected to find one collection tarball in"
-                f"{self._collection.build_dir}, found {len(built)}"
+                f"{collection.build_dir}, found {len(built)}"
             )
             raise RuntimeError(err)
         tarball = built[0]
 
-        if self._collection.site_pkg_path.exists():
-            msg = f"Removing installed {self._collection.site_pkg_path}"
+        if collection.site_pkg_path.exists():
+            msg = f"Removing installed {collection.site_pkg_path}"
             self._output.debug(msg)
-            if self._collection.site_pkg_path.is_symlink():
-                self._collection.site_pkg_path.unlink()
+            if collection.site_pkg_path.is_symlink():
+                collection.site_pkg_path.unlink()
             else:
-                shutil.rmtree(self._collection.site_pkg_path)
+                shutil.rmtree(collection.site_pkg_path)
 
         info_dirs = [
             entry
             for entry in self._config.site_pkg_collections_path.iterdir()
             if entry.is_dir()
             and entry.name.endswith(".info")
-            and entry.name.startswith(self._collection.name)
+            and entry.name.startswith(collection.name)
         ]
         for info_dir in info_dirs:
             msg = f"Removing installed {info_dir}"
@@ -282,7 +305,7 @@ class Installer:
                 env=env,
                 verbose=self._config.args.verbose,
                 msg=msg,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collection: {exc} {exc.stderr}"
@@ -294,42 +317,45 @@ class Installer:
         # preserve the MANIFEST.json file for editable installs
         if not self._config.args.editable:
             shutil.copy(
-                self._collection.build_dir / "galaxy.yml",
-                self._collection.site_pkg_path / "galaxy.yml",
+                collection.build_dir / "galaxy.yml",
+                collection.site_pkg_path / "galaxy.yml",
             )
         else:
             shutil.copy(
-                self._collection.site_pkg_path / "MANIFEST.json",
-                self._collection.cache_dir / "MANIFEST.json",
+                collection.site_pkg_path / "MANIFEST.json",
+                collection.cache_dir / "MANIFEST.json",
             )
 
         installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
-    def _swap_editable_collection(self: Installer) -> None:
+    def _swap_editable_collection(self: Installer, collection: Collection) -> None:
         """Swap the installed collection with the current working directory.
+
+        Args:
+            collection: The collection object.
 
         Raises:
             RuntimeError: If the collection path is not set.
         """
-        msg = f"Swapping {self._collection.name} with {self._collection.path}"
+        msg = f"Swapping {collection.name} with {collection.path}"
         self._output.info(msg)
 
-        if self._collection.path is None:
+        if collection.path is None:
             msg = "Collection path not set"
             raise RuntimeError(msg)
-        msg = f"Removing installed {self._collection.site_pkg_path}"
+        msg = f"Removing installed {collection.site_pkg_path}"
         self._output.debug(msg)
-        if self._collection.site_pkg_path.exists():
-            if self._collection.site_pkg_path.is_symlink():
-                self._collection.site_pkg_path.unlink()
+        if collection.site_pkg_path.exists():
+            if collection.site_pkg_path.is_symlink():
+                collection.site_pkg_path.unlink()
             else:
-                shutil.rmtree(self._collection.site_pkg_path)
+                shutil.rmtree(collection.site_pkg_path)
 
-        msg = f"Symlinking {self._collection.site_pkg_path} to {self._collection.path}"
+        msg = f"Symlinking {collection.site_pkg_path} to {collection.path}"
         self._output.debug(msg)
-        self._collection.site_pkg_path.symlink_to(self._collection.path)
+        collection.site_pkg_path.symlink_to(collection.path)
 
     def _pip_install(self: Installer) -> None:
         """Install the dependencies."""
@@ -351,7 +377,7 @@ class Installer:
                 command=command,
                 verbose=self._config.args.verbose,
                 msg=work,
-                term_features=self._config.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = (

@@ -33,7 +33,7 @@ class TreeMaker:
     def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
         """Run the command."""
         # pylint: disable=too-many-locals
-        builder_introspect(self._config)
+        builder_introspect(self._config, self._output)
 
         with self._config.discovered_python_reqs.open("r") as reqs_file:
             python_deps = reqs_file.read().splitlines()

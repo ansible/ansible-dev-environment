@@ -1,0 +1,17 @@
+   Debug: Virtual environment: /home/bthornto/github/pip4a/venv
+   Debug: Virtual environment interpreter:
+          /home/bthornto/github/pip4a/venv/bin/python
+   Debug: Running command: /home/bthornto/github/pip4a/venv/bin/python -c
+          'import json,site; print(json.dumps(site.getsitepackages()))'
+["/home/bthornto/github/pip4a/venv/lib64/python3.11/site-packages", "/home/bthornto/github/pip4a/venv/lib/python3.11/site-packages"]
+   Debug: Found site packages path:
+          /home/bthornto/github/pip4a/venv/lib64/python3.11/site-packages
+    Info: Installing ansible-core.
+    Info: Installing collections from requirements file:
+          /home/bthornto/github/pip4a/requirements.yml
+   Debug: Removing installed /home/bthornto/github/pip4a/venv/lib64/python3.11
+          /site-packages/ansible_collections/community/general
+   Debug: Running command: /home/bthornto/github/pip4a/venv/bin/ansible-galaxy
+          collection install -r /home/bthornto/github/pip4a/requirements.yml
+          -p /home/bthornto/github/pip4a/venv/lib64/python3.11/site-packages
+          --force
