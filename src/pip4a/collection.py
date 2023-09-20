@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Collection:
+class Collection:  # pylint: disable=too-many-instance-attributes
     """A collection request specification."""
 
     config: Config
@@ -27,6 +27,7 @@ class Collection:
     cnamespace: str | None = None
     cname: str | None = None
     specifier: str | None = None
+    original: str | None = None
 
     @property
     def name(self: Collection) -> str:
@@ -72,7 +73,7 @@ def parse_collection_request(  # noqa: PLR0915
     Returns:
         A collection object
     """
-    collection = Collection(config=config)
+    collection = Collection(config=config, original=string)
     # spec with dep, local
     if "[" in string and "]" in string:
         msg = f"Found optional dependencies in collection request: {string}"

@@ -57,52 +57,87 @@ class Cli:
 
     def args_sanity(self: Cli) -> None:
         """Perform some sanity checking on the args."""
+        # Missing args
         if (
             hasattr(self.args, "requirement")
             and self.args.requirement
             and not self.args.requirement.exists()
         ):
             err = f"Requirements file not found: {self.args.requirement}"
-            self.output.error(err)
+            self.output.critical(err)
+
+        # Multiple editable collections
+        if (
+            hasattr(self.args, "collection_specifier")
+            and len(self.args.collection_specifier) > 1
+            and hasattr(self.args, "editable")
+            and self.args.editable
+        ):
+            err = "Editable can only be used with a single collection specifier."
+            self.output.critical(err)
+
+        # Editable with requirements file
+        if (
+            hasattr(self.args, "requirement")
+            and self.args.requirement
+            and hasattr(self.args, "editable")
+            and self.args.editable
+        ):
+            err = "Editable can not be used with a requirements file."
+            self.output.critical(err)
 
     def ensure_isolated(self: Cli) -> None:
         """Ensure the environment is isolated."""
         env_vars = os.environ
-        errors = []
+        errored = False
         if "ANSIBLE_COLLECTIONS_PATHS" in env_vars:
             err = "ANSIBLE_COLLECTIONS_PATHS is set"
-            errors.append(err)
+            self.output.error(err)
+            hint = "Run `unset ANSIBLE_COLLECTIONS_PATHS` to unset it."
+            self.output.hint(hint)
+            errored = True
         if "ANSIBLE_COLLECTION_PATH" in env_vars:
             err = "ANSIBLE_COLLECTION_PATH is set"
-            errors.append(err)
+            self.output.error(err)
+            hint = "Run `unset ANSIBLE_COLLECTION_PATH` to unset it."
+            self.output.hint(hint)
+            errored = True
 
         home_coll = Path.home() / ".ansible/collections/ansible_collections"
         if home_coll.exists() and tuple(home_coll.iterdir()):
             err = f"Collections found in {home_coll}"
-            errors.append(err)
+            self.output.error(err)
+            hint = "Run `rm -rf ~/.ansible/collections` to remove them."
+            self.output.hint(hint)
+            errored = True
 
         usr_coll = Path("/usr/share/ansible/collections")
         if usr_coll.exists() and tuple(usr_coll.iterdir()):
             err = f"Collections found in {usr_coll}"
-            errors.append(err)
+            self.output.error(err)
+            hint = "Run `sudo rm -rf /usr/share/ansible/collections` to remove them."
+            self.output.hint(hint)
+            errored = True
 
         if "VIRTUAL_ENV" not in env_vars and not self.args.venv:
             err = (
                 "Unable to use user site packages directory:"
                 f" {site.getusersitepackages()}, please activate or specify a virtual environment"
             )
-            errors.append(err)
+            self.output.error(err)
+            hint = (
+                "Use `--venv <directory>` to specify a virtual environment"
+                " or enable an existing one."
+            )
+            self.output.hint(hint)
+            errored = True
 
-        if errors:
+        if errored:
             err = (
                 "The development environment is not isolated,"
-                " please resolve the following errors:"
+                " please resolve the above errors."
             )
-            self.output.error(err)
-            for error in errors:
-                err = f"- {error}"
-                self.output.error(err)
-            err = "Exiting."
+
             self.output.critical(err)
 
     def run(self: Cli) -> None:

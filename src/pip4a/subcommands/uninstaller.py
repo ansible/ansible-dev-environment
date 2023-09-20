@@ -32,6 +32,10 @@ class UnInstaller:
 
     def run(self: UnInstaller) -> None:
         """Run the uninstaller."""
+        if len(self._config.args.collection_specifier) > 1:
+            msg = "Only one collection can be uninstalled at a time."
+            self._output.critical(msg)
+
         if self._config.args.requirement:
             requirements_path = Path(self._config.args.requirement)
             if not requirements_path.exists():
@@ -47,7 +51,7 @@ class UnInstaller:
                 self._remove_collection()
         else:
             self._collection = parse_collection_request(
-                string=self._config.args.collection_specifier,
+                string=self._config.args.collection_specifier[0],
                 config=self._config,
                 output=self._output,
             )

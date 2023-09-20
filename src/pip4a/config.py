@@ -116,7 +116,7 @@ class Config:
                         command=command,
                         verbose=self.args.verbose,
                         msg=work,
-                        term_features=self.term_features,
+                        output=self._output,
                     )
                     msg = f"Created virtual environment: {self.venv}"
                     self._output.info(msg)
@@ -149,7 +149,7 @@ class Config:
                 command=command,
                 verbose=self.args.verbose,
                 msg=work,
-                term_features=self.term_features,
+                output=self._output,
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to find site packages path: {exc}"

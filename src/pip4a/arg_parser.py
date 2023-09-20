@@ -136,13 +136,12 @@ def parse() -> argparse.Namespace:
     )
 
     level2 = ArgumentParser(add_help=False, parents=[level1])
-    spec_or_req = level2.add_mutually_exclusive_group(required=True)
-    spec_or_req.add_argument(
+    level2.add_argument(
         "collection_specifier",
         help="Collection name or path to collection with extras.",
-        nargs="?",
+        nargs="*",
     )
-    spec_or_req.add_argument(
+    level2.add_argument(
         "-r",
         "--requirement <file>",
         dest="requirement",
