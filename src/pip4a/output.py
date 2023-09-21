@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import decimal
 import logging
-import os
+import shutil
 import sys
 import textwrap
 
@@ -18,6 +19,40 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T", bound="Level")
+GOLDEN_RATIO = 1.61803398875
+
+
+def round_half_up(number: float) -> int:
+    """Round a number to the nearest integer with ties going away from zero.
+
+    This is different the round() where exact halfway cases are rounded to the nearest
+    even result instead of away from zero. (e.g. round(2.5) = 2, round(3.5) = 4).
+
+    This will always round based on distance from zero. (e.g round(2.5) = 3, round(3.5) = 4).
+
+    :param number: The number to round
+    :returns: The rounded number as an it
+    """
+    rounded = decimal.Decimal(number).quantize(
+        decimal.Decimal("1"),
+        rounding=decimal.ROUND_HALF_UP,
+    )
+    return int(rounded)
+
+
+def console_width() -> int:
+    """Get a console width based on common screen widths.
+
+    :returns: The console width
+    """
+    medium = 80
+    wide = 132
+    width = shutil.get_terminal_size().columns
+    if width <= medium:
+        return width
+    if width <= wide:
+        return max(80, round_half_up(width / GOLDEN_RATIO))
+    return wide
 
 
 class Color:
@@ -284,18 +319,7 @@ class Output:
         if self.log_to_file:
             self.logger.log(level.log_level, msg, stacklevel=3)
 
-        try:
-            width = float(os.get_terminal_size()[0])
-        except OSError:
-            width = 80
-        narrow = 80
-        wide = 120
-        if width <= narrow:
-            set_width = width - 2
-        elif wide >= width >= narrow:
-            set_width = width * 0.9
-        elif width > wide:
-            set_width = width * 0.8
+        set_width = console_width()
 
         debug = 2
         info = 1
@@ -306,7 +330,7 @@ class Output:
 
         lines = Msg(message=msg, prefix=level).to_lines(
             color=self.term_features.color,
-            width=int(set_width),
+            width=set_width,
             with_prefix=True,
         )
         if level in (Level.CRITICAL, Level.ERROR):
