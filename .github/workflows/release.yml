@@ -5,8 +5,22 @@ name: release
 "on":
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
+  # https://github.com/marketplace/actions/actions-tagger
+  actions-tagger:
+    needs: pypi # do not move the mobile tag until we publish
+    runs-on: windows-latest
+    permissions:
+      # Give the default GITHUB_TOKEN write permission.
+      # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
+      contents: write
+    steps:
+      - uses: Actions-R-Us/actions-tagger@latest
+        with:
+          token: "${{ github.token }}"
+          publish_latest_tag: true
   pypi:
     name: Publish to PyPI registry
     environment: release
@@ -20,10 +34,10 @@ jobs:
       TOXENV: pkg
 
     steps:
-      - name: Switch to using Python 3.11 by default
+      - name: Switch to using Python 3.10 by default
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: "3.10"
 
       - name: Install tox
         run: python3 -m pip install --user "tox>=4.0.0"
