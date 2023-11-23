@@ -14,7 +14,6 @@ fqcn
 levelname
 levelno
 netcommon
-pip4a
 reqs
 setenv
 specp

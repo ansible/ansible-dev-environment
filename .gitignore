@@ -166,4 +166,4 @@ cython_debug/
 # and should all have detailed explanations
 
 # Version created and populated by setuptools_scm
-/src/pip4a/_version.py
+/src/ansible-development-environment/_version.py

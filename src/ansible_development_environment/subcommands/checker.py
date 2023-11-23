@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
 
-from pip4a.utils import (
+from ansible_development_environment.utils import (
     builder_introspect,
     collect_manifests,
     oxford_join,
@@ -19,8 +19,8 @@ from pip4a.utils import (
 
 
 if TYPE_CHECKING:
-    from pip4a.config import Config
-    from pip4a.output import Output
+    from ansible_development_environment.config import Config
+    from ansible_development_environment.output import Output
 
 
 class Checker:
@@ -122,7 +122,7 @@ class Checker:
                         f" {dep} {version} but it is not installed."
                     )
                     self._output.error(err)
-                    msg = f"Try running `pip4a install {dep}`"
+                    msg = f"Try running `ansible-development-environment install {dep}`"
                     self._output.hint(msg)
                     missing = True
 
@@ -136,7 +136,7 @@ class Checker:
         if self._system_dep_missing:
             msg = "System packages are missing. Python dependency checking may fail."
             self._output.warning(msg)
-            msg = "Install system packages and re-run `pip4a check`."
+            msg = "Install system packages and re-run `ansible-development-environment check`."
             self._output.hint(msg)
         missing_file = self._config.venv_cache_dir / "pip-report.txt"
         command = (
