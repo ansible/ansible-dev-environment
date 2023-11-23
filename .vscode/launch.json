@@ -8,7 +8,7 @@
       "name": "Python: Module",
       "type": "python",
       "request": "launch",
-      "module": "pip4a",
+      "module": "ansible_development_environment",
       "args": ["inspect", "-v", "-v", "-vv"],
       "justMyCode": true
     },

@@ -14,7 +14,9 @@ except ImportError:  # pragma: no cover
     try:
         import pkg_resources
 
-        __version__ = pkg_resources.get_distribution("pip4a").version
+        __version__ = pkg_resources.get_distribution(
+            "ansible_development_environment",
+        ).version
     except Exception:  # pylint: disable=broad-except # noqa: BLE001
         # this is the fallback SemVer version picked by setuptools_scm when tag
         # information is not available.
@@ -31,7 +33,7 @@ def common_args(parser: ArgumentParser) -> None:
         "--lf",
         "--log-file <file>",
         dest="log_file",
-        default=str(Path.cwd() / "pip4a.log"),
+        default=str(Path.cwd() / "ansible-development-environment.log"),
         help="Log file to write to.",
     )
     parser.add_argument(

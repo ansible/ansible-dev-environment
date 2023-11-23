@@ -1,4 +1,4 @@
-# pip4a
+# ansible-development-environment
 
 A pip-like install for ansible collections.
 
@@ -19,10 +19,10 @@ By placing collections into the python site-packages directory they are discover
 ### Setting up a development environment
 
 ```
-$ pip install pip4a --user
+$ pip install ansible-development-environment --user
 $ git clone <collection_repo>
 $ cd <collection_repo>
-$ pip4a install -e .\[test] --venv venv
+$ ansible-development-environment install -e .\[test] --venv venv
 INFO: Found collection name: network.interfaces from /home/bthornto/github/network.interfaces/galaxy.yml.
 INFO: Creating virtual environment: /home/bthornto/github/network.interfaces/venv
 INFO: Virtual environment: /home/bthornto/github/network.interfaces/venv
@@ -44,7 +44,7 @@ source venv/bin/activate
 ### Tearing down the development environment
 
 ```
-$ pip4a uninstall ansible.scm
+$ ansible-development-environment uninstall ansible.scm
 INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
 INFO     Requirements file /home/bthornto/github/ansible.scm/requirements.txt is empty, skipping
 INFO     Uninstalling python requirements from /home/bthornto/github/ansible.scm/test-requirements.txt
@@ -57,8 +57,8 @@ INFO     Removed collection root: /home/bthornto/github/ansible.scm/venv/lib64/p
 
 ## Help
 
-`pip4a --help`
+`ansible-development-environment --help`
 
-`pip4a install --help`
+`ansible-development-environment install --help`
 
-`pip4a uninstall --help`
+`ansible-development-environment uninstall --help`

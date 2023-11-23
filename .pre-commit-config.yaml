@@ -79,6 +79,7 @@ repos:
           - pytest
           - pyyaml
           - subprocess_tee
+          - setuptools
           - tox
 
   - repo: https://github.com/pre-commit/mirrors-mypy.git

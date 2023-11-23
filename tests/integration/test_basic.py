@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from pip4a.cli import main
-from pip4a.output import Output
-from pip4a.utils import TermFeatures, subprocess_run
+from ansible_development_environment.cli import main
+from ansible_development_environment.output import Output
+from ansible_development_environment.utils import TermFeatures, subprocess_run
 
 
 def test_venv(
@@ -20,7 +20,7 @@ def test_venv(
     # disable color for json output
     term_features = TermFeatures(color=False, links=False)
     output = Output(
-        log_file=f"/{tmp_path}/pip4a.log",
+        log_file=f"/{tmp_path}/ansible-development-environment.log",
         log_level="INFO",
         log_append="false",
         term_features=term_features,
@@ -40,7 +40,13 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "install", str(tmp_path / "cisco.nxos"), "--venv=venv", "--no-ansi"],
+        [
+            "ansible-development-environment",
+            "install",
+            str(tmp_path / "cisco.nxos"),
+            "--venv=venv",
+            "--no-ansi",
+        ],
     )
     with pytest.raises(SystemExit):
         main()
@@ -51,7 +57,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "list", "--venv=venv"],
+        ["ansible-development-environment", "list", "--venv=venv"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -63,14 +69,22 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "uninstall", "ansible.utils", "--venv=venv"],
+        [
+            "ansible-development-environment",
+            "uninstall",
+            "ansible.utils",
+            "--venv=venv",
+        ],
     )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
     assert "Removed ansible.utils" in captured.out
 
-    monkeypatch.setattr("sys.argv", ["pip4a", "inspect", "--venv=venv", "--no-ansi"])
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-development-environment", "inspect", "--venv=venv", "--no-ansi"],
+    )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
@@ -82,7 +96,10 @@ def test_venv(
     command = f"{tmp_path / 'venv' / 'bin' / 'python'} -m pip uninstall xmltodict -y"
     subprocess_run(command=command, verbose=True, msg="", output=output)
 
-    monkeypatch.setattr("sys.argv", ["pip4a", "check", "--venv=venv"])
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-development-environment", "check", "--venv=venv"],
+    )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
@@ -97,7 +114,12 @@ def test_non_local(
     """Install non-local collection."""
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "install", "ansible.scm", f"--venv={tmp_path / 'venv'}"],
+        [
+            "ansible-development-environment",
+            "install",
+            "ansible.scm",
+            f"--venv={tmp_path / 'venv'}",
+        ],
     )
     with pytest.raises(SystemExit):
         main()
@@ -106,7 +128,7 @@ def test_non_local(
     assert string in captured.out
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "tree", f"--venv={tmp_path / 'venv'}"],
+        ["ansible-development-environment", "tree", f"--venv={tmp_path / 'venv'}"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -127,7 +149,13 @@ def test_requirements(
     requirements = Path(__file__).parent.parent / "fixtures" / "requirements.yml"
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "install", f"--venv={tmp_path / 'venv'}", "-r", str(requirements)],
+        [
+            "ansible-development-environment",
+            "install",
+            f"--venv={tmp_path / 'venv'}",
+            "-r",
+            str(requirements),
+        ],
     )
     with pytest.raises(SystemExit):
         main()
@@ -136,7 +164,13 @@ def test_requirements(
     assert string in captured.out
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "uninstall", f"--venv={tmp_path / 'venv'}", "-r", str(requirements)],
+        [
+            "ansible-development-environment",
+            "uninstall",
+            f"--venv={tmp_path / 'venv'}",
+            "-r",
+            str(requirements),
+        ],
     )
     with pytest.raises(SystemExit):
         main()
@@ -148,7 +182,7 @@ def test_requirements(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["pip4a", "list", f"--venv={tmp_path / 'venv'}"],
+        ["ansible-development-environment", "list", f"--venv={tmp_path / 'venv'}"],
     )
     with pytest.raises(SystemExit):
         main()

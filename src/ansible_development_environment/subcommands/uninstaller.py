@@ -7,13 +7,16 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pip4a.collection import Collection, parse_collection_request
-from pip4a.utils import collections_from_requirements
+from ansible_development_environment.collection import (
+    Collection,
+    parse_collection_request,
+)
+from ansible_development_environment.utils import collections_from_requirements
 
 
 if TYPE_CHECKING:
-    from pip4a.config import Config
-    from pip4a.output import Output
+    from ansible_development_environment.config import Config
+    from ansible_development_environment.output import Output
 
 
 class UnInstaller:

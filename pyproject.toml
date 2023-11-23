@@ -24,18 +24,18 @@ dynamic = ["dependencies", "optional-dependencies", "version"]
 keywords = ["ansible"]
 license = {text = "GPL-3.0-only"}
 maintainers = [{"email" = "bthornto@redhat.com", "name" = "Bradley Thornton"}]
-name = "pip4a"
+name = "ansible-development-environment"
 readme = "README.md"
 requires-python = ">=3.9"
 
 [project.scripts]
-pip4a = "pip4a.cli:main"
+ansible-development-environment = "ansible_development_environment.cli:main"
 
 [project.urls]
-changelog = "https://github.com/cidrblock/pip4a/releases"
-documentation = "https://pip4a.readthedocs.io/en/latest/"
-homepage = "https://github.com/cidrblock/pip4a"
-repository = "https://github.com/cidrblock/pip4a"
+changelog = "https://github.com/cidrblock/ansible-development-environment/releases"
+documentation = "https://ansible.readthedocs.io/projects/development-environment/"
+homepage = "https://github.com/ansible/ansible-development-environment"
+repository = "https://github.com/ansible/ansible-development-environment"
 
 [tool.mypy]
 files = ["src", "tests"]
@@ -261,7 +261,7 @@ optional-dependencies.test = {file = [".config/requirements-test.txt"]}
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
-write_to = "src/pip4a/_version.py"
+write_to = "src/ansible_development_environment/_version.py"
 
 [tool.tomlsort]
 all = true

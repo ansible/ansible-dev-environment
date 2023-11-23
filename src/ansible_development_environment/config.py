@@ -1,4 +1,4 @@
-"""Constants, for now, for pip4a."""
+"""Constants, for now, for ansible-development-environment."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ class Config:
     @property
     def cache_dir(self: Config) -> Path:
         """Return the cache directory."""
-        cache_dir = self.venv / ".pip4a"
+        cache_dir = self.venv / ".ansible-development-environment"
         if not cache_dir.exists():
             cache_dir.mkdir(parents=True)
         return cache_dir

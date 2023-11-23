@@ -7,16 +7,19 @@ from pathlib import Path
 
 import pytest
 
-from pip4a.collection import Collection, parse_collection_request
-from pip4a.config import Config
-from pip4a.output import Output
-from pip4a.utils import TermFeatures
+from ansible_development_environment.collection import (
+    Collection,
+    parse_collection_request,
+)
+from ansible_development_environment.config import Config
+from ansible_development_environment.output import Output
+from ansible_development_environment.utils import TermFeatures
 
 
 term_features = TermFeatures(color=False, links=False)
 
 output = Output(
-    log_file=str(Path.cwd() / "pip4a.log"),
+    log_file=str(Path.cwd() / "ansible-development-environment.log"),
     log_level="notset",
     log_append="true",
     term_features=term_features,

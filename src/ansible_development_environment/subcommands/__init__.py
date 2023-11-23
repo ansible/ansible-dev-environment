@@ -1,4 +1,4 @@
-"""The subcommands module contains all the subcommands for pip4a."""
+"""The subcommands module contains all the subcommands for ansible-development-environment."""
 
 # ruff: noqa: F401
 

@@ -1,15 +1,15 @@
-"""Lister module for pip4a."""
+"""Lister module for ansible-development-environment."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pip4a.utils import collect_manifests, term_link
+from ansible_development_environment.utils import collect_manifests, term_link
 
 
 if TYPE_CHECKING:
-    from pip4a.config import Config
-    from pip4a.output import Output
+    from ansible_development_environment.config import Config
+    from ansible_development_environment.output import Output
 
 
 class Lister:

@@ -5,12 +5,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pip4a.tree import Tree
-from pip4a.utils import TermFeatures
+from ansible_development_environment.tree import Tree
+from ansible_development_environment.utils import TermFeatures
 
 
 if TYPE_CHECKING:
-    from pip4a.tree import JSONVal
+    from ansible_development_environment.tree import JSONVal
 
 
 sample_1: JSONVal = {

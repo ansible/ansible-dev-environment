@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union
 
-from pip4a.tree import Tree
-from pip4a.utils import builder_introspect, collect_manifests
+from ansible_development_environment.tree import Tree
+from ansible_development_environment.utils import builder_introspect, collect_manifests
 
 
 if TYPE_CHECKING:
-    from pip4a.config import Config
-    from pip4a.output import Output
+    from ansible_development_environment.config import Config
+    from ansible_development_environment.output import Output
 
 ScalarVal = Union[bool, str, float, int, None]
 JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
