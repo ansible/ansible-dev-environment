@@ -1,3 +1,4 @@
 ansible-builder
 pyyaml
 subprocess-tee
+gitpython
