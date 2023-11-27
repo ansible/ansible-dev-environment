@@ -97,5 +97,5 @@ repos:
         args:
           - src
           - tests
-          - --python-version=3.9
+          - --python-version=3.11
         pass_filenames: false
