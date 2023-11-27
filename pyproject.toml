@@ -13,7 +13,6 @@ classifiers = [
   'Programming Language :: Python :: 3',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
-  'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: Implementation :: CPython',
   'Programming Language :: Python',
   'Topic :: Software Development',
@@ -26,7 +25,7 @@ license = {text = "GPL-3.0-only"}
 maintainers = [{"email" = "bthornto@redhat.com", "name" = "Bradley Thornton"}]
 name = "ansible-development-environment"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.scripts]
 ansible-development-environment = "ansible_development_environment.cli:main"
