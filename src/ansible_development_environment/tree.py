@@ -1,13 +1,11 @@
 """An ascii tree generator."""
 from __future__ import annotations
 
-from typing import Union
-
 from .utils import Ansi, TermFeatures, term_link
 
 
-ScalarVal = Union[bool, str, float, int, None]
-JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
+ScalarVal = bool | str | float | int | None
+JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
 
 class Tree:  # pylint: disable=R0902
@@ -87,7 +85,7 @@ class Tree:  # pylint: disable=R0902
     @staticmethod
     def is_scalar(obj: JSONVal) -> bool:
         """Check if the object is a scalar."""
-        return isinstance(obj, (str, int, float, bool)) or obj is None
+        return isinstance(obj, str | int | float | bool) or obj is None
 
     def _print_tree(  # noqa: C901, PLR0913, PLR0912
         self: Tree,
@@ -137,7 +135,7 @@ class Tree:  # pylint: disable=R0902
                 )
 
         elif isinstance(obj, list):
-            is_complex = any(isinstance(item, (dict, list)) for item in obj)
+            is_complex = any(isinstance(item, dict | list) for item in obj)
             is_long = len(obj) > 1
             if is_complex and is_long:
                 repr_obj = {str(i): item for i, item in enumerate(obj)}
