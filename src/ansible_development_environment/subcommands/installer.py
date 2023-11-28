@@ -204,7 +204,65 @@ class Installer:
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
-    def _install_local_collection(  # noqa: PLR0915, PLR0912
+    def _copy_git_repo_files(
+        self: Installer,
+        local_repo_path: Path | None,
+        destination_path: Path,
+    ) -> None:
+        """Copy collection files tracked in git to the build directory.
+
+        Args:
+            local_repo_path: The collection local path.
+            destination_path: The build destination path.
+
+        """
+        if local_repo_path is None:
+            msg = "Invalid repo path, no files to copy from Git"
+            self._output.info(msg)
+            return
+
+        msg = "List collection files using git ls-files."
+        self._output.debug(msg)
+
+        try:
+            # Get the list of tracked files in the repository
+            tracked_files_output = subprocess_run(
+                command="git ls-files 2> /dev/null || ls",
+                cwd=local_repo_path,
+                verbose=self._config.args.verbose,
+                msg=msg,
+                output=self._output,
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to list collection using git ls-files: {exc} {exc.stderr}"
+            self._output.critical(err)
+            return
+
+        # Get the list of tracked files
+        tracked_files = tracked_files_output.stdout.split("\n")
+
+        # Create the destination folder if it doesn't exist
+        Path(destination_path).mkdir(parents=True, exist_ok=True)
+
+        for file in tracked_files:
+            src_file_path = Path(local_repo_path) / file
+            dest_file_path = Path(destination_path) / file
+
+            # Ensure the destination directory for the file exists
+            dest_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if src_file_path.is_dir():
+                # Skip directories
+                continue
+
+            try:
+                # Copy the file
+                shutil.copy2(src_file_path, dest_file_path)
+            except shutil.Error as exc:
+                err = f"Failed to copy collection to build directory: {exc}"
+                self._output.critical(err)
+
+    def _install_local_collection(
         self: Installer,
         collection: Collection,
     ) -> None:
@@ -220,23 +278,10 @@ class Installer:
         msg = f"Installing local collection from: {collection.build_dir}"
         self._output.info(msg)
 
-        command = (
-            "cp -r --parents $(git ls-files 2> /dev/null || ls)"
-            f" {collection.build_dir}"
+        self._copy_git_repo_files(
+            local_repo_path=collection.path,
+            destination_path=collection.build_dir,
         )
-        msg = "Copying collection to build directory using git ls-files."
-        self._output.debug(msg)
-        try:
-            subprocess_run(
-                command=command,
-                cwd=collection.path,
-                verbose=self._config.args.verbose,
-                msg=msg,
-                output=self._output,
-            )
-        except subprocess.CalledProcessError as exc:
-            err = f"Failed to copy collection to build directory: {exc} {exc.stderr}"
-            self._output.critical(err)
 
         command = (
             f"cd {collection.build_dir} &&"
