@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from ansible_development_environment.tree import Tree
 from ansible_development_environment.utils import builder_introspect, collect_manifests
@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from ansible_development_environment.config import Config
     from ansible_development_environment.output import Output
 
-ScalarVal = Union[bool, str, float, int, None]
-JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
+ScalarVal = bool | str | float | int | None
+JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
 
 class TreeMaker:

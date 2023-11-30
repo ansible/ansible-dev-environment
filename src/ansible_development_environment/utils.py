@@ -11,7 +11,7 @@ import threading
 import time
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import subprocess_tee
 import yaml
@@ -30,8 +30,8 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-ScalarVal = Union[bool, str, float, int, None]
-JSONVal = Union[ScalarVal, list["JSONVal"], dict[str, "JSONVal"]]
+ScalarVal = bool | str | float | int | None
+JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
 
 @dataclass
