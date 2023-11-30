@@ -47,7 +47,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
 
       - name: Install tox
-        run: python3 -m pip install --upgrade "tox>=4.0.2"
+        run: python3 -m pip install --upgrade "tox>=4.11.3"
 
       - name: Log Python info (${{ matrix.python_version }})
         run: |

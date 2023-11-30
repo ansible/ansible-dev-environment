@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 try:
-    from ._version import version as __version__  # type: ignore[import-not-found]
+    from ._version import version as __version__  # type: ignore[unused-ignore,import-not-found]
 except ImportError:  # pragma: no cover
     try:
         import pkg_resources
