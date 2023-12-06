@@ -93,9 +93,6 @@ def test_venv(
     assert "ansible.netcommon" in captured_json
     assert "ansible.utils" not in captured_json
 
-    command = f"{tmp_path / 'venv' / 'bin' / 'python'} -m pip uninstall xmltodict -y"
-    subprocess_run(command=command, verbose=True, msg="", output=output)
-
     monkeypatch.setattr(
         "sys.argv",
         ["ansible-development-environment", "check", "--venv=venv"],
@@ -103,7 +100,7 @@ def test_venv(
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
-    assert "Missing python dependencies: xmltodict" in captured.err
+    assert "Collection ansible.netcommon requires ansible.util" in captured.err
 
 
 def test_non_local(
