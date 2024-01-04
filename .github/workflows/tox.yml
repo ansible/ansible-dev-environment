@@ -1,15 +1,21 @@
+---
 name: tox
 
-# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+on:
+  push: # only publishes pushes to the main branch to TestPyPI
+    branches: # any integration branch but not tag
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
-on:
-  create: # is used for publishing to PyPI and TestPyPI
-    tags: # any tag regardless of its name, no branches
-      - "**"
-  pull_request:
+env:
+  FORCE_COLOR: 1 # tox, pytest, ansible-lint
+  PY_COLORS: 1
 
 jobs:
   prepare:
@@ -80,6 +86,30 @@ jobs:
       - name: tox -e ${{ matrix.passed_name }}
         run: python3 -m tox -e ${{ matrix.passed_name }}
 
+      - name: Upload coverage data
+        if: ${{ startsWith(matrix.passed_name, 'py') }}
+        uses: codecov/codecov-action@v3
+        with:
+          name: ${{ matrix.passed_name }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true # optional (default = false)
+
+      - name: Archive logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs.zip
+          path: .tox/**/log/
+
+      - name: Report failure if git reports dirty status
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            # shellcheck disable=SC2016
+            echo -n '::error file=git-status::'
+            printf '### Failed as git reported modified and/or untracked files\n```\n%s\n```\n' "$(git status -s)" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 99
+          fi
+        # https://github.com/actions/toolkit/issues/193
   check: # This job does nothing and is only used for the branch protection
     if: always()
     permissions:

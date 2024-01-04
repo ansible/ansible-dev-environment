@@ -40,6 +40,25 @@ documentation = "https://ansible.readthedocs.io/projects/development-environment
 homepage = "https://github.com/ansible/ansible-development-environment"
 repository = "https://github.com/ansible/ansible-development-environment"
 
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
+# Increase it just so it would pass on any single-python run
+fail_under = 42
+# During development we might remove code (files) with coverage data, and we dont want to fail:
+ignore_errors = true
+omit = ["tests/*"]
+show_missing = true
+skip_covered = true
+skip_empty = true
+
+[tool.coverage.run]
+concurrency = ["multiprocessing", "thread"]
+# Do not use branch until bug is fixes:
+# https://github.com/nedbat/coveragepy/issues/605
+# branch = true
+parallel = true
+source = ["src"]
+
 [tool.mypy]
 files = ["src", "tests"]
 strict = true
