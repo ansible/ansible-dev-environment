@@ -20,7 +20,7 @@ def test_venv(
     # disable color for json output
     term_features = TermFeatures(color=False, links=False)
     output = Output(
-        log_file=f"/{tmp_path}/ansible-development-environment.log",
+        log_file=f"/{tmp_path}/ansible-dev-environment.log",
         log_level="INFO",
         log_append="false",
         term_features=term_features,
@@ -41,7 +41,7 @@ def test_venv(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-development-environment",
+            "ansible-dev-environment",
             "install",
             str(tmp_path / "cisco.nxos"),
             "--venv=venv",
@@ -57,7 +57,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-development-environment", "list", "--venv=venv"],
+        ["ansible-dev-environment", "list", "--venv=venv"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -70,7 +70,7 @@ def test_venv(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-development-environment",
+            "ansible-dev-environment",
             "uninstall",
             "ansible.utils",
             "--venv=venv",
@@ -83,7 +83,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-development-environment", "inspect", "--venv=venv", "--no-ansi"],
+        ["ansible-dev-environment", "inspect", "--venv=venv", "--no-ansi"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -95,7 +95,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-development-environment", "check", "--venv=venv"],
+        ["ansible-dev-environment", "check", "--venv=venv"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -112,7 +112,7 @@ def test_non_local(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-development-environment",
+            "ansible-dev-environment",
             "install",
             "ansible.scm",
             f"--venv={tmp_path / 'venv'}",
@@ -125,7 +125,7 @@ def test_non_local(
     assert string in captured.out
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-development-environment", "tree", f"--venv={tmp_path / 'venv'}"],
+        ["ansible-dev-environment", "tree", f"--venv={tmp_path / 'venv'}"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -147,7 +147,7 @@ def test_requirements(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-development-environment",
+            "ansible-dev-environment",
             "install",
             f"--venv={tmp_path / 'venv'}",
             "-r",
@@ -162,7 +162,7 @@ def test_requirements(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-development-environment",
+            "ansible-dev-environment",
             "uninstall",
             f"--venv={tmp_path / 'venv'}",
             "-r",
@@ -179,7 +179,7 @@ def test_requirements(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-development-environment", "list", f"--venv={tmp_path / 'venv'}"],
+        ["ansible-dev-environment", "list", f"--venv={tmp_path / 'venv'}"],
     )
     with pytest.raises(SystemExit):
         main()

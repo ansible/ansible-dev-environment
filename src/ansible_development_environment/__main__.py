@@ -1,4 +1,4 @@
-"""A runpy entry point for ansible-development-environment.
+"""A runpy entry point for ansible-dev-environment.
 
 This makes it possible to invoke CLI
 via :command:`python -m ansible_development_environment`.

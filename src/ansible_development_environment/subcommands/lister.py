@@ -1,4 +1,4 @@
-"""Lister module for ansible-development-environment."""
+"""Lister module for ansible-dev-environment."""
 
 from __future__ import annotations
 

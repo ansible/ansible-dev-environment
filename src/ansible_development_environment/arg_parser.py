@@ -33,7 +33,7 @@ def common_args(parser: ArgumentParser) -> None:
         "--lf",
         "--log-file <file>",
         dest="log_file",
-        default=str(Path.cwd() / "ansible-development-environment.log"),
+        default=str(Path.cwd() / "ansible-dev-environment.log"),
         help="Log file to write to.",
     )
     parser.add_argument(

@@ -19,7 +19,7 @@ from ansible_development_environment.utils import TermFeatures
 term_features = TermFeatures(color=False, links=False)
 
 output = Output(
-    log_file=str(Path.cwd() / "ansible-development-environment.log"),
+    log_file=str(Path.cwd() / "ansible-dev-environment.log"),
     log_level="notset",
     log_append="true",
     term_features=term_features,
