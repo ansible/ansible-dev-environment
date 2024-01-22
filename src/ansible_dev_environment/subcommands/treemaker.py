@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ansible_development_environment.tree import Tree
-from ansible_development_environment.utils import builder_introspect, collect_manifests
+from ansible_dev_environment.tree import Tree
+from ansible_dev_environment.utils import builder_introspect, collect_manifests
 
 
 if TYPE_CHECKING:
-    from ansible_development_environment.config import Config
-    from ansible_development_environment.output import Output
+    from ansible_dev_environment.config import Config
+    from ansible_dev_environment.output import Output
 
 ScalarVal = bool | str | float | int | None
 JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]

@@ -1,7 +1,7 @@
 ---
 site_name: Ansible Development Environment Documentation
-site_url: https://ansible.readthedocs.io/projects/development-environment/
-repo_url: https://github.com/ansible/ansible-development-environment
+site_url: https://ansible.readthedocs.io/projects/dev-environment/
+repo_url: https://github.com/ansible/ansible-dev-environment
 edit_uri: blob/main/docs/
 copyright: Copyright © 2023 Red Hat, Inc.
 docs_dir: docs
@@ -22,10 +22,10 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/ansible-development-environment/
+      link: https://pypi.org/project/ansible-dev-environment/
       name: PyPI
     - icon: fontawesome/solid/scroll
-      link: https://github.com/ansible/ansible-development-environment/releases
+      link: https://github.com/ansible/ansible-dev-environment/releases
       name: Releases
     - icon: simple/mastodon
       link: https://fosstodon.org/@ansible
@@ -34,10 +34,10 @@ extra:
       link: https://matrix.to/#/#devtools:ansible.com
       name: Matrix
     - icon: fontawesome/solid/comments
-      link: https://github.com/ansible/ansible-development-environment/discussions
+      link: https://github.com/ansible/ansible-dev-environment/discussions
       name: Discussions
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/ansible/ansible-development-environment
+      link: https://github.com/ansible/ansible-dev-environment
       name: GitHub
 
 nav:

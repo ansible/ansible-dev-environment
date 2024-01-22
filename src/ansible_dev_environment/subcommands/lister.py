@@ -1,15 +1,15 @@
-"""Lister module for ansible-development-environment."""
+"""Lister module for ansible-dev-environment."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ansible_development_environment.utils import collect_manifests, term_link
+from ansible_dev_environment.utils import collect_manifests, term_link
 
 
 if TYPE_CHECKING:
-    from ansible_development_environment.config import Config
-    from ansible_development_environment.output import Output
+    from ansible_dev_environment.config import Config
+    from ansible_dev_environment.output import Output
 
 
 class Lister:

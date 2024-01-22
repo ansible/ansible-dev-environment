@@ -6,12 +6,12 @@ import json
 
 from typing import TYPE_CHECKING
 
-from ansible_development_environment.utils import collect_manifests
+from ansible_dev_environment.utils import collect_manifests
 
 
 if TYPE_CHECKING:
-    from ansible_development_environment.config import Config
-    from ansible_development_environment.output import Output
+    from ansible_dev_environment.config import Config
+    from ansible_dev_environment.output import Output
 
 try:
     from pip._vendor.rich import print_json

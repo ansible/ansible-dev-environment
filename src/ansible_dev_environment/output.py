@@ -235,7 +235,7 @@ class Output:
             "warning": 0,
         }
         self.term_features = term_features
-        self.logger = logging.getLogger("ansible_development_environment")
+        self.logger = logging.getLogger("ansible_dev_environment")
         if log_level != "notset":
             self.logger.setLevel(log_level.upper())
             self.log_to_file = bool(log_file)

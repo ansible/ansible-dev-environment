@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ansible_development_environment import subcommands
+from ansible_dev_environment import subcommands
 
 from .arg_parser import parse
 from .config import Config
