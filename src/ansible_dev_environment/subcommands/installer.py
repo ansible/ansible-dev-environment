@@ -9,11 +9,11 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ansible_development_environment.collection import (
+from ansible_dev_environment.collection import (
     Collection,
     parse_collection_request,
 )
-from ansible_development_environment.utils import (
+from ansible_dev_environment.utils import (
     builder_introspect,
     collections_from_requirements,
     oxford_join,
@@ -24,8 +24,8 @@ from .checker import Checker
 
 
 if TYPE_CHECKING:
-    from ansible_development_environment.config import Config
-    from ansible_development_environment.output import Output
+    from ansible_dev_environment.config import Config
+    from ansible_dev_environment.output import Output
 
 
 class Installer:

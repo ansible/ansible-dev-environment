@@ -27,18 +27,18 @@ dynamic = ["dependencies", "optional-dependencies", "version"]
 keywords = ["ansible"]
 license = {text = "GPL-3.0-only"}
 maintainers = [{"email" = "bthornto@redhat.com", "name" = "Bradley Thornton"}]
-name = "ansible-development-environment"
+name = "ansible-dev-environment"
 readme = "README.md"
 requires-python = ">=3.10"
 
 [project.scripts]
-ansible-development-environment = "ansible_development_environment.cli:main"
+ansible-dev-environment = "ansible_dev_environment.cli:main"
 
 [project.urls]
-changelog = "https://github.com/cidrblock/ansible-development-environment/releases"
-documentation = "https://ansible.readthedocs.io/projects/development-environment/"
-homepage = "https://github.com/ansible/ansible-development-environment"
-repository = "https://github.com/ansible/ansible-development-environment"
+changelog = "https://github.com/ansible/ansible-dev-environment/releases"
+documentation = "https://ansible.readthedocs.io/projects/dev-environment/"
+homepage = "https://github.com/ansible/ansible-dev-environment"
+repository = "https://github.com/ansible/ansible-dev-environment"
 
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
@@ -282,7 +282,7 @@ optional-dependencies.test = {file = [".config/requirements-test.in"]}
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
-write_to = "src/ansible_development_environment/_version.py"
+write_to = "src/ansible_dev_environment/_version.py"
 
 [tool.tomlsort]
 all = true

@@ -1,4 +1,4 @@
-"""The subcommands module contains all the subcommands for ansible-development-environment."""
+"""The subcommands module contains all the subcommands for ansible-dev-environment."""
 
 # ruff: noqa: F401
 

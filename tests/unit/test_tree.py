@@ -5,12 +5,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ansible_development_environment.tree import Tree
-from ansible_development_environment.utils import TermFeatures
+from ansible_dev_environment.tree import Tree
+from ansible_dev_environment.utils import TermFeatures
 
 
 if TYPE_CHECKING:
-    from ansible_development_environment.tree import JSONVal
+    from ansible_dev_environment.tree import JSONVal
 
 
 sample_1: JSONVal = {
