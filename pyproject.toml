@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-  "setuptools >= 63.0.0", # required by pyproject+setuptools_scm integration
+  "setuptools >= 65.3.0", # required by pyproject+setuptools_scm integration and editable installs
   "setuptools_scm[toml] >= 7.0.5" # required for "no-local-version" scheme
 ]
 
@@ -281,9 +281,19 @@ optional-dependencies.docs = {file = [".config/requirements-docs.in"]}
 optional-dependencies.test = {file = [".config/requirements-test.in"]}
 
 [tool.setuptools_scm]
+# To prevent accidental pick of mobile version tags such 'v6'
+git_describe_command = [
+  "git",
+  "describe",
+  "--dirty",
+  "--long",
+  "--match",
+  "--tags",
+  "v*.*"
+]
 local_scheme = "no-local-version"
+tag_regex = '^(?P<prefix>v)?(?P<version>[^\+]+)(?P<suffix>.*)?$'
 write_to = "src/ansible_dev_environment/_version.py"
 
 [tool.tomlsort]
-all = true
 in_place = true
