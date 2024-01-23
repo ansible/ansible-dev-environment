@@ -32,7 +32,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 [project.scripts]
-ansible-dev-environment = "ansible_dev_environment.cli:main"
+ade = "ansible_dev_environment.cli:main"
 
 [project.urls]
 changelog = "https://github.com/ansible/ansible-dev-environment/releases"

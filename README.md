@@ -22,7 +22,7 @@ By placing collections into the python site-packages directory they are discover
 $ pip install ansible-dev-environment --user
 $ git clone <collection_repo>
 $ cd <collection_repo>
-$ ansible-dev-environment install -e .\[test] --venv venv
+$ ade install -e .\[test] --venv venv
 INFO: Found collection name: network.interfaces from /home/bthornto/github/network.interfaces/galaxy.yml.
 INFO: Creating virtual environment: /home/bthornto/github/network.interfaces/venv
 INFO: Virtual environment: /home/bthornto/github/network.interfaces/venv
@@ -44,7 +44,7 @@ source venv/bin/activate
 ### Tearing down the development environment
 
 ```
-$ ansible-dev-environment uninstall ansible.scm
+$ ade uninstall ansible.scm
 INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
 INFO     Requirements file /home/bthornto/github/ansible.scm/requirements.txt is empty, skipping
 INFO     Uninstalling python requirements from /home/bthornto/github/ansible.scm/test-requirements.txt
@@ -57,8 +57,8 @@ INFO     Removed collection root: /home/bthornto/github/ansible.scm/venv/lib64/p
 
 ## Help
 
-`ansible-dev-environment --help`
+`ade --help`
 
-`ansible-dev-environment install --help`
+`ade install --help`
 
-`ansible-dev-environment uninstall --help`
+`ade uninstall --help`

@@ -41,7 +41,7 @@ def test_venv(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-dev-environment",
+            "ade",
             "install",
             str(tmp_path / "cisco.nxos"),
             "--venv=venv",
@@ -57,7 +57,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-dev-environment", "list", "--venv=venv"],
+        ["ade", "list", "--venv=venv"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -70,7 +70,7 @@ def test_venv(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-dev-environment",
+            "ade",
             "uninstall",
             "ansible.utils",
             "--venv=venv",
@@ -83,7 +83,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-dev-environment", "inspect", "--venv=venv", "--no-ansi"],
+        ["ade", "inspect", "--venv=venv", "--no-ansi"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -95,7 +95,7 @@ def test_venv(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-dev-environment", "check", "--venv=venv"],
+        ["ade", "check", "--venv=venv"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -112,7 +112,7 @@ def test_non_local(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-dev-environment",
+            "ade",
             "install",
             "ansible.scm",
             f"--venv={tmp_path / 'venv'}",
@@ -125,7 +125,7 @@ def test_non_local(
     assert string in captured.out
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-dev-environment", "tree", f"--venv={tmp_path / 'venv'}"],
+        ["ade", "tree", f"--venv={tmp_path / 'venv'}"],
     )
     with pytest.raises(SystemExit):
         main()
@@ -147,7 +147,7 @@ def test_requirements(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-dev-environment",
+            "ade",
             "install",
             f"--venv={tmp_path / 'venv'}",
             "-r",
@@ -162,7 +162,7 @@ def test_requirements(
     monkeypatch.setattr(
         "sys.argv",
         [
-            "ansible-dev-environment",
+            "ade",
             "uninstall",
             f"--venv={tmp_path / 'venv'}",
             "-r",
@@ -179,7 +179,7 @@ def test_requirements(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["ansible-dev-environment", "list", f"--venv={tmp_path / 'venv'}"],
+        ["ade", "list", f"--venv={tmp_path / 'venv'}"],
     )
     with pytest.raises(SystemExit):
         main()
