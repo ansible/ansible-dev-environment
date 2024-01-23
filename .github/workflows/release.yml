@@ -8,19 +8,6 @@ name: release
   workflow_dispatch:
 
 jobs:
-  # https://github.com/marketplace/actions/actions-tagger
-  actions-tagger:
-    needs: pypi # do not move the mobile tag until we publish
-    runs-on: windows-latest
-    permissions:
-      # Give the default GITHUB_TOKEN write permission.
-      # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
-      contents: write
-    steps:
-      - uses: Actions-R-Us/actions-tagger@latest
-        with:
-          token: "${{ github.token }}"
-          publish_latest_tag: true
   pypi:
     name: Publish to PyPI registry
     environment: release
