@@ -1,4 +1,5 @@
 """An ascii tree generator."""
+
 from __future__ import annotations
 
 from .utils import Ansi, TermFeatures, term_link
