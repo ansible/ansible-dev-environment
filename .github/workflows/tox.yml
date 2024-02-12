@@ -93,7 +93,7 @@ jobs:
         with:
           name: ${{ matrix.passed_name }}
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false  # optional (default = false)
           verbose: true # optional (default = false)
 
       - name: Archive logs
