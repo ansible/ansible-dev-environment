@@ -18,8 +18,27 @@ By placing collections into the python site-packages directory they are discover
 
 ### Setting up a development environment
 
+!!! Recommendation
+
+    The **recommended** approach to install `ansible-lint` is using the
+    `ansible-dev-tools` package.
+    [Ansible Development Tools (ADT)](https://ansible.readthedocs.io/projects/dev-tools/)
+    aims to streamline the setup and usage of several tools needed in order to
+    create [Ansible](https://www.ansible.com) content. ADT combines critical Ansible
+    development packages into a unified Python package.
+
+    ```bash
+    # This also installs ansible-core if it is not already installed
+    pip3 install ansible-dev-tools
+    ```
+
+!!! Standalone
+
+    ```bash
+    pip install ansible-dev-environment --user
+    ```
+
 ```
-$ pip install ansible-dev-environment --user
 $ git clone <collection_repo>
 $ cd <collection_repo>
 $ ade install -e .\[test] --venv venv
