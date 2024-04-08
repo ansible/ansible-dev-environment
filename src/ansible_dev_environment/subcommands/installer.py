@@ -215,7 +215,65 @@ class Installer:
             msg = f"Source installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
-    def _copy_git_repo_files(
+    def _copy_files_using_git_ls_files(
+        self: Installer,
+        local_repo_path: Path | None,
+    ) -> str | None:
+        """Copy collection files tracked using git ls-files to the build directory.
+
+        Args:
+            local_repo_path: The collection local path.
+        Returns:
+            string containing a list of files or nothing
+        """
+        msg = "List collection files using git ls-files."
+        self._output.debug(msg)
+
+        try:
+            # Get the list of tracked files in the repository
+            tracked_files_output = subprocess_run(
+                command="git ls-files 2> /dev/null",
+                cwd=local_repo_path,
+                verbose=self._config.args.verbose,
+                msg=msg,
+                output=self._output,
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to list collection using git ls-files: {exc} {exc.stderr}"
+            self._output.critical(err)
+
+        return tracked_files_output.stdout
+
+    def _copy_files_using_ls(
+        self: Installer,
+        local_repo_path: Path | None,
+    ) -> str | None:
+        """Copy collection files tracked using ls to the build directory.
+
+        Args:
+            local_repo_path: The collection local path.
+        Returns:
+            string containing a list of files or nothing
+        """
+        msg = "List collection files using ls."
+        self._output.debug(msg)
+
+        try:
+            # Get the list of tracked files in the repository
+            tracked_files_output = subprocess_run(
+                command="ls 2> /dev/null",
+                cwd=local_repo_path,
+                verbose=self._config.args.verbose,
+                msg=msg,
+                output=self._output,
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to list collection using ls: {exc} {exc.stderr}"
+            self._output.critical(err)
+
+        return tracked_files_output.stdout
+
+    def _copy_repo_files(
         self: Installer,
         local_repo_path: Path | None,
         destination_path: Path,
@@ -228,29 +286,31 @@ class Installer:
 
         """
         if local_repo_path is None:
-            msg = "Invalid repo path, no files to copy from Git"
+            msg = "Invalid repo path, no files to copy"
             self._output.info(msg)
             return
 
-        msg = "List collection files using git ls-files."
-        self._output.debug(msg)
+        # Get tracked files from git ls-files command
+        tracked_files_output = self._copy_files_using_git_ls_files(
+            local_repo_path=local_repo_path,
+        )
 
-        try:
-            # Get the list of tracked files in the repository
-            tracked_files_output = subprocess_run(
-                command="git ls-files 2> /dev/null || ls",
-                cwd=local_repo_path,
-                verbose=self._config.args.verbose,
-                msg=msg,
-                output=self._output,
+        if tracked_files_output is None:
+            msg = "No tracked files found using git ls-files"
+            self._output.info(msg)
+
+            # If no tracked files found, get files using ls command
+            tracked_files_output = self._copy_files_using_ls(
+                local_repo_path=local_repo_path,
             )
-        except subprocess.CalledProcessError as exc:
-            err = f"Failed to list collection using git ls-files: {exc} {exc.stderr}"
-            self._output.critical(err)
+
+        if tracked_files_output is None:
+            msg = "No files found"
+            self._output.info(msg)
             return
 
-        # Get the list of tracked files
-        tracked_files = tracked_files_output.stdout.split("\n")
+        # Parse tracked files output
+        tracked_files = tracked_files_output.split("\n")
 
         # Create the destination folder if it doesn't exist
         Path(destination_path).mkdir(parents=True, exist_ok=True)
@@ -289,7 +349,7 @@ class Installer:
         msg = f"Installing local collection from: {collection.build_dir}"
         self._output.info(msg)
 
-        self._copy_git_repo_files(
+        self._copy_repo_files(
             local_repo_path=collection.path,
             destination_path=collection.build_dir,
         )
