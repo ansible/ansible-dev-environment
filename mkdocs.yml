@@ -45,6 +45,8 @@ nav:
 
 plugins:
   - autorefs
+  - macros:
+      modules: [mkdocs-ansible:mkdocs_ansible]
   - markdown-exec
   - material/search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
