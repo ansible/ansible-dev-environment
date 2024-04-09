@@ -18,8 +18,13 @@ By placing collections into the python site-packages directory they are discover
 
 ### Setting up a development environment
 
+{{ install_from_adt("ansible-dev-environment") }}
+
+```bash
+pip install ansible-dev-environment --user
 ```
-$ pip install ansible-dev-environment --user
+
+```
 $ git clone <collection_repo>
 $ cd <collection_repo>
 $ ade install -e .\[test] --venv venv
