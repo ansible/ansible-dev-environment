@@ -110,12 +110,15 @@ class Config:
                 msg = f"Creating virtual environment: {self.venv}"
                 self._output.debug(msg)
                 command = f"python -m venv {self.venv}"
-                work = "Creating virtual environment"
+                msg = f"Creating virtual environment: {self.venv}"
+                if self.args.system_site_packages:
+                    command = f"{command} --system-site-packages"
+                    msg = f"Creating virtual environment with system site packages: {self.venv}"
                 try:
                     subprocess_run(
                         command=command,
                         verbose=self.args.verbose,
-                        msg=work,
+                        msg=msg,
                         output=self._output,
                     )
                     msg = f"Created virtual environment: {self.venv}"
@@ -138,10 +141,10 @@ class Config:
         self.venv_interpreter = venv_interpreter
 
     def _set_site_pkg_path(self: Config) -> None:
-        """USe the interpreter to find the site packages path."""
+        """Use the interpreter to find the site packages path."""
         command = (
             f"{self.venv_interpreter} -c"
-            " 'import json,site; print(json.dumps(site.getsitepackages()))'"
+            "'import json,sysconfig; print(json.dumps(sysconfig.get_paths()))'"
         )
         work = "Locating site packages directory"
         try:
@@ -156,16 +159,20 @@ class Config:
             self._output.critical(err)
 
         try:
-            site_pkg_dirs = json.loads(proc.stdout)
+            sysconfig_paths = json.loads(proc.stdout)
         except json.JSONDecodeError as exc:
             err = f"Failed to decode json: {exc}"
             self._output.critical(err)
 
-        if not site_pkg_dirs:
+        if not sysconfig_paths:
             err = "Failed to find site packages path."
             self._output.critical(err)
 
-        msg = f"Found site packages path: {site_pkg_dirs[0]}"
-        self._output.debug(msg)
+        purelib = sysconfig_paths.get("purelib")
+        if not purelib:
+            err = "Failed to find purelib in sysconfig paths."
+            self._output.critical(err)
 
-        self.site_pkg_path = Path(site_pkg_dirs[0])
+        self.site_pkg_path = Path(purelib)
+        msg = f"Found site packages path: {self.site_pkg_path}"
+        self._output.debug(msg)
