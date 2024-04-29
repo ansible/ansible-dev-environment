@@ -16,6 +16,7 @@ fqcn
 levelname
 levelno
 netcommon
+purelib
 reqs
 setenv
 specp

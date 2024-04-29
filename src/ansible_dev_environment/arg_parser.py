@@ -115,6 +115,15 @@ def parse() -> argparse.Namespace:
         help="Disable the use of ANSI codes for terminal hyperlink generation and color.",
     )
 
+    level1.add_argument(
+        "--ssp",
+        "--system-site-packages",
+        help="When building a virtual environment, give access to the system site-packages dir.",
+        default=False,
+        dest="system_site_packages",
+        action="store_true",
+    )
+
     common_args(level1)
 
     _check = subparsers.add_parser(
