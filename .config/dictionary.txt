@@ -10,6 +10,7 @@ cpart
 cpath
 crepository
 csource
+excinfo
 fileh
 fqcn
 levelname

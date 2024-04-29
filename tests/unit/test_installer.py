@@ -20,12 +20,14 @@ def test_git_no_files(tmp_path: Path, output: Output) -> None:
     """Test no files using git.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
     installer = Installer(output=output, config=config)
-    found_using, files = installer._find_files_using_git_ls_files(local_repo_path=tmp_path)
+    found_using, files = installer._find_files_using_git_ls_files(
+        local_repo_path=tmp_path,
+    )
     assert not found_using
     assert files is None
 
@@ -34,13 +36,15 @@ def test_git_none_tracked(tmp_path: Path, output: Output) -> None:
     """Test non tracked using git.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
     installer = Installer(output=output, config=config)
     subprocess.run(args=["git", "init"], cwd=tmp_path, check=False)
-    found_using, files = installer._find_files_using_git_ls_files(local_repo_path=tmp_path)
+    found_using, files = installer._find_files_using_git_ls_files(
+        local_repo_path=tmp_path,
+    )
     assert found_using == "git ls-files"
     assert files == ""
 
@@ -49,7 +53,7 @@ def test_git_one_tracked(tmp_path: Path, output: Output) -> None:
     """Test one tracked using git.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
@@ -57,7 +61,9 @@ def test_git_one_tracked(tmp_path: Path, output: Output) -> None:
     subprocess.run(args=["git", "init"], cwd=tmp_path, check=False)
     (tmp_path / "file.txt").touch()
     subprocess.run(args=["git", "add", "--all"], cwd=tmp_path, check=False)
-    found_using, files = installer._find_files_using_git_ls_files(local_repo_path=tmp_path)
+    found_using, files = installer._find_files_using_git_ls_files(
+        local_repo_path=tmp_path,
+    )
     assert found_using == "git ls-files"
     assert files == "file.txt\n"
 
@@ -66,7 +72,7 @@ def test_ls_no_files(tmp_path: Path, output: Output) -> None:
     """Test no files using ls.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
@@ -80,7 +86,7 @@ def test_ls_one_found(tmp_path: Path, output: Output) -> None:
     """Test one found using ls.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
@@ -95,7 +101,7 @@ def test_copy_no_files(tmp_path: Path, output: Output) -> None:
     """Test file copy no files.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     source = tmp_path / "source"
@@ -113,7 +119,7 @@ def test_copy_using_git(tmp_path: Path, output: Output) -> None:
     """Test file copy using git.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     source = tmp_path / "source"
@@ -135,7 +141,7 @@ def test_copy_using_ls(tmp_path: Path, output: Output) -> None:
     """Test file copy using ls.
 
     Args:
-        tmp_dir: Temp directory
+        tmp_path: Temp directory
         output: Output instance
     """
     source = tmp_path / "source"
