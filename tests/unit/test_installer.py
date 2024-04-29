@@ -154,4 +154,4 @@ def test_copy_using_ls(tmp_path: Path, output: Output) -> None:
     (source / "file2.txt").touch()
     installer._copy_repo_files(local_repo_path=source, destination_path=dest)
     moved = dest.glob("**/*")
-    assert [m.name for m in list(moved)] == ["file1.txt", "file2.txt"]
+    assert sorted([m.name for m in list(moved)]) == ["file1.txt", "file2.txt"]
