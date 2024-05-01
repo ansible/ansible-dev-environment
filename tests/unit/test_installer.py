@@ -155,3 +155,65 @@ def test_copy_using_ls(tmp_path: Path, output: Output) -> None:
     installer._copy_repo_files(local_repo_path=source, destination_path=dest)
     moved = dest.glob("**/*")
     assert sorted([m.name for m in list(moved)]) == ["file1.txt", "file2.txt"]
+
+
+def test_no_adt_install(
+    tmpdir: Path,
+    output: Output,
+) -> None:
+    """Test only core is installed.
+
+    Args:
+        tmpdir: A temporary directory.
+        output: The output fixture.
+    """
+    venv = tmpdir / "test_venv"
+    args = Namespace(
+        venv=venv,
+        verbose=0,
+        adt=False,
+        system_site_packages=False,
+        collection_specifier=None,
+        requirement=None,
+        cpi=None,
+    )
+
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+
+    installer = Installer(output=output, config=config)
+    installer.run()
+    assert venv.exists()
+    assert (venv / "bin" / "ansible").exists()
+    assert not (venv / "bin" / "adt").exists()
+
+
+def test_adt_install(
+    tmpdir: Path,
+    output: Output,
+) -> None:
+    """Test adt is installed.
+
+    Args:
+        tmpdir: A temporary directory.
+        output: The output fixture.
+    """
+    venv = tmpdir / "test_venv"
+    args = Namespace(
+        venv=venv,
+        verbose=0,
+        adt=True,
+        system_site_packages=False,
+        collection_specifier=None,
+        requirement=None,
+        cpi=None,
+    )
+
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+
+    installer = Installer(output=output, config=config)
+    installer.run()
+    assert venv.exists()
+    assert (venv / "bin" / "ansible").exists()
+    assert (venv / "bin" / "adt").exists()

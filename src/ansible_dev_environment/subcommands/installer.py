@@ -51,7 +51,11 @@ class Installer:
             err = "Multiple optional dependencies are not supported at this time."
             self._output.critical(err)
 
-        self._install_core()
+        if self._config.args.adt:
+            self._install_dev_tools()
+        else:
+            self._install_core()
+
         if self._config.args.requirement or self._config.args.cpi:
             self._install_galaxy_requirements()
         if self._config.args.collection_specifier:
@@ -114,6 +118,28 @@ class Installer:
             )
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install ansible-core: {exc}"
+            self._output.critical(err)
+
+    def _install_dev_tools(self: Installer) -> None:
+        """Install ansible developer tools."""
+        msg = "Installing ansible-dev-tools."
+        self._output.info(msg)
+
+        adt = self._config.venv_bindir / "adt"
+        if adt.exists():
+            return
+        msg = "Installing ansible-dev-tools."
+        self._output.debug(msg)
+        command = f"{self._config.venv_interpreter} -m pip install ansible-dev-tools"
+        try:
+            subprocess_run(
+                command=command,
+                verbose=self._config.args.verbose,
+                msg=msg,
+                output=self._output,
+            )
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to install ansible-dev-tools: {exc}"
             self._output.critical(err)
 
     def _install_galaxy_collections(

@@ -181,6 +181,14 @@ def parse() -> argparse.Namespace:
         help="Install editable.",
     )
 
+    install.add_argument(
+        "-adt",
+        "--ansible-dev-tools",
+        action="store_true",
+        dest="adt",
+        help="Install ansible-dev-tools in the virtual environment.",
+    )
+
     _uninstall = subparsers.add_parser(
         "uninstall",
         formatter_class=CustomHelpFormatter,
