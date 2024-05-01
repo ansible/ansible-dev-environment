@@ -137,7 +137,7 @@ class Installer:
                     shutil.rmtree(collection.site_pkg_path)
 
         command = (
-            f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
+            f"{self._config.galaxy_bin} collection"
             f" install {collections_str}"
             f" -p {self._config.site_pkg_path}"
             " --force"
@@ -191,7 +191,7 @@ class Installer:
                     shutil.rmtree(cpath)
 
         command = (
-            f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
+            f"{self._config.galaxy_bin} collection"
             f" install -r {self._config.args.requirement}"
             f" -p {self._config.site_pkg_path}"
             " --force"
@@ -359,7 +359,7 @@ class Installer:
 
         command = (
             f"cd {collection.build_dir} &&"
-            f" {self._config.venv_bindir / 'ansible-galaxy'} collection build"
+            f" {self._config.galaxy_bin} collection build"
             f" --output-path {collection.build_dir}"
             " --force"
         )
@@ -412,7 +412,7 @@ class Installer:
             shutil.rmtree(info_dir)
 
         command = (
-            f"{self._config.venv_bindir / 'ansible-galaxy'} collection"
+            f"{self._config.galaxy_bin} collection"
             f" install {tarball} -p {self._config.site_pkg_path}"
             " --force"
         )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -100,6 +101,31 @@ class Config:
     def interpreter(self: Config) -> Path:
         """Return the current interpreter."""
         return Path(sys.executable)
+
+    @property
+    def galaxy_bin(self: Config) -> Path | None:
+        """Find the ansible galaxy command.
+
+        Prefer the venv over the system package over the PATH.
+        """
+        within_venv = self.venv_bindir / "ansible-galaxy"
+        if within_venv.exists():
+            msg = f"Found ansible-galaxy in virtual environment: {within_venv}"
+            self._output.debug(msg)
+            return within_venv
+        system_pkg = self.site_pkg_path / "bin" / "ansible-galaxy"
+        if system_pkg.exists():
+            msg = f"Found ansible-galaxy in system packages: {system_pkg}"
+            self._output.debug(msg)
+            return system_pkg
+        last_resort = shutil.which("ansible-galaxy")
+        if last_resort:
+            msg = f"Found ansible-galaxy in PATH: {last_resort}"
+            self._output.debug(msg)
+            return Path(last_resort)
+        msg = "Failed to find ansible-galaxy."
+        self._output.critical(msg)
+        return None
 
     def _set_interpreter(
         self: Config,
