@@ -54,11 +54,16 @@ mkdocs-gen-files==0.5.0
 mkdocs-get-deps==0.2.0
 mkdocs-htmlproofer-plugin==1.2.1
 <<<<<<< HEAD
+<<<<<<< HEAD
 mkdocs-macros-plugin==1.0.5
 mkdocs-material==9.5.20
 =======
 mkdocs-material==9.5.23
 >>>>>>> bf1744c (Bump the dependencies group in /.config with 7 updates (#156))
+=======
+mkdocs-macros-plugin==1.0.5
+mkdocs-material==9.5.20
+>>>>>>> 687e94c (Update constraints)
 mkdocs-material-extensions==1.3.1
 mkdocs-minify-plugin==0.8.0
 mkdocs-monorepo-plugin==1.1.0
@@ -74,6 +79,7 @@ pathspec==0.12.1
 pbr==6.0.0
 pillow==10.3.0
 <<<<<<< HEAD
+<<<<<<< HEAD
 pip-tools==7.4.1
 pipdeptree==2.19.1
 platformdirs==4.2.1
@@ -81,6 +87,11 @@ platformdirs==4.2.1
 pipdeptree==2.20.0
 platformdirs==4.2.2
 >>>>>>> bf1744c (Bump the dependencies group in /.config with 7 updates (#156))
+=======
+pip-tools==7.4.1
+pipdeptree==2.19.1
+platformdirs==4.2.1
+>>>>>>> 687e94c (Update constraints)
 pluggy==1.5.0
 pre-commit==3.7.1
 pycparser==2.22
