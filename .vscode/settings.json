@@ -1,4 +1,5 @@
 {
+  "python.analysis.ignore": ["*"],
   "python.testing.unittestEnabled": false,
   // Override the pyproject.toml and disable xdist to enable test debugging
   "python.testing.pytestArgs": ["-n0", "--dist", "no"],
@@ -12,5 +13,8 @@
   },
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.preferDaemon": true,
+  "mypy-type-checker.reportingScope": "workspace"
 }
