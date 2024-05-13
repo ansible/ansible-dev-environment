@@ -1,6 +1,9 @@
 coverage[toml]
 mypy
+<<<<<<< HEAD
 pip-tools
+=======
+>>>>>>> 57c1317 (Format with Ruff)
 pre-commit
 pydoclint
 pytest
