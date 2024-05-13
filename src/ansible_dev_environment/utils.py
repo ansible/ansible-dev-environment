@@ -72,19 +72,19 @@ def term_link(uri: str, term_features: TermFeatures, label: str) -> str:
 class Ansi:
     """ANSI escape codes."""
 
-    BLUE = "\x1B[34m"
-    BOLD = "\x1B[1m"
-    CYAN = "\x1B[36m"
-    GREEN = "\x1B[32m"
-    ITALIC = "\x1B[3m"
-    MAGENTA = "\x1B[35m"
-    RED = "\x1B[31m"
-    RESET = "\x1B[0m"
-    REVERSED = "\x1B[7m"
-    UNDERLINE = "\x1B[4m"
-    WHITE = "\x1B[37m"
-    YELLOW = "\x1B[33m"
-    GREY = "\x1B[90m"
+    BLUE = "\x1b[34m"
+    BOLD = "\x1b[1m"
+    CYAN = "\x1b[36m"
+    GREEN = "\x1b[32m"
+    ITALIC = "\x1b[3m"
+    MAGENTA = "\x1b[35m"
+    RED = "\x1b[31m"
+    RESET = "\x1b[0m"
+    REVERSED = "\x1b[7m"
+    UNDERLINE = "\x1b[4m"
+    WHITE = "\x1b[37m"
+    YELLOW = "\x1b[33m"
+    GREY = "\x1b[90m"
 
 
 def subprocess_run(  # noqa: PLR0913
@@ -171,9 +171,7 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
     Returns:
         The sorted dictionary.
     """
-    return {
-        k: sort_dict(v) if isinstance(v, dict) else v for k, v in sorted(item.items())
-    }
+    return {k: sort_dict(v) if isinstance(v, dict) else v for k, v in sorted(item.items())}
 
 
 def collect_manifests(  # noqa: C901
@@ -201,9 +199,7 @@ def collect_manifests(  # noqa: C901
             manifest = name_dir / "MANIFEST.json"
             if not manifest.exists():
                 manifest = (
-                    venv_cache_dir
-                    / f"{namespace_dir.name}.{name_dir.name}"
-                    / "MANIFEST.json"
+                    venv_cache_dir / f"{namespace_dir.name}.{name_dir.name}" / "MANIFEST.json"
                 )
             if not manifest.exists():
                 msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
@@ -341,9 +337,7 @@ def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
 
             elif (name_dir / "galaxy.yml").exists():
                 file = name_dir / "galaxy.yml"
-                editable_location = (
-                    str(name_dir.resolve()) if name_dir.is_symlink() else ""
-                )
+                editable_location = str(name_dir.resolve()) if name_dir.is_symlink() else ""
 
             if file:
                 with file.open() as info_file:

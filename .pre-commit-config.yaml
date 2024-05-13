@@ -15,17 +15,6 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: check-symlinks
-      - id: debug-statements
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-
-  - repo: https://github.com/asottile/add-trailing-comma.git
-    rev: v3.1.0
-    hooks:
-      - id: add-trailing-comma
-        args:
-          - --py36-plus
-
   - repo: https://github.com/Lucas-C/pre-commit-hooks.git
     rev: v1.5.5
     hooks:
@@ -42,11 +31,6 @@ repos:
           - prettier-plugin-toml
           - prettier-plugin-sort-json
 
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.3.0
-    hooks:
-      - id: black
-
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.23.1
     hooks:
@@ -58,27 +42,25 @@ repos:
       - id: tox-ini-fmt
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.3.5"
+    rev: "v0.4.4"
     hooks:
       - id: ruff
         args:
           - "--exit-non-zero-on-fix"
+      - id: ruff-format
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v8.6.1
+    rev: v8.8.0
     hooks:
       - id: cspell
-        name: Spell check with cspell
 
   - repo: https://github.com/jsh9/pydoclint
     rev: 0.4.1
     hooks:
       - id: pydoclint
-        args:
-          - "--config=pyproject.toml"
 
   - repo: https://github.com/pycqa/pylint.git
-    rev: v3.1.0
+    rev: v3.1.1
     hooks:
       - id: pylint
         args:
@@ -91,7 +73,7 @@ repos:
           - tox
 
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: mypy
         additional_dependencies:
@@ -103,8 +85,9 @@ repos:
         args:
           - src
           - tests
-          - --python-version=3.11
+          - --python-version=3.12
         pass_filenames: false
+
   - repo: https://github.com/jazzband/pip-tools
     rev: 7.4.1
     hooks:

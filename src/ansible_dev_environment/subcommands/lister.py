@@ -42,11 +42,7 @@ class Lister:
             f" {'Version': <{column2_width}}"
             f" {'Editable project location': <{column3_width}}",
         )
-        print(  # noqa: T201
-            f"{'-' * (column1_width)}"
-            f" {'-' * (column2_width)}"
-            f" {'-' * (column3_width)}",
-        )
+        print(f"{'-' * (column1_width)} {'-' * (column2_width)} {'-' * (column3_width)}")  # noqa: T201
 
         for fqcn, collection in collections.items():
             err = f"Collection {fqcn} has malformed metadata."
@@ -68,9 +64,7 @@ class Lister:
                 continue
 
             collection_path = (
-                self._config.site_pkg_collections_path
-                / collection_namespace
-                / collection_name
+                self._config.site_pkg_collections_path / collection_namespace / collection_name
             )
             if collection_path.is_symlink():
                 editable_location = str(collection_path.resolve())

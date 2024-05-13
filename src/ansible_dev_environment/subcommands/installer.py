@@ -44,10 +44,7 @@ class Installer:
 
     def run(self: Installer) -> None:
         """Run the installer."""
-        if (
-            self._config.args.collection_specifier
-            and "," in self._config.args.collection_specifier
-        ):
+        if self._config.args.collection_specifier and "," in self._config.args.collection_specifier:
             err = "Multiple optional dependencies are not supported at this time."
             self._output.critical(err)
 
@@ -67,16 +64,12 @@ class Installer:
                 )
                 for entry in self._config.args.collection_specifier
             ]
-            local_collections = [
-                collection for collection in collections if collection.local
-            ]
+            local_collections = [collection for collection in collections if collection.local]
             for local_collection in local_collections:
                 self._install_local_collection(collection=local_collection)
                 if self._config.args.editable:
                     self._swap_editable_collection(collection=local_collection)
-            distant_collections = [
-                collection for collection in collections if not collection.local
-            ]
+            distant_collections = [collection for collection in collections if not collection.local]
             if distant_collections:
                 if self._config.args.editable:
                     msg = "Editable installs are only supported for local collections."
@@ -87,9 +80,7 @@ class Installer:
         self._pip_install()
         Checker(config=self._config, output=self._output).system_deps()
 
-        if self._config.args.venv and (
-            self._config.interpreter != self._config.venv_interpreter
-        ):
+        if self._config.args.venv and (self._config.interpreter != self._config.venv_interpreter):
             msg = "A virtual environment was specified but has not been activated."
             self._output.note(msg)
             msg = (
@@ -515,9 +506,7 @@ class Installer:
             f" -r {self._config.discovered_python_reqs}"
         )
 
-        msg = (
-            f"Installing python requirements from {self._config.discovered_python_reqs}"
-        )
+        msg = f"Installing python requirements from {self._config.discovered_python_reqs}"
         self._output.debug(msg)
         work = "Installing python requirements"
         try:

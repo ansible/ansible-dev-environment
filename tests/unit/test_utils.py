@@ -25,11 +25,7 @@ output = Output(
     term_features=term_features,
     verbosity=0,
 )
-config = Config(
-    args=Namespace(),
-    term_features=term_features,
-    output=output,
-)
+config = Config(args=Namespace(), term_features=term_features, output=output)
 
 FIXTURE_DIR = Path(__file__).parent.parent.resolve() / "fixtures"
 scenarios = (
@@ -109,7 +105,4 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
         with pytest.raises(SystemExit):
             parse_collection_request(string=string, config=config, output=output)
     else:
-        assert (
-            parse_collection_request(string=string, config=config, output=output)
-            == spec
-        )
+        assert parse_collection_request(string=string, config=config, output=output) == spec

@@ -126,9 +126,7 @@ class Level(Enum):
 
         :returns: The exit message prefix as a string
         """
-        return (
-            f"{' ' * (self._longest_name() - len(self.name))}{self.name.capitalize()}: "
-        )
+        return f"{' ' * (self._longest_name() - len(self.name))}{self.name.capitalize()}: "
 
 
 @dataclass

@@ -76,10 +76,7 @@ class UnInstaller:
             msg = f"Removed {self._collection.name}"
             self._output.note(msg)
         else:
-            err = (
-                f"Failed to find {self._collection.name}:"
-                f" {self._collection.site_pkg_path}"
-            )
+            err = f"Failed to find {self._collection.name}: {self._collection.site_pkg_path}"
             self._output.warning(err)
 
         for entry in self._config.site_pkg_collections_path.iterdir():
