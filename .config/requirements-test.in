@@ -1,7 +1,5 @@
 coverage[toml]
-coverage-enable-subprocess
 mypy
-pip-tools
 pre-commit
 pydoclint
 pytest
