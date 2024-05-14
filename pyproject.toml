@@ -304,6 +304,12 @@ disable = [
   "too-few-public-methods"
 ]
 
+
+[tool.pytest.ini_options]
+addopts = "-n auto"
+tmp_path_retention_policy = "failed"
+verbosity_assertions = 2
+
 [tool.ruff]
 builtins = ["__"]
 fix = true
