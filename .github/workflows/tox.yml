@@ -115,6 +115,7 @@ jobs:
     if: always()
     permissions:
       pull-requests: write # allow codenotify to comment on pull-request
+      deployments: write # allow for cleanup
 
     needs:
       - build
@@ -136,11 +137,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # https://github.com/sourcegraph/codenotify/issues/19
         continue-on-error: true
-  delete_github_deployments:
-    runs-on: ubuntu-latest
-    needs: check
-    if: ${{ always() }}
-    steps:
+  
       - name: Delete Previous deployments
         uses: actions/github-script@v6
         env:
