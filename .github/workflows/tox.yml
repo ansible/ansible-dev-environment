@@ -136,4 +136,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # https://github.com/sourcegraph/codenotify/issues/19
         continue-on-error: true
-
