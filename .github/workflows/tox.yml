@@ -140,6 +140,7 @@ jobs:
   
       - name: Delete Previous deployments
         uses: actions/github-script@v6
+        if: always()
         env:
           GITHUB_SHA_HEAD: ${{ github.event.pull_request.head.sha }}
         with:
