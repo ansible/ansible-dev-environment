@@ -115,7 +115,6 @@ jobs:
     if: always()
     permissions:
       pull-requests: write # allow codenotify to comment on pull-request
-      deployments: write # allow for cleanup
 
     needs:
       - build
@@ -137,32 +136,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # https://github.com/sourcegraph/codenotify/issues/19
         continue-on-error: true
-  
-      - name: Delete Previous deployments
-        uses: actions/github-script@v6
-        if: always()
-        env:
-          GITHUB_SHA_HEAD: ${{ github.event.pull_request.head.sha }}
-        with:
-          script: |
-            const { GITHUB_SHA_HEAD } = process.env
-            const deployments = await github.rest.repos.listDeployments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: GITHUB_SHA_HEAD
-            });
-            await Promise.all(
-              deployments.data.map(async (deployment) => {
-                await github.rest.repos.createDeploymentStatus({ 
-                  owner: context.repo.owner, 
-                  repo: context.repo.repo, 
-                  deployment_id: deployment.id, 
-                  state: 'inactive' 
-                });
-                return github.rest.repos.deleteDeployment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  deployment_id: deployment.id
-                });
-              })
-            );
