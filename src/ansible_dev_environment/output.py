@@ -30,8 +30,10 @@ def round_half_up(number: float) -> int:
 
     This will always round based on distance from zero. (e.g round(2.5) = 3, round(3.5) = 4).
 
-    :param number: The number to round
-    :returns: The rounded number as an it
+    Args:
+        number: The number to round
+    Returns:
+        The rounded number as an it
     """
     rounded = decimal.Decimal(number).quantize(
         decimal.Decimal("1"),
@@ -43,7 +45,8 @@ def round_half_up(number: float) -> int:
 def console_width() -> int:
     """Get a console width based on common screen widths.
 
-    :returns: The console width
+    Returns:
+        The console width
     """
     medium = 80
     wide = 132
@@ -109,7 +112,8 @@ class Level(Enum):
     def _longest_name(cls: type[T]) -> int:
         """Return the longest exit message prefix.
 
-        :returns: The longest exit message prefix
+        Returns:
+            The longest exit message prefix
         """
         return max(len(member.value) for member in cls)
 
@@ -117,14 +121,16 @@ class Level(Enum):
     def longest_formatted(cls: type[T]) -> int:
         """Return the longest exit message prefix.
 
-        :returns: The longest exit message prefix
+        Returns:
+            The longest exit message prefix
         """
         return max(len(str(member)) for member in cls)
 
     def __str__(self: Level) -> str:
         """Return the exit message prefix as a string.
 
-        :returns: The exit message prefix as a string
+        Returns:
+            The exit message prefix as a string
         """
         return f"{' ' * (self._longest_name() - len(self.name))}{self.name.capitalize()}: "
 
@@ -163,10 +169,12 @@ class Msg:
     ) -> list[str]:
         """Output exit message to the console.
 
-        :param color: Whether to color the message
-        :param width: Constrain message to width
-        :param with_prefix: Whether to prefix the message
-        :returns: The exit message as a string
+        Args:
+            color: Whether to color the message
+            width: Constrain message to width
+            with_prefix: Whether to prefix the message
+        Returns:
+            The exit message as a string
         """
         prefix_length = Level.longest_formatted()
         indent = " " * prefix_length
@@ -254,7 +262,8 @@ class Output:
     def critical(self: Output, msg: str) -> None:
         """Print a critical message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["critical"] += 1
         self.log(msg, level=Level.CRITICAL)
@@ -263,7 +272,8 @@ class Output:
     def debug(self: Output, msg: str) -> None:
         """Print a debug message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["debug"] += 1
         self.log(msg, level=Level.DEBUG)
@@ -271,7 +281,8 @@ class Output:
     def error(self: Output, msg: str) -> None:
         """Print an error message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["error"] += 1
         self.log(msg, level=Level.ERROR)
@@ -279,7 +290,8 @@ class Output:
     def hint(self: Output, msg: str) -> None:
         """Print a hint message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["hint"] += 1
         self.log(msg, level=Level.HINT)
@@ -287,7 +299,8 @@ class Output:
     def info(self: Output, msg: str) -> None:
         """Print a hint message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["info"] += 1
         self.log(msg, level=Level.INFO)
@@ -295,7 +308,8 @@ class Output:
     def note(self: Output, msg: str) -> None:
         """Print a note message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["note"] += 1
         self.log(msg, level=Level.NOTE)
@@ -303,7 +317,8 @@ class Output:
     def warning(self: Output, msg: str) -> None:
         """Print a warning message to the console.
 
-        :param msg: The message to print
+        Args:
+            msg: The message to print
         """
         self.call_count["warning"] += 1
         self.log(msg, level=Level.WARNING)
@@ -311,8 +326,9 @@ class Output:
     def log(self: Output, msg: str, level: Level = Level.ERROR) -> None:
         """Print a message to the console.
 
-        :param msg: The message to print
-        :param prefix: The prefix for the message
+        Args:
+            msg: The message to print
+            level: The message level
         """
         if self.log_to_file:
             self.logger.log(level.log_level, msg, stacklevel=3)

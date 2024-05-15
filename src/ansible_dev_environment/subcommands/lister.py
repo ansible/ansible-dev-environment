@@ -26,7 +26,11 @@ class Lister:
         self._output = output
 
     def run(self: Lister) -> None:
-        """Run the Lister."""
+        """Run the Lister.
+
+        Raises:
+            TypeError: If the link is not a string.
+        """
         # pylint: disable=too-many-locals
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,

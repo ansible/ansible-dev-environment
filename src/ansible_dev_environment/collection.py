@@ -54,7 +54,13 @@ class Collection:  # pylint: disable=too-many-instance-attributes
 
     @property
     def site_pkg_path(self: Collection) -> Path:
-        """Return the site packages collection path."""
+        """Return the site packages collection path.
+
+        Returns:
+            The site packages collection path
+        Raises:
+            RuntimeError: If the collection namespace or name is not set
+        """
         if not self.cnamespace or not self.cname:
             msg = "Collection namespace or name not set."
             raise RuntimeError(msg)

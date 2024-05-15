@@ -70,6 +70,8 @@ strict = true
 allow-init-docstring = true
 arg-type-hints-in-docstring = false
 check-return-types = false
+show-filenames-in-every-violation-message = true
+skip-checking-short-docstrings = false
 style = 'google'
 
 [tool.pylint]

@@ -16,7 +16,13 @@ def test_venv(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Basic smoke test."""
+    """Basic smoke test.
+
+    Args:
+        capsys: Capture stdout and stderr
+        tmp_path: Temporary directory
+        monkeypatch: Pytest monkeypatch
+    """
     # disable color for json output
     term_features = TermFeatures(color=False, links=False)
     output = Output(
@@ -108,7 +114,13 @@ def test_non_local(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Install non-local collection."""
+    """Install non-local collection.
+
+    Args:
+        capsys: Capture stdout and stderr
+        tmp_path: Temporary directory
+        monkeypatch: Pytest monkeypatch
+    """
     monkeypatch.setattr(
         "sys.argv",
         [
@@ -142,7 +154,14 @@ def test_requirements(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Install non-local collection."""
+    """Install non-local collection.
+
+    Args:
+        capsys: Capture stdout and stderr
+        tmp_path: Temporary directory
+        monkeypatch: Pytest monkeypatch
+
+    """
     requirements = Path(__file__).parent.parent / "fixtures" / "requirements.yml"
     monkeypatch.setattr(
         "sys.argv",

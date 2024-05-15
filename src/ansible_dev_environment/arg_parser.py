@@ -6,7 +6,11 @@ import argparse
 
 from argparse import HelpFormatter
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+
+if TYPE_CHECKING:
+    from typing import Any
 
 try:
     from ._version import version as __version__  # type: ignore[unused-ignore,import-not-found]
@@ -214,12 +218,17 @@ def parse() -> argparse.Namespace:
 class ArgumentParser(argparse.ArgumentParser):
     """A custom argument parser."""
 
-    def add_argument(  # type: ignore[no-untyped-def, override]
+    def add_argument(  # type: ignore[override]
         self: ArgumentParser,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
+        *args: Any,  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
-        """Add an argument."""
+        """Add an argument.
+
+        Args:
+            *args: The arguments
+            **kwargs: The keyword arguments
+        """
         if "choices" in kwargs:
             kwargs["help"] += f" (choices: {', '.join(kwargs['choices'])})"
         if "default" in kwargs and kwargs["default"] != "==SUPPRESS==":
@@ -234,7 +243,8 @@ class CustomHelpFormatter(HelpFormatter):
     def __init__(self: CustomHelpFormatter, prog: str) -> None:
         """Initialize the help formatter.
 
-        :param prog: The program name
+        Args:
+            prog: The program name
         """
         long_string = "--abc  --really_really_really_log"
         # 3 here accounts for the spaces in the ljust(6) below

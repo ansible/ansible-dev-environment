@@ -31,7 +31,13 @@ class Config:
         output: Output,
         term_features: TermFeatures,
     ) -> None:
-        """Initialize the configuration."""
+        """Initialize the configuration.
+
+        Args:
+            args: The command line arguments
+            output: The output object
+            term_features: The terminal features
+        """
         self._create_venv: bool = False
         self.args: Namespace = args
         self.bindir: Path
