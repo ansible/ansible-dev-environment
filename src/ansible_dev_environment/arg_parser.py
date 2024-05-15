@@ -218,7 +218,7 @@ def parse() -> argparse.Namespace:
 class ArgumentParser(argparse.ArgumentParser):
     """A custom argument parser."""
 
-    def add_argument(  # type: ignore[no-untyped-def, override]
+    def add_argument(  # type: ignore[override]
         self: ArgumentParser,
         *args: Any,  # noqa: ANN401
         **kwargs: Any,  # noqa: ANN401
