@@ -30,7 +30,11 @@ class TreeMaker:
         self._output = output
 
     def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
-        """Run the command."""
+        """Run the command.
+
+        Raises:
+            TypeError: If the tree dict is not a dict.
+        """
         # pylint: disable=too-many-locals
         builder_introspect(self._config, self._output)
 

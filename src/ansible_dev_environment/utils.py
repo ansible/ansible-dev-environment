@@ -42,7 +42,11 @@ class TermFeatures:
     links: bool
 
     def any_enabled(self: TermFeatures) -> bool:
-        """Return True if any features are enabled."""
+        """Return True if any features are enabled.
+
+        Returns:
+            True if any features are enabled
+        """
         return any((self.color, self.links))
 
 
@@ -72,19 +76,19 @@ def term_link(uri: str, term_features: TermFeatures, label: str) -> str:
 class Ansi:
     """ANSI escape codes."""
 
-    BLUE = "\x1B[34m"
-    BOLD = "\x1B[1m"
-    CYAN = "\x1B[36m"
-    GREEN = "\x1B[32m"
-    ITALIC = "\x1B[3m"
-    MAGENTA = "\x1B[35m"
-    RED = "\x1B[31m"
-    RESET = "\x1B[0m"
-    REVERSED = "\x1B[7m"
-    UNDERLINE = "\x1B[4m"
-    WHITE = "\x1B[37m"
-    YELLOW = "\x1B[33m"
-    GREY = "\x1B[90m"
+    BLUE = "\x1b[34m"
+    BOLD = "\x1b[1m"
+    CYAN = "\x1b[36m"
+    GREEN = "\x1b[32m"
+    ITALIC = "\x1b[3m"
+    MAGENTA = "\x1b[35m"
+    RED = "\x1b[31m"
+    RESET = "\x1b[0m"
+    REVERSED = "\x1b[7m"
+    UNDERLINE = "\x1b[4m"
+    WHITE = "\x1b[37m"
+    YELLOW = "\x1b[33m"
+    GREY = "\x1b[90m"
 
 
 def subprocess_run(  # noqa: PLR0913
@@ -95,7 +99,18 @@ def subprocess_run(  # noqa: PLR0913
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    """Run a subprocess command."""
+    """Run a subprocess command.
+
+    Args:
+        command: The command to run
+        verbose: The verbosity level
+        msg: The message to display
+        output: The output object
+        cwd: The current working directory
+        env: The environment variables
+    Returns:
+        The completed process
+    """
     cmd = f"Running command: {command}"
     output.debug(cmd)
     log_level = logging.ERROR - (verbose * 10)
@@ -123,8 +138,10 @@ def subprocess_run(  # noqa: PLR0913
 def oxford_join(words: list[str]) -> str:
     """Join a list of words with commas and an oxford comma.
 
-    :param words: A list of words to join
-    :return: A string of words joined with commas and an oxford comma
+    Args:
+        words: A list of words to join
+    Returns:
+        A string of words joined with commas and an oxford comma
     """
     words.sort()
     if not words:
@@ -139,8 +156,11 @@ def oxford_join(words: list[str]) -> str:
 def opt_deps_to_files(collection_path: Path, dep_str: str) -> list[Path]:
     """Convert a string of optional dependencies to a list of files.
 
-    :param dep_str: A string of optional dependencies
-    :return: A list of files
+    Args:
+        collection_path: The path to the collection
+        dep_str: A string of optional dependencies
+    Returns:
+        A list of files
     """
     deps = dep_str.split(",")
     files = []
@@ -290,7 +310,13 @@ def builder_introspect(config: Config, output: Output) -> None:
 
 
 def collections_from_requirements(file: Path) -> list[dict[str, str]]:
-    """Build a list of collections from a requirements file."""
+    """Build a list of collections from a requirements file.
+
+    Args:
+        file: The requirements file
+    Returns:
+        A list of collections
+    """
     collections = []
     try:
         with file.open() as requirements_file:

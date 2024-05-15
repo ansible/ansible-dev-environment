@@ -146,7 +146,11 @@ class Installer:
         self: Installer,
         collections: list[Collection],
     ) -> None:
-        """Install the collection from galaxy."""
+        """Install the collection from galaxy.
+
+        Args:
+            collections: The collection objects.
+        """
         collections_str = " ".join(
             [f"'{collection.original}'" for collection in collections],
         )

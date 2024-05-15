@@ -103,7 +103,11 @@ scenarios = (
 
 @pytest.mark.parametrize("scenario", scenarios)
 def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> None:
-    """Test that the parse_collection_request function works as expected."""
+    """Test that the parse_collection_request function works as expected.
+
+    Args:
+        scenario: A tuple containing the string to parse and the expected result.
+    """
     string, spec = scenario
     if spec is None:
         with pytest.raises(SystemExit):
