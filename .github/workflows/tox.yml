@@ -95,7 +95,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           verbose: true # optional (default = false)
-      
+
       - name: Upload coverage data without token
         if: ${{ startsWith(matrix.passed_name, 'py') }} and github.event.pull_request.head.repo.full_name != github.repository
         uses: codecov/codecov-action@v4
