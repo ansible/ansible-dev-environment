@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 def output(tmp_path: Path) -> Output:
     """Create an Output class object as fixture.
 
-    :param tmp_path: App configuration object.
+    Args:
+        tmp_path: Temporary directory.
+    Returns:
+        Output: Output class object.
     """
     return Output(
         log_file=str(tmp_path) + "ansible-creator.log",

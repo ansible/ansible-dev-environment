@@ -23,7 +23,12 @@ class Tree:  # pylint: disable=R0902
         obj: JSONVal,
         term_features: TermFeatures,
     ) -> None:
-        """Initialize the renderer."""
+        """Initialize the renderer.
+
+        Args:
+            obj: The object to render
+            term_features: The terminal features
+        """
         self.obj = obj
         self._lines: list[str] = []
         self.blue: list[ScalarVal] = []
@@ -85,7 +90,13 @@ class Tree:  # pylint: disable=R0902
 
     @staticmethod
     def is_scalar(obj: JSONVal) -> bool:
-        """Check if the object is a scalar."""
+        """Check if the object is a scalar.
+
+        Args:
+            obj: The object to check
+        Returns:
+            Whether the object is a scalar
+        """
         return isinstance(obj, str | int | float | bool) or obj is None
 
     def _print_tree(  # noqa: C901, PLR0913, PLR0912
@@ -167,11 +178,19 @@ class Tree:  # pylint: disable=R0902
             raise TypeError(err)
 
     def append(self: Tree, string: str) -> None:
-        """Append a line to the output."""
+        """Append a line to the output.
+
+        Args:
+            string: The string to append
+        """
         self._lines.append(string)
 
     def render(self: Tree) -> str:
-        """Render the root of the tree."""
+        """Render the root of the tree.
+
+        Returns:
+            The rendered tree
+        """
         # if not isinstance(self.obj, dict):
         self._print_tree(self.obj, is_last=False, is_root=True, was_list=False)
         return "\n".join(self._lines) + "\n"
