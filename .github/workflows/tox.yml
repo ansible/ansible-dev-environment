@@ -87,31 +87,8 @@ jobs:
       - name: tox -e ${{ matrix.passed_name }}
         run: python3 -m tox -e ${{ matrix.passed_name }}
 
-      - name: Upload coverage data (1 of 3 attempts)
-        id: codecov1
-        continue-on-error: true
+      - name: Upload coverage data
         if: ${{ startsWith(matrix.passed_name, 'py') }}
-        uses: codecov/codecov-action@v4
-        with:
-          name: ${{ matrix.passed_name }}
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          verbose: true # optional (default = false)
-
-      - name: Upload coverage data (2 of 3 attempts)
-        id: codecov2
-        continue-on-error: true
-        if: ${{ startsWith(matrix.passed_name, 'py') and steps.codecov1.outcome == 'failure' }}
-        uses: codecov/codecov-action@v4
-        with:
-          name: ${{ matrix.passed_name }}
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          verbose: true # optional (default = false)
-
-      - name: Upload coverage data (3 of 3 attempts)
-        id: codecov3
-        if: ${{ startsWith(matrix.passed_name, 'py') and steps.codecov2.outcome == 'failure' }}
         uses: codecov/codecov-action@v4
         with:
           name: ${{ matrix.passed_name }}
