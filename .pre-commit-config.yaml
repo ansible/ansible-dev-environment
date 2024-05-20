@@ -55,7 +55,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v8.8.0
+    rev: v8.8.1
     hooks:
       - id: cspell
 
@@ -65,7 +65,7 @@ repos:
       - id: pydoclint
 
   - repo: https://github.com/pycqa/pylint.git
-    rev: v3.1.1
+    rev: v3.2.2
     hooks:
       - id: pylint
         args:

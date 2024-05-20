@@ -56,6 +56,7 @@ mkdocs-htmlproofer-plugin==1.2.1
 <<<<<<< HEAD
 <<<<<<< HEAD
 mkdocs-macros-plugin==1.0.5
+<<<<<<< HEAD
 mkdocs-material==9.5.20
 =======
 mkdocs-material==9.5.23
@@ -64,6 +65,9 @@ mkdocs-material==9.5.23
 mkdocs-macros-plugin==1.0.5
 mkdocs-material==9.5.20
 >>>>>>> 687e94c (Update constraints)
+=======
+mkdocs-material==9.5.24
+>>>>>>> 2a632df (Constraints)
 mkdocs-material-extensions==1.3.1
 mkdocs-minify-plugin==0.8.0
 mkdocs-monorepo-plugin==1.1.0
@@ -81,6 +85,7 @@ pillow==10.3.0
 <<<<<<< HEAD
 <<<<<<< HEAD
 pip-tools==7.4.1
+<<<<<<< HEAD
 pipdeptree==2.19.1
 platformdirs==4.2.1
 =======
@@ -92,6 +97,10 @@ pip-tools==7.4.1
 pipdeptree==2.19.1
 platformdirs==4.2.1
 >>>>>>> 687e94c (Update constraints)
+=======
+pipdeptree==2.20.0
+platformdirs==4.2.2
+>>>>>>> 2a632df (Constraints)
 pluggy==1.5.0
 pre-commit==3.7.1
 pycparser==2.22
@@ -100,7 +109,7 @@ pygments==2.18.0
 pymdown-extensions==10.8.1
 pyproject-api==1.6.1
 pyproject-hooks==1.1.0
-pytest==8.2.0
+pytest==8.2.1
 pytest-xdist==3.6.1
 python-dateutil==2.9.0.post0
 python-slugify==8.0.4
@@ -110,7 +119,7 @@ referencing==0.35.1
 regex==2024.5.15
 requests==2.31.0
 requirements-parser==0.9.0
-rpds-py==0.18.0
+rpds-py==0.18.1
 ruff==0.4.4
 six==1.16.0
 soupsieve==2.5
@@ -119,7 +128,7 @@ termcolor==2.4.0
 text-unidecode==1.3
 tinycss2==1.3.0
 toml-sort==0.23.1
-tomlkit==0.12.4
+tomlkit==0.12.5
 tox==4.15.0
 types-pyyaml==6.0.12.20240311
 types-setuptools==69.5.0.20240519
