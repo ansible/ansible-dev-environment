@@ -15,11 +15,8 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: check-symlinks
-<<<<<<< HEAD
       - id: end-of-file-fixer
 
-=======
->>>>>>> 539122a (Format with Ruff)
   - repo: https://github.com/Lucas-C/pre-commit-hooks.git
     rev: v1.5.5
     hooks:
