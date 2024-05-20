@@ -1,7 +1,7 @@
 {
-  "python.testing.unittestEnabled": false,
-  // Override the pyproject.toml and disable xdist to enable test debugging
-  "python.testing.pytestArgs": ["tests"],
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",
@@ -10,12 +10,12 @@
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
   },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
+  "markiscodecoverage.searchCriteria": "coverage.lcov",
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.preferDaemon": true,
   "mypy-type-checker.reportingScope": "workspace",
+  // Override the pyproject.toml and disable xdist to enable test debugging
+  "python.testing.pytestArgs": ["tests"],
   "python.testing.pytestEnabled": true,
-  "markiscodecoverage.searchCriteria": "coverage.lcov"
+  "python.testing.unittestEnabled": false
 }
