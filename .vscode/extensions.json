@@ -5,6 +5,7 @@
     "ms-python.mypy-type-checker",
     "ms-python.pylint",
     "ms-python.python",
-    "ms-python.debugpy"
+    "ms-python.debugpy",
+    "streetsidesoftware.code-spell-checker"
   ]
 }
