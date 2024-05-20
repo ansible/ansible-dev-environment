@@ -168,4 +168,7 @@ cython_debug/
 # Version created and populated by setuptools_scm
 /src/*/_version.py
 
+# Coverage files
+*.lcov
+
 .DS_Store

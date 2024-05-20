@@ -1,4 +1,13 @@
 pytest
 coverage[toml]
+coverage-enable-subprocess
+mypy
+pip-tools
+pre-commit
+pydoclint
+pytest
 pytest-xdist
+ruff
+toml-sort
 tox
+types-PyYAML
