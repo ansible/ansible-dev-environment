@@ -40,9 +40,6 @@ documentation = "https://ansible.readthedocs.io/projects/dev-environment/"
 homepage = "https://github.com/ansible/ansible-dev-environment"
 repository = "https://github.com/ansible/ansible-dev-environment"
 
-[tool.coverage.paths]
-source = ["src"]
-
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
 # Increase it just so it would pass on any single-python run
@@ -55,7 +52,7 @@ skip_covered = true
 skip_empty = true
 
 [tool.coverage.run]
-source = ["src"]
+source_pkgs = ["ansible_dev_environment"]
 # Do not use branch until bug is fixes:
 # https://github.com/nedbat/coveragepy/issues/605
 # branch = true
@@ -313,6 +310,7 @@ disable = [
 
 [tool.pytest.ini_options]
 addopts = "-ra --showlocals --durations=10"
+testpaths = "tests"
 tmp_path_retention_policy = "failed"
 verbosity_assertions = 2
 
