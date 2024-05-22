@@ -40,7 +40,8 @@ jobs:
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os || 'ubuntu-22.04' }}
-    environment: test
+    permissions:
+      id-token: write
     needs:
       - prepare
     defaults:
@@ -92,9 +93,9 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           name: ${{ matrix.passed_name }}
-          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           verbose: true # optional (default = false)
+          use_oidc: true # cspell:ignore oidc
 
       - name: Archive logs
         uses: actions/upload-artifact@v4
