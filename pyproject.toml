@@ -52,12 +52,12 @@ skip_covered = true
 skip_empty = true
 
 [tool.coverage.run]
-concurrency = ["multiprocessing", "thread"]
+source_pkgs = ["ansible_dev_environment"]
 # Do not use branch until bug is fixes:
 # https://github.com/nedbat/coveragepy/issues/605
 # branch = true
 parallel = true
-source = ["src"]
+concurrency = ["multiprocessing", "thread"]
 
 [tool.mypy]
 files = ["src", "tests"]
@@ -308,33 +308,42 @@ disable = [
   "unsubscriptable-object"
 ]
 
+[tool.pytest.ini_options]
+addopts = "-ra --showlocals --durations=10"
+testpaths = "tests"
+tmp_path_retention_policy = "failed"
+verbosity_assertions = 2
+
 [tool.ruff]
 builtins = ["__"]
 fix = true
 line-length = 100
-select = ["ALL"]
 target-version = "py310"
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint]
+select = ["ALL"]
+
+[tool.ruff.lint.flake8-pytest-style]
 parametrize-values-type = "tuple"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-after-imports = 2 # Ensures consistency for cases when there's variable vs function/class definitions after imports
 lines-between-types = 1 # Separate import/from with 1 line
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # SLF001: Allow private member access in tests
 # S101 Allow assert in tests
 # S602 Allow shell in test
 # T201 Allow print in tests
 "tests/**" = ["SLF001", "S101", "S602", "T201"]
+# SIM108, file is generated
+"_version.py" = ["SIM108"]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "pep257"
 
 [tool.setuptools.dynamic]
 dependencies = {file = [".config/requirements.in"]}
-optional-dependencies.dev = {file = [".config/requirements-dev.in"]}
 optional-dependencies.docs = {file = [".config/requirements-docs.in"]}
 optional-dependencies.test = {file = [".config/requirements-test.in"]}
 
