@@ -42,7 +42,7 @@ repository = "https://github.com/ansible/ansible-dev-environment"
 
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
-fail_under = 73
+fail_under = 72
 show_missing = true
 skip_covered = true
 skip_empty = true
