@@ -117,10 +117,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # checkout needed for codecov action which needs codecov.yml file
       - uses: actions/checkout@v4
 
-      - name: Set up Python # likely needed for coverage
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -132,7 +131,6 @@ jobs:
         with:
           name: logs.zip
           pattern: logs-*.zip
-          # artifacts like py312.zip and py312-macos do have overlapping files
           separate-directories: true
 
       - name: Download artifacts
@@ -153,10 +151,8 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           name: ${{ matrix.passed_name }}
-          # token: ${{ secrets.CODECOV_TOKEN }}
-          # verbose: true # optional (default = false)
           fail_ci_if_error: true
-          use_oidc: true # cspell:ignore oidc
+          use_oidc: true
 
       - name: Check codecov.io status
         if: github.event_name == 'pull_request'

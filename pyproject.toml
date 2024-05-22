@@ -42,14 +42,11 @@ repository = "https://github.com/ansible/ansible-dev-environment"
 
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
-# Increase it just so it would pass on any single-python run
-fail_under = 42
-# During development we might remove code (files) with coverage data, and we dont want to fail:
-ignore_errors = true
-omit = ["tests/*"]
+fail_under = 73
 show_missing = true
 skip_covered = true
 skip_empty = true
+sort = "Cover"
 
 [tool.coverage.run]
 source_pkgs = ["ansible_dev_environment"]
