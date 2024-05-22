@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from ansible_dev_environment.tree import Tree
 from ansible_dev_environment.utils import TermFeatures
 
@@ -150,3 +152,11 @@ def test_tree_color() -> None:
     tree.links = {"2": "http://red.ht"}
     rendered = tree.render().splitlines()
     assert rendered == expected
+
+
+def test_tree_fail() -> None:
+    """Test a tree failure."""
+    term_features = TermFeatures(color=False, links=False)
+    tree = Tree(obj=(1, 2, 3), term_features=term_features)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="Invalid type <class 'tuple'>"):
+        tree.render()

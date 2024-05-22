@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ansible_dev_environment.tree import Tree
 from ansible_dev_environment.utils import builder_introspect, collect_manifests
@@ -44,10 +44,7 @@ class TreeMaker:
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,
         )
-        tree_dict: JSONVal = {c: {} for c in collections}
-        if not isinstance(tree_dict, dict):
-            msg = "Tree dict is not a dict."
-            raise TypeError(msg)
+        tree_dict: dict[str, dict[str, JSONVal]] = {c: {} for c in collections}
 
         links: dict[str, str] = {}
         for collection_name, collection in collections.items():
@@ -65,10 +62,6 @@ class TreeMaker:
                     self._output.error(err)
                     continue
                 target = tree_dict[collection_name]
-                if not isinstance(target, dict):
-                    msg = "Tree dict is not a dict."
-                    raise TypeError(msg)
-
                 target[dep] = tree_dict[dep]
 
             docs = collection["collection_info"].get("documentation")
@@ -97,7 +90,8 @@ class TreeMaker:
 
         more_verbose = 2
         if self._config.args.verbose >= more_verbose:
-            tree = Tree(obj=tree_dict, term_features=self._config.term_features)
+            j_tree_dict = cast(JSONVal, tree_dict)
+            tree = Tree(obj=j_tree_dict, term_features=self._config.term_features)
             tree.links = links
             tree.green.extend(green)
             rendered = tree.render()
@@ -132,7 +126,7 @@ class TreeMaker:
 
 
 def add_python_reqs(
-    tree_dict: dict[str, JSONVal],
+    tree_dict: dict[str, dict[str, JSONVal]],
     collection_name: str,
     python_deps: list[str],
 ) -> None:
