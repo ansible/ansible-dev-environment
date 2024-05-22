@@ -71,9 +71,12 @@ def test_tree_malformed_info(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        <<<<<<< HEAD
 
         Returns:
             Collection info.
+        =======
+        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -126,9 +129,12 @@ def test_tree_malformed_deps(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        <<<<<<< HEAD
 
         Returns:
             Collection info.
+        =======
+        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -183,9 +189,12 @@ def test_tree_malformed_deps_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        <<<<<<< HEAD
 
         Returns:
             Collection info.
+        =======
+        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -238,9 +247,12 @@ def test_tree_malformed_repo_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        <<<<<<< HEAD
 
         Returns:
             Collection info.
+        =======
+        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
