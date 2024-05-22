@@ -120,7 +120,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - run: pip3 install 'coverage>=7.5.1'
 
