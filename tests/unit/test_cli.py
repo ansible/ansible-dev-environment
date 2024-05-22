@@ -12,7 +12,7 @@ def main(cli: Cli) -> None:
     """Stub main function for testing.
 
     Args:
-        cli (Cli): Cli object.
+        cli: Cli object.
     """
     cli.parse_args()
     cli.init_output()
@@ -24,7 +24,7 @@ def test_cpi(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test the cpi option.
 
     Args:
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
+        monkeypatch: Pytest fixture.
     """
     monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install", "--cpi"])
     cli = Cli()
@@ -40,7 +40,7 @@ def test_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test term features with tty.
 
     Args:
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
+        monkeypatch: Pytest fixture.
     """
     monkeypatch.setattr("sys.stdout.isatty", (lambda: True))
     monkeypatch.setattr("os.environ", {"NO_COLOR": ""})
@@ -85,7 +85,8 @@ def test_editable_many(
     """Test the editable option with too many arguments.
 
     Args:
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
+        capsys: Pytest stdout capture fixture.
+        monkeypatch: Pytest fixture.
     """
     monkeypatch.setattr(
         "sys.argv",
@@ -142,6 +143,7 @@ def test_acp_env_var_set(
     """Test the ansible collection path environment variable set.
 
     Args:
+        env_var: Environment variable name.
         capsys: Pytest stdout capture fixture.
         monkeypatch: Pytest fixture.
     """
@@ -198,7 +200,13 @@ def test_collections_in_user(
     exists = Path.exists
 
     def _exists(self: Path) -> bool:
-        """Patch the exists method."""
+        """Patch the exists method.
+
+        Args:
+            self: Path object.
+        Returns:
+            bool: True if the path exists.
+        """
         if self == usr_path:
             return True
         return exists(self)
@@ -208,7 +216,13 @@ def test_collections_in_user(
     iterdir = Path.iterdir
 
     def _iterdir(self: Path) -> list[Path] | Generator[Path, None, None]:
-        """Patch the iterdir method."""
+        """Patch the iterdir method.
+
+        Args:
+            self: Path object.
+        Returns:
+            List of paths or generator.
+        """
         if self == usr_path:
             return [usr_path / "ansible_collections"]
         return iterdir(self)

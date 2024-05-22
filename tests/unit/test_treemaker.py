@@ -17,7 +17,13 @@ def test_tree_empty(
     output: Output,
     tmp_path: Path,
 ) -> None:
-    """Test tree_not_dict."""
+    """Test tree_not_dict.
+
+    Args:
+        capsys: Pytest stdout capture fixture.
+        output: Output class object.
+        tmp_path: Pytest fixture.
+    """
     venv_path = tmp_path / "venv"
     EnvBuilder().create(venv_path)
 
@@ -65,6 +71,8 @@ def test_tree_malformed_info(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        Returns:
+            Collection info.
         """
         assert target
         assert venv_cache_dir
@@ -117,6 +125,8 @@ def test_tree_malformed_deps(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        Returns:
+            Collection info.
         """
         assert target
         assert venv_cache_dir
@@ -171,6 +181,8 @@ def test_tree_malformed_deps_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        Returns:
+            Collection info.
         """
         assert target
         assert venv_cache_dir
@@ -223,6 +235,8 @@ def test_tree_malformed_repo_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+        Returns:
+            Collection info.
         """
         assert target
         assert venv_cache_dir
