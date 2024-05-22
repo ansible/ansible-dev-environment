@@ -126,13 +126,6 @@ jobs:
 
       - run: pip3 install 'coverage>=7.5.1'
 
-      - name: Merge logs into a single archive
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: logs.zip
-          pattern: logs-*.zip
-          separate-directories: true
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -146,6 +139,14 @@ jobs:
             echo "::error::Number of coverage.xml files was not the expected one (${JOBS_PRODUCING_COVERAGE}): $(find . -name coverage.xml |xargs echo)"
             exit 1
           fi
+
+      - name: Merge logs into a single archive
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: logs.zip
+          pattern: logs-*.zip
+          separate-directories: true
+          delete-merged: true
 
       - name: Upload coverage data
         uses: codecov/codecov-action@v4
@@ -162,11 +163,6 @@ jobs:
         uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-
-      - name: Delete Merged Artifacts
-        uses: actions/upload-artifact/merge@v4
-        with:
-          delete-merged: true
 
       - name: Notify repository owners about changes affecting them
         uses: sourcegraph/codenotify@v0.6.4
