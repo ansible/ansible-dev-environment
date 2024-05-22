@@ -92,8 +92,7 @@ jobs:
           name: logs-${{ matrix.name }}.zip
           path: |
             .tox/**/log/
-            .tox/**/.coverage*
-            .tox/**/coverage.xml
+            .tox/**/.coverage
 
       - name: Report failure if git reports dirty status
         run: |
