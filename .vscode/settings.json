@@ -12,6 +12,7 @@
   },
   "flake8.importStrategy": "fromEnvironment",
   "markiscodecoverage.searchCriteria": "coverage.lcov",
+  "mypy-type-checker.args": ["--config-file=${workspaceFolder}/pyproject.toml"],
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.preferDaemon": true,
   "mypy-type-checker.reportingScope": "workspace",
