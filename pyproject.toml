@@ -332,7 +332,7 @@ lines-between-types = 1 # Separate import/from with 1 line
 "_version.py" = ["SIM108"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "pep257"
+convention = "google"
 
 [tool.setuptools.dynamic]
 dependencies = {file = [".config/requirements.in"]}
