@@ -6,7 +6,7 @@
   "configurations": [
     {
       "name": "Python: Module",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "ansible_dev_environment",
       "args": ["inspect", "-v", "-v", "-vv"],
@@ -14,7 +14,7 @@
     },
     {
       "name": "Python: Current File",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal"
