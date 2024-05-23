@@ -10,6 +10,7 @@
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
   },
+  "flake8.importStrategy": "fromEnvironment",
   "markiscodecoverage.searchCriteria": "coverage.lcov",
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.preferDaemon": true,
