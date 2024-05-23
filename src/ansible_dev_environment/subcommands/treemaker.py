@@ -24,7 +24,6 @@ class TreeMaker:
 
         Args:
             config: The application configuration.
-            output: The application output object.
         """
         self._config = config
         self._output = output

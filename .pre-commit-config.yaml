@@ -76,7 +76,7 @@ repos:
       - id: flake8
         name: flake8(pydoclint)
         additional_dependencies:
-          - pydoclint
+          - pydoclint[flake8]
 
   - repo: https://github.com/pycqa/pylint.git
     rev: v3.1.0
