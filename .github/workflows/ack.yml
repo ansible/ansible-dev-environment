@@ -7,4 +7,5 @@ on:
 jobs:
   ack:
     uses: ansible/team-devtools/.github/workflows/ack.yml@main
-    secrets: inherit
+    secrets:
+      BOT_PAT: ${{ secrets.ANSIBUDDY_BOT_PAT }}
