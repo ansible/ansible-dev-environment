@@ -60,14 +60,6 @@ concurrency = ["multiprocessing", "thread"]
 files = ["src", "tests"]
 strict = true
 
-[tool.pydoclint]
-allow-init-docstring = true
-arg-type-hints-in-docstring = false
-check-return-types = false
-show-filenames-in-every-violation-message = true
-skip-checking-short-docstrings = false
-style = 'google'
-
 [tool.pylint]
 
 [tool.pylint.format]
@@ -337,7 +329,7 @@ lines-between-types = 1 # Separate import/from with 1 line
 "_version.py" = ["SIM108"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "pep257"
+convention = "google"
 
 [tool.setuptools.dynamic]
 dependencies = {file = [".config/requirements.in"]}

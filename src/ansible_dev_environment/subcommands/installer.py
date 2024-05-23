@@ -253,6 +253,7 @@ class Installer:
 
         Args:
             local_repo_path: The collection local path.
+
         Returns:
             string with the command used to list files or None
             string containing a list of files or nothing
@@ -284,6 +285,7 @@ class Installer:
 
         Args:
             local_repo_path: The collection local path.
+
         Returns:
             string with the command used to list files or None
             string containing a list of files or nothing

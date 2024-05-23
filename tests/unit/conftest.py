@@ -20,6 +20,7 @@ def output(tmp_path: Path) -> Output:
 
     Args:
         tmp_path: Temporary directory.
+
     Returns:
         Output: Output class object.
     """

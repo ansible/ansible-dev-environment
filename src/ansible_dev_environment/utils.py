@@ -338,6 +338,7 @@ def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
 
     Args:
         config: The configuration object.
+
     Returns:
         A dictionary of metadata about installed collections.
     """
