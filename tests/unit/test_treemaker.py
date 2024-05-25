@@ -71,6 +71,7 @@ def test_tree_malformed_info(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+
         Returns:
             Collection info.
         """
@@ -125,6 +126,7 @@ def test_tree_malformed_deps(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+
         Returns:
             Collection info.
         """
@@ -181,6 +183,7 @@ def test_tree_malformed_deps_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+
         Returns:
             Collection info.
         """
@@ -235,6 +238,7 @@ def test_tree_malformed_repo_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
+
         Returns:
             Collection info.
         """

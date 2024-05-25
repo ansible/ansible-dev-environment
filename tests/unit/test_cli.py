@@ -204,6 +204,7 @@ def test_collections_in_user(
 
         Args:
             self: Path object.
+
         Returns:
             bool: True if the path exists.
         """
@@ -220,6 +221,7 @@ def test_collections_in_user(
 
         Args:
             self: Path object.
+
         Returns:
             List of paths or generator.
         """
