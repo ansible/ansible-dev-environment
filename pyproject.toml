@@ -293,7 +293,6 @@ disable = [
   "W3201", # bad-dunder-name / ruff PLW3201
   "W3301", # nested-min-max / ruff PLW3301
   "duplicate-code",
-  "fixme",
   "too-few-public-methods",
   "unsubscriptable-object"
 ]
