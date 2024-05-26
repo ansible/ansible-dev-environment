@@ -101,6 +101,8 @@ repos:
           - tox
           - types-PyYAML
           - types-setuptools
+        # Override default pre-commit '--ignore-missing-imports'
+        args: [--strict]
 
   - repo: https://github.com/jazzband/pip-tools
     rev: 7.4.1
