@@ -101,11 +101,7 @@ repos:
           - tox
           - types-PyYAML
           - types-setuptools
-        args:
-          - src
-          - tests
-          - --python-version=3.11
-        pass_filenames: false
+
   - repo: https://github.com/jazzband/pip-tools
     rev: 7.4.1
     hooks:
