@@ -98,7 +98,6 @@ repos:
         additional_dependencies:
           - pytest
           - subprocess_tee
-          - tox
           - types-PyYAML
           - types-setuptools
         # Override default pre-commit '--ignore-missing-imports'
