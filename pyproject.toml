@@ -8,7 +8,7 @@ requires = [
 [project]
 authors = [{"email" = "bthornto@redhat.com", "name" = "Bradley A. Thornton"}]
 classifiers = [
-  'Development Status :: 2 - Pre-Alpha',
+  'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Developers',
   'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
   'Operating System :: OS Independent',
@@ -26,7 +26,7 @@ description = "A pip-like ansible collection installer."
 dynamic = ["dependencies", "optional-dependencies", "version"]
 keywords = ["ansible"]
 license = {text = "GPL-3.0-only"}
-maintainers = [{"email" = "bthornto@redhat.com", "name" = "Bradley Thornton"}]
+maintainers = [{"email" = "info@ansible.com", "name" = "Ansible by Red Hat"}]
 name = "ansible-dev-environment"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,21 +41,19 @@ homepage = "https://github.com/ansible/ansible-dev-environment"
 repository = "https://github.com/ansible/ansible-dev-environment"
 
 [tool.coverage.report]
-ignore_errors = true
 exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
 fail_under = 72
+ignore_errors = true
 show_missing = true
 skip_covered = true
 skip_empty = true
 sort = "Cover"
 
 [tool.coverage.run]
-source_pkgs = ["ansible_dev_environment"]
-# Do not use branch until bug is fixes:
-# https://github.com/nedbat/coveragepy/issues/605
-# branch = true
-parallel = true
+branch = false # https://github.com/nedbat/coveragepy/issues/605
 concurrency = ["multiprocessing", "thread"]
+parallel = true
+source_pkgs = ["ansible_creator"]
 
 [tool.mypy]
 files = ["src", "tests"]
@@ -320,13 +318,8 @@ lines-after-imports = 2 # Ensures consistency for cases when there's variable vs
 lines-between-types = 1 # Separate import/from with 1 line
 
 [tool.ruff.lint.per-file-ignores]
-# SLF001: Allow private member access in tests
-# S101 Allow assert in tests
-# S602 Allow shell in test
-# T201 Allow print in tests
-"tests/**" = ["SLF001", "S101", "S602", "T201"]
-# SIM108, file is generated
 "_version.py" = ["SIM108"]
+"tests/**" = ["SLF001", "S101", "S602", "T201"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -353,3 +346,5 @@ write_to = "src/ansible_dev_environment/_version.py"
 
 [tool.tomlsort]
 in_place = true
+sort_inline_tables = true
+sort_table_keys = true
