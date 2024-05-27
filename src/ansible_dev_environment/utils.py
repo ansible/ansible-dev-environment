@@ -362,6 +362,7 @@ def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
                 if f"{namespace_dir.name}.{name_dir.name}" in info_dir.name
             ]
             file = None
+            editable_location = ""
             if some_info_dirs:
                 file = some_info_dirs[0] / "GALAXY.yml"
                 editable_location = ""
