@@ -53,7 +53,7 @@ sort = "Cover"
 branch = false # https://github.com/nedbat/coveragepy/issues/605
 concurrency = ["multiprocessing", "thread"]
 parallel = true
-source_pkgs = ["ansible_creator"]
+source_pkgs = ["ansible_dev_environment"]
 
 [tool.mypy]
 files = ["src", "tests"]
