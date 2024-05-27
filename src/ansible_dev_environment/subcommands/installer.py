@@ -207,6 +207,8 @@ class Installer:
             collections = collections_from_requirements(
                 file=self._config.args.requirement,
             )
+        else:
+            collections = []
 
         for collection in collections:
             cnamespace = collection["name"].split(".")[0]
