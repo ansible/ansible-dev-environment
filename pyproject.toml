@@ -294,6 +294,9 @@ disable = [
   "too-few-public-methods",
   "too-many-instance-attributes"
 ]
+enable = [
+  "useless-suppression" # Identify unneeded pylint disable statements
+]
 
 [tool.pytest.ini_options]
 addopts = "-ra --showlocals --durations=10"
