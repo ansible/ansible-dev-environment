@@ -35,7 +35,6 @@ class TreeMaker:
         Raises:
             TypeError: If the tree dict is not a dict.
         """
-        # pylint: disable=too-many-locals
         builder_introspect(self._config, self._output)
 
         with self._config.discovered_python_reqs.open("r") as reqs_file:

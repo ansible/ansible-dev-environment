@@ -119,7 +119,6 @@ class Tree:  # pylint: disable=R0902
         Raises:
             TypeError: If the object is not a dict, list, or scalar
         """
-        # pylint: disable=R0914
         if isinstance(obj, dict):
             for i, (key, value) in enumerate(obj.items()):
                 is_last = i == len(obj) - 1

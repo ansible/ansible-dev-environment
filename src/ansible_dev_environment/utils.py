@@ -200,7 +200,6 @@ def collect_manifests(  # noqa: C901
     target: Path,
     venv_cache_dir: Path,
 ) -> dict[str, dict[str, JSONVal]]:
-    # pylint: disable=too-many-locals
     """Collect manifests from a target directory.
 
     Args:

@@ -382,7 +382,6 @@ class Installer:
         Raises:
             RuntimeError: If tarball is not found or if more than one tarball is found.
         """
-        # pylint: disable=too-many-instance-attributes
         msg = f"Installing local collection from: {collection.build_dir}"
         self._output.info(msg)
 
