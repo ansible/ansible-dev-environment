@@ -31,7 +31,6 @@ class Lister:
         Raises:
             TypeError: If the link is not a string.
         """
-        # pylint: disable=too-many-locals
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,

@@ -5,6 +5,7 @@
 #    pip-compile --all-extras --no-annotate --output-file=.config/constraints.txt --strip-extras .config/requirements.in pyproject.toml
 #
 ansible-builder==3.0.1
+astroid==3.2.2
 attrs==23.2.0
 babel==2.15.0
 beautifulsoup4==4.12.3
@@ -21,10 +22,11 @@ chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
-coverage==7.5.2
+coverage==7.5.3
 csscompressor==0.9.5
 cssselect2==0.7.0
 defusedxml==0.7.1
+dill==0.3.8
 distlib==0.3.8
 distro==1.9.0
 dnspython==2.6.1
@@ -39,6 +41,7 @@ htmlmin2==0.1.13
 identify==2.5.36
 idna==3.7
 iniconfig==2.0.0
+isort==5.13.2
 jinja2==3.1.4
 jsmin==3.0.1
 jsonschema==4.22.0
@@ -82,6 +85,7 @@ pycparser==2.22
 pydoclint==0.4.1
 pyflakes==3.2.0
 pygments==2.18.0
+pylint==3.2.2
 pymdown-extensions==10.8.1
 pyproject-api==1.6.1
 pyproject-hooks==1.1.0

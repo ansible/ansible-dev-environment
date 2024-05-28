@@ -295,7 +295,10 @@ disable = [
   "too-many-instance-attributes"
 ]
 enable = [
-  "useless-suppression" # Identify unneeded pylint disable statements
+  "useless-suppression"
+]
+fail-on = [
+  "useless-suppression"
 ]
 
 [tool.pytest.ini_options]

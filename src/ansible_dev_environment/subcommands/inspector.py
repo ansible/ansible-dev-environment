@@ -36,7 +36,6 @@ class Inspector:
 
     def run(self: Inspector) -> None:
         """Run the Inspector."""
-        # pylint: disable=too-many-locals
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,

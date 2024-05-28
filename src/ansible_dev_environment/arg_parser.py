@@ -200,7 +200,6 @@ def parse() -> argparse.Namespace:
         help="Uninstall a collection.",
     )
 
-    # pylint: disable=protected-access
     for grp in parser._action_groups:  # noqa: SLF001
         if grp.title is None:
             continue
