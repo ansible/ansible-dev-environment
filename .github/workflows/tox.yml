@@ -19,6 +19,10 @@ jobs:
 
   build:
     uses: ansible/team-devtools/.github/workflows/tox-build.yml@main
+    needs:
+      - prepare
   
   check:
     uses: ansible/team-devtools/.github/workflows/tox-check.yml@main
+    needs:
+      - build
