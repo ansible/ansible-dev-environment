@@ -29,4 +29,4 @@ jobs:
     needs:
       - test
     with:
-      test_needs_context: ${{ needs.test }}
+      tests_outcome: ${{ needs.test }}
