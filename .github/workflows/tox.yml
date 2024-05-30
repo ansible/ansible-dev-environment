@@ -14,19 +14,5 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prepare:
-    uses: ansible/team-devtools/.github/workflows/tox-prepare.yml@main
-
-  test:
-    uses: ansible/team-devtools/.github/workflows/tox-test.yml@main
-    needs:
-      - prepare
-    with:
-      matrix: ${{ needs.prepare.outputs.matrix }}
-
-  check:
-    uses: ansible/team-devtools/.github/workflows/tox-check.yml@main
-    needs:
-      - test
-    with:
-      tests_outcome: ${{ toJSON(needs.test) }}
+  tox:
+    uses: ansible/team-devtools/.github/workflows/tox.yml@main
