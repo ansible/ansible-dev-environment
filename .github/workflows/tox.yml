@@ -23,7 +23,7 @@ jobs:
       - prepare
     with:
       matrix: ${{ needs.prepare.outputs.matrix }}
-  
+
   check:
     uses: ansible/team-devtools/.github/workflows/tox-check.yml@main
     needs:
