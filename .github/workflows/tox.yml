@@ -17,8 +17,8 @@ jobs:
   prepare:
     uses: ansible/team-devtools/.github/workflows/tox-prepare.yml@main
 
-  build:
-    uses: ansible/team-devtools/.github/workflows/tox-build.yml@main
+  test:
+    uses: ansible/team-devtools/.github/workflows/tox-test.yml@main
     needs:
       - prepare
     with:
@@ -27,4 +27,6 @@ jobs:
   check:
     uses: ansible/team-devtools/.github/workflows/tox-check.yml@main
     needs:
-      - build
+      - test
+    with:
+      test_needs_context: ${{ needs.test }}
