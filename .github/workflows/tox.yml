@@ -21,6 +21,8 @@ jobs:
     uses: ansible/team-devtools/.github/workflows/tox-build.yml@main
     needs:
       - prepare
+    with:
+      matrix: ${{ steps.prepare.outputs.matrix }}
   
   check:
     uses: ansible/team-devtools/.github/workflows/tox-check.yml@main
