@@ -128,9 +128,7 @@ def parse_collection_request(  # noqa: PLR0915
     )
     matched = non_local_re.match(string)
     if not matched:
-        msg = (
-            "Specify a valid collection name (ns.n) with an optional version specifier"
-        )
+        msg = "Specify a valid collection name (ns.n) with an optional version specifier"
         output.hint(msg)
         msg = f"Failed to parse collection request: {string}"
         output.critical(msg)

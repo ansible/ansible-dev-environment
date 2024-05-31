@@ -191,9 +191,7 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
     Returns:
         The sorted dictionary.
     """
-    return {
-        k: sort_dict(v) if isinstance(v, dict) else v for k, v in sorted(item.items())
-    }
+    return {k: sort_dict(v) if isinstance(v, dict) else v for k, v in sorted(item.items())}
 
 
 def collect_manifests(  # noqa: C901
@@ -220,9 +218,7 @@ def collect_manifests(  # noqa: C901
             manifest = name_dir / "MANIFEST.json"
             if not manifest.exists():
                 manifest = (
-                    venv_cache_dir
-                    / f"{namespace_dir.name}.{name_dir.name}"
-                    / "MANIFEST.json"
+                    venv_cache_dir / f"{namespace_dir.name}.{name_dir.name}" / "MANIFEST.json"
                 )
             if not manifest.exists():
                 msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
@@ -368,9 +364,7 @@ def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
 
             elif (name_dir / "galaxy.yml").exists():
                 file = name_dir / "galaxy.yml"
-                editable_location = (
-                    str(name_dir.resolve()) if name_dir.is_symlink() else ""
-                )
+                editable_location = str(name_dir.resolve()) if name_dir.is_symlink() else ""
 
             if file:
                 with file.open() as info_file:

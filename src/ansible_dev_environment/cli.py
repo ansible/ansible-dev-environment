@@ -37,9 +37,7 @@ class Cli:
         if hasattr(self.args, "requirement") and self.args.requirement:
             self.args.requirement = Path(self.args.requirement).expanduser().resolve()
         if self.args.cpi:
-            self.args.requirement = (
-                Path(".config/source-requirements.yml").expanduser().resolve()
-            )
+            self.args.requirement = Path(".config/source-requirements.yml").expanduser().resolve()
 
     def init_output(self: Cli) -> None:
         """Initialize the output object."""
@@ -137,10 +135,7 @@ class Cli:
             errored = True
 
         if errored:
-            err = (
-                "The development environment is not isolated,"
-                " please resolve the above errors."
-            )
+            err = "The development environment is not isolated, please resolve the above errors."
 
             self.output.critical(err)
 
