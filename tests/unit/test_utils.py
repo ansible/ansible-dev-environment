@@ -113,7 +113,4 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
         with pytest.raises(SystemExit):
             parse_collection_request(string=string, config=config, output=output)
     else:
-        assert (
-            parse_collection_request(string=string, config=config, output=output)
-            == spec
-        )
+        assert parse_collection_request(string=string, config=config, output=output) == spec
