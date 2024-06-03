@@ -200,18 +200,23 @@ def parse() -> argparse.Namespace:
         help="Uninstall a collection.",
     )
 
-    for grp in parser._action_groups:  # noqa: SLF001
-        if grp.title is None:
-            continue
-        grp.title = grp.title.capitalize()
+    _group_titles(parser)
     for subparser in subparsers.choices.values():
-        for grp in subparser._action_groups:  # noqa: SLF001
-            if grp.title is None:
-                continue
-            grp.title = grp.title.capitalize()
-    # pylint: enable=protected-access
+        _group_titles(subparser)
 
     return parser.parse_args()
+
+
+def _group_titles(parser: ArgumentParser) -> None:
+    """Set the group titles to be capitalized.
+
+    Args:
+        parser: The parser to set the group titles for
+    """
+    for group in parser._action_groups:  # noqa: SLF001
+        if group.title is None:
+            continue
+        group.title = group.title.capitalize()
 
 
 class ArgumentParser(argparse.ArgumentParser):

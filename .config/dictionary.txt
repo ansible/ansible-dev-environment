@@ -10,9 +10,11 @@ cpart
 cpath
 crepository
 csource
+delenv
 excinfo
 fileh
 fqcn
+jsonschema
 levelname
 levelno
 netcommon
@@ -23,5 +25,6 @@ setenv
 specp
 treemaker
 uninstallation
+usefixtures
 vuuid
 xmltodict
