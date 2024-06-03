@@ -15,11 +15,7 @@ def test_no_option_string(
     """Test an argument without an option string.
 
     Args:
-<<<<<<< HEAD
         capsys: Pytest fixture.
-=======
-        capsys (pytest.CaptureFixture[str]): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     parser = ArgumentParser(
         formatter_class=CustomHelpFormatter,
@@ -40,11 +36,7 @@ def test_one_string(
     """Test an argument without an option string.
 
     Args:
-<<<<<<< HEAD
         capsys: Pytest fixture.
-=======
-        capsys (pytest.CaptureFixture[str]): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     parser = ArgumentParser(
         formatter_class=CustomHelpFormatter,
@@ -66,11 +58,7 @@ def test_too_many_string(
     """Test an argument with too many option strings.
 
     Args:
-<<<<<<< HEAD
         monkeypatch: Pytest fixture.
-=======
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     monkeypatch.setattr("sys.argv", ["prog", "--help"])
 
@@ -92,11 +80,7 @@ def test_group_no_title(capsys: pytest.CaptureFixture[str]) -> None:
     """Test a group without a title.
 
     Args:
-<<<<<<< HEAD
         capsys: Pytest fixture.
-=======
-        capsys (pytest.CaptureFixture[str]): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     parser = ArgumentParser(
         formatter_class=CustomHelpFormatter,
