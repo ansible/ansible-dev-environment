@@ -12,11 +12,7 @@ def main(cli: Cli) -> None:
     """Stub main function for testing.
 
     Args:
-<<<<<<< HEAD
         cli: Cli object.
-=======
-        cli (Cli): Cli object.
->>>>>>> 556acba (Add some tests)
     """
     cli.parse_args()
     cli.init_output()
@@ -28,11 +24,7 @@ def test_cpi(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test the cpi option.
 
     Args:
-<<<<<<< HEAD
         monkeypatch: Pytest fixture.
-=======
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install", "--cpi"])
     cli = Cli()
@@ -48,11 +40,7 @@ def test_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test term features with tty.
 
     Args:
-<<<<<<< HEAD
         monkeypatch: Pytest fixture.
-=======
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     monkeypatch.setattr("sys.stdout.isatty", (lambda: True))
     monkeypatch.setattr("os.environ", {"NO_COLOR": ""})
@@ -97,12 +85,8 @@ def test_editable_many(
     """Test the editable option with too many arguments.
 
     Args:
-<<<<<<< HEAD
         capsys: Pytest stdout capture fixture.
         monkeypatch: Pytest fixture.
-=======
-        monkeypatch (pytest.MonkeyPatch): Pytest fixture.
->>>>>>> 556acba (Add some tests)
     """
     monkeypatch.setattr(
         "sys.argv",
@@ -113,9 +97,7 @@ def test_editable_many(
     with pytest.raises(SystemExit):
         main(cli)
     captured = capsys.readouterr()
-    assert (
-        "Editable can only be used with a single collection specifier." in captured.err
-    )
+    assert "Editable can only be used with a single collection specifier." in captured.err
 
 
 def test_editable_requirements(
@@ -159,10 +141,7 @@ def test_acp_env_var_set(
     """Test the ansible collection path environment variable set.
 
     Args:
-<<<<<<< HEAD
         env_var: Environment variable name.
-=======
->>>>>>> 556acba (Add some tests)
         capsys: Pytest stdout capture fixture.
         monkeypatch: Pytest fixture.
     """
@@ -219,7 +198,6 @@ def test_collections_in_user(
     exists = Path.exists
 
     def _exists(self: Path) -> bool:
-<<<<<<< HEAD
         """Patch the exists method.
 
         Args:
@@ -228,9 +206,6 @@ def test_collections_in_user(
         Returns:
             bool: True if the path exists.
         """
-=======
-        """Patch the exists method."""
->>>>>>> 556acba (Add some tests)
         if self == usr_path:
             return True
         return exists(self)
@@ -240,7 +215,6 @@ def test_collections_in_user(
     iterdir = Path.iterdir
 
     def _iterdir(self: Path) -> list[Path] | Generator[Path, None, None]:
-<<<<<<< HEAD
         """Patch the iterdir method.
 
         Args:
@@ -249,9 +223,6 @@ def test_collections_in_user(
         Returns:
             List of paths or generator.
         """
-=======
-        """Patch the iterdir method."""
->>>>>>> 556acba (Add some tests)
         if self == usr_path:
             return [usr_path / "ansible_collections"]
         return iterdir(self)
