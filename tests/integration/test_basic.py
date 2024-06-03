@@ -137,16 +137,13 @@ def test_non_local(
     assert string in captured.out
     monkeypatch.setattr(
         "sys.argv",
-        ["ade", "tree", f"--venv={tmp_path / 'venv'}"],
+        ["ade", "tree", f"--venv={tmp_path / 'venv'}", "-v"],
     )
     with pytest.raises(SystemExit):
         main()
     captured = capsys.readouterr()
-    with pytest.raises(SystemExit):
-        main()
-    captured = capsys.readouterr()
-    string = "ansible.scm\n└──ansible.utils\n\n"
-    assert string == captured.out
+    assert "ansible.scm\n├──ansible.utils" in captured.out
+    assert "├──jsonschema" in captured.out
 
 
 def test_requirements(

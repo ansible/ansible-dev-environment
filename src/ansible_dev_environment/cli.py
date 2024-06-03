@@ -170,7 +170,3 @@ def main() -> None:
     cli.args_sanity()
     cli.ensure_isolated()
     cli.run()
-
-
-if __name__ == "__main__":
-    main()
