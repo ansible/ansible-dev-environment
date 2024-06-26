@@ -36,7 +36,12 @@ JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
 @dataclass
 class TermFeatures:
-    """Terminal features."""
+    """Terminal features.
+
+    Attributes:
+        color: A boolean indicating if color is enabled
+        links: A boolean indicating if links are enabled
+    """
 
     color: bool
     links: bool
@@ -74,7 +79,23 @@ def term_link(uri: str, term_features: TermFeatures, label: str) -> str:
 
 
 class Ansi:
-    """ANSI escape codes."""
+    """ANSI escape codes.
+
+    Attributes:
+        BLUE: The blue color
+        BOLD: The bold style
+        CYAN: The cyan color
+        GREEN: The green color
+        ITALIC: The italic style
+        MAGENTA: The magenta color
+        RED: The red color
+        RESET: The reset style
+        REVERSED: The reversed style
+        UNDERLINE: The underline style
+        WHITE: The white color
+        YELLOW: The yellow color
+        GREY: The grey color
+    """
 
     BLUE = "\x1b[34m"
     BOLD = "\x1b[1m"
