@@ -19,7 +19,19 @@ if TYPE_CHECKING:
 
 @dataclass
 class Collection:  # pylint: disable=too-many-instance-attributes
-    """A collection request specification."""
+    """A collection request specification.
+
+    Attributes:
+        config: The configuration object
+        path: The collection path
+        opt_deps: The optional dependencies
+        local: A boolean indicating if the collection is local
+        cnamespace: The collection namespace
+        cname: The collection name
+        csource: The collection source
+        specifier: The collection specifier
+        original: The original collection request
+    """
 
     config: Config
     path: Path | None = None

@@ -10,7 +10,15 @@ JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
 
 class Tree:  # pylint: disable=R0902
-    """Renderer for the tree."""
+    """Renderer for the tree.
+
+    Attributes:
+        PIPE: The pipe character
+        ELBOW: The elbow character
+        TEE: The tee character
+        PIPE_PREFIX: The pipe prefix
+        SPACE_PREFIX: The space prefix
+    """
 
     PIPE = "│"
     ELBOW = "└──"

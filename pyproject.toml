@@ -63,6 +63,16 @@ cache_dir = "./.cache/.mypy"
 files = ["src", "tests"]
 strict = true
 
+[tool.pydoclint]
+allow-init-docstring = true
+arg-type-hints-in-docstring = false
+baseline = ".config/pydoclint-baseline.txt"
+check-return-types = false
+exclude = '\.git|\.tox|build|out|venv'
+show-filenames-in-every-violation-message = true
+skip-checking-short-docstrings = false
+style = "google"
+
 [tool.pylint]
 
 [tool.pylint.format]
