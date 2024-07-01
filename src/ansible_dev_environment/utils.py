@@ -141,7 +141,7 @@ def subprocess_run(  # noqa: PLR0913
             check=True,
             cwd=cwd,
             env=env,
-            shell=True,  # noqa: S604
+            shell=True,
             text=True,
         )
     with Spinner(message=msg, term_features=output.term_features):
@@ -150,7 +150,7 @@ def subprocess_run(  # noqa: PLR0913
             check=True,
             cwd=cwd,
             env=env,
-            shell=True,  # noqa: S602
+            shell=True,
             capture_output=True,
             text=True,
         )
