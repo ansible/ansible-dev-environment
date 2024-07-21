@@ -5,14 +5,14 @@
 #    pip-compile --all-extras --no-annotate --output-file=.config/constraints.txt --strip-extras .config/requirements.in pyproject.toml
 #
 ansible-builder==3.1.0
-astroid==3.2.3
+astroid==3.2.4
 attrs==23.2.0
 babel==2.15.0
 beautifulsoup4==4.12.3
 bindep==2.11.0
 black==24.4.2
 build==1.2.1
-cachetools==5.3.3
+cachetools==5.4.0
 cairocffi==1.7.1
 cairosvg==2.7.1
 certifi==2024.7.4
@@ -35,7 +35,7 @@ exceptiongroup==1.2.2
 execnet==2.1.1
 filelock==3.15.4
 ghp-import==2.1.0
-griffe==0.47.0
+griffe==0.48.0
 htmlmin2==0.1.13
 identify==2.6.0
 idna==3.7
@@ -59,13 +59,13 @@ mkdocs-gen-files==0.5.0
 mkdocs-get-deps==0.2.0
 mkdocs-htmlproofer-plugin==1.2.1
 mkdocs-macros-plugin==1.0.5
-mkdocs-material==9.5.28
+mkdocs-material==9.5.29
 mkdocs-material-extensions==1.3.1
 mkdocs-minify-plugin==0.8.0
 mkdocs-monorepo-plugin==1.1.0
 mkdocstrings==0.25.1
 mkdocstrings-python==1.10.5
-mypy==1.10.1
+mypy==1.11.0
 mypy-extensions==1.0.0
 nodeenv==1.9.1
 packaging==24.1
@@ -80,13 +80,13 @@ platformdirs==4.2.2
 pluggy==1.5.0
 pre-commit==3.7.1
 pycparser==2.22
-pydoclint==0.5.3
+pydoclint==0.5.6
 pygments==2.18.0
 pylint==3.2.5
 pymdown-extensions==10.8.1
 pyproject-api==1.7.1
 pyproject-hooks==1.1.0
-pytest==8.2.2
+pytest==8.3.1
 pytest-xdist==3.6.1
 python-dateutil==2.9.0.post0
 python-slugify==8.0.4
@@ -96,7 +96,7 @@ referencing==0.35.1
 regex==2024.5.15
 requests==2.32.3
 rpds-py==0.19.0
-ruff==0.5.1
+ruff==0.5.4
 six==1.16.0
 soupsieve==2.5
 subprocess-tee==0.4.2
