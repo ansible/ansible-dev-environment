@@ -29,7 +29,13 @@ if TYPE_CHECKING:
 
 
 class Installer:
-    """The installer class."""
+    """The installer class.
+
+    Attributes:
+        RE_GALAXY_INSTALLED: The regular expression to match galaxy installed collections
+    """
+
+    RE_GALAXY_INSTALLED = re.compile(r"(\w+\.\w+):.*installed")
 
     def __init__(self: Installer, config: Config, output: Output) -> None:
         """Initialize the installer.
@@ -180,7 +186,7 @@ class Installer:
             err = f"Failed to install collection: {exc}\n{exc.stderr}"
             self._output.critical(err)
             return
-        installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
+        installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
@@ -231,7 +237,7 @@ class Installer:
             err = f"Failed to install collections: {exc} {exc.stderr}"
             self._output.critical(err)
 
-        installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
+        installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
         if not self._config.args.cpi:
             msg = f"Installed collections include: {oxford_join(installed)}"
         else:
@@ -472,7 +478,7 @@ class Installer:
                 collection.cache_dir / "MANIFEST.json",
             )
 
-        installed = re.findall(r"(\w+\.\w+):.*installed", proc.stdout)
+        installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
