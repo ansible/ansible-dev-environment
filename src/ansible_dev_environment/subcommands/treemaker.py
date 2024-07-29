@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 ScalarVal = bool | str | float | int | None
 JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
+NOT_A_DICT = "Tree dict is not a dict."
+
 
 class TreeMaker:
     """Generate a dependency tree."""
@@ -99,14 +101,12 @@ class TreeMaker:
         else:
             pruned_tree_dict: JSONVal = {}
             if not isinstance(pruned_tree_dict, dict):
-                msg = "Tree dict is not a dict."
-                raise TypeError(msg)
+                raise TypeError(NOT_A_DICT)
             for collection_name in list(tree_dict.keys()):
                 found = False
                 for value in tree_dict.values():
                     if not isinstance(value, dict):
-                        msg = "Tree dict is not a dict."
-                        raise TypeError(msg)
+                        raise TypeError(NOT_A_DICT)
                     if collection_name in value:
                         found = True
                 if not found:
@@ -141,12 +141,10 @@ def add_python_reqs(
         TypeError: If the tree dict is not a dict.
     """
     if not isinstance(tree_dict, dict):
-        msg = "Tree dict is not a dict."
-        raise TypeError(msg)
+        raise TypeError(NOT_A_DICT)
     collection = tree_dict[collection_name]
     if not isinstance(collection, dict):
-        msg = "Tree dict is not a dict."
-        raise TypeError(msg)
+        raise TypeError(NOT_A_DICT)
     collection["python requirements"] = []
 
     for dep in sorted(python_deps):
