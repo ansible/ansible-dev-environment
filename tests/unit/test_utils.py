@@ -41,6 +41,10 @@ scenarios = (
             cnamespace="ansible",
             local=False,
             original="ansible.utils",
+            specifier="",
+            path=Path(),
+            opt_deps="",
+            csource=[],
         ),
     ),
     (
@@ -52,6 +56,9 @@ scenarios = (
             specifier=":1.0.0",
             local=False,
             original="ansible.utils:1.0.0",
+            path=Path(),
+            opt_deps="",
+            csource=[],
         ),
     ),
     (
@@ -63,6 +70,9 @@ scenarios = (
             specifier=">=1.0.0",
             local=False,
             original="ansible.utils>=1.0.0",
+            path=Path(),
+            opt_deps="",
+            csource=[],
         ),
     ),
     (
@@ -73,8 +83,10 @@ scenarios = (
             config=config,
             local=True,
             path=FIXTURE_DIR,
-            specifier=None,
+            specifier="",
             original=str(FIXTURE_DIR),
+            opt_deps="",
+            csource=[],
         ),
     ),
     (
@@ -86,18 +98,15 @@ scenarios = (
             local=True,
             opt_deps="test",
             path=FIXTURE_DIR,
-            specifier=None,
+            specifier="",
             original=str(FIXTURE_DIR) + "/[test]",
+            csource=[],
         ),
     ),
-    (
-        "/foo/bar",
-        None,
-    ),
-    (
-        "abcdefg",
-        None,
-    ),
+    ("/foo/bar", None),
+    ("abcdefg", None),
+    ("/12345678901234567890[test]", None),
+    ("not_a_collection_name", None),
 )
 
 
