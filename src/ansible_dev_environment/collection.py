@@ -108,6 +108,7 @@ def parse_collection_request(  # noqa: PLR0915
         output.debug(msg)
         collection.path = path
         msg = f"Setting collection path: {collection.path}"
+        output.debug(msg)
         collection.opt_deps = string.split("[")[1].split("]")[0]
         msg = f"Setting optional dependencies: {collection.opt_deps}"
         output.debug(msg)

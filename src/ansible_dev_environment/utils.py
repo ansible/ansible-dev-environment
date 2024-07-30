@@ -136,7 +136,7 @@ def subprocess_run(  # noqa: PLR0913
     output.debug(cmd)
     log_level = logging.ERROR - (verbose * 10)
     if log_level == logging.DEBUG:
-        return subprocess_tee.run(
+        return subprocess_tee.run(  # noqa: S604
             command,
             check=True,
             cwd=cwd,
@@ -145,7 +145,7 @@ def subprocess_run(  # noqa: PLR0913
             text=True,
         )
     with Spinner(message=msg, term_features=output.term_features):
-        return subprocess.run(
+        return subprocess.run(  # noqa: S602
             command,
             check=True,
             cwd=cwd,
@@ -420,7 +420,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
             term_features: Terminal features
             delay: The delay between characters
         """
-        self.spinner = itertools.cycle(("|", "/", "-", "\\", "|", "/", "-"))
+        self._spinner = itertools.cycle(("|", "/", "-", "\\", "|", "/", "-"))
         self.delay = delay
         self.busy = False
         self.spinner_visible = False
@@ -435,9 +435,9 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
         with self._screen_lock:
             if not self.spinner_visible:
                 if self._term_features.color:
-                    char = f"{Ansi.GREY}{next(self.spinner)}{Ansi.RESET}"
+                    char = f"{Ansi.GREY}{next(self._spinner)}{Ansi.RESET}"
                 else:
-                    char = next(self.spinner)
+                    char = next(self._spinner)
                 sys.stdout.write(char)
                 self.spinner_visible = True
                 sys.stdout.flush()

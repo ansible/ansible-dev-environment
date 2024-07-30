@@ -11,14 +11,13 @@ import textwrap
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
     from .utils import TermFeatures
 
 
-T = TypeVar("T", bound="Level")
 GOLDEN_RATIO = 1.61803398875
 
 
@@ -109,7 +108,7 @@ class Level(Enum):
         return mapping[self]
 
     @classmethod
-    def _longest_name(cls: type[T]) -> int:
+    def _longest_name(cls) -> int:
         """Return the longest exit message prefix.
 
         Returns:
@@ -118,7 +117,7 @@ class Level(Enum):
         return max(len(member.value) for member in cls)
 
     @classmethod
-    def longest_formatted(cls: type[T]) -> int:
+    def longest_formatted(cls) -> int:
         """Return the longest exit message prefix.
 
         Returns:
@@ -213,7 +212,7 @@ class Msg:
 class Output:
     """Output functionality."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Output,
         log_file: str,
         log_level: str,
