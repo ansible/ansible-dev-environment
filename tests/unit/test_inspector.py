@@ -12,7 +12,7 @@ from ansible_dev_environment.config import Config
 from ansible_dev_environment.subcommands import inspector
 
 
-def test_output_no_color(session_venv: Config, capsys: pytest.CaptureFixture) -> None:
+def test_output_no_color(session_venv: Config, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the inspector output.
 
     Args:
@@ -30,7 +30,7 @@ def test_output_no_color(session_venv: Config, capsys: pytest.CaptureFixture) ->
 
 def test_output_color(
     session_venv: Config,
-    capsys: pytest.CaptureFixture,
+    capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test the inspector output.
@@ -57,7 +57,7 @@ def test_output_color(
 
 def test_no_rich(
     session_venv: Config,
-    capsys: pytest.CaptureFixture,
+    capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test the inspector output when rich is not available.
