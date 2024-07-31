@@ -8,7 +8,7 @@ import pytest
 
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
-from ansible_dev_environment.subcommands.treemaker import TreeMaker
+from ansible_dev_environment.subcommands.treemaker import TreeMaker, TreeWithReqs, add_python_reqs
 from ansible_dev_environment.utils import JSONVal
 
 
@@ -71,12 +71,9 @@ def test_tree_malformed_info(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
-        <<<<<<< HEAD
 
         Returns:
             Collection info.
-        =======
-        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -129,12 +126,9 @@ def test_tree_malformed_deps(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
-        <<<<<<< HEAD
 
         Returns:
             Collection info.
-        =======
-        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -189,12 +183,9 @@ def test_tree_malformed_deps_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
-        <<<<<<< HEAD
 
         Returns:
             Collection info.
-        =======
-        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -222,6 +213,7 @@ def test_tree_malformed_repo_not_string(
     monkeypatch: pytest.MonkeyPatch,
     output: Output,
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Test malformed collection repo.
 
@@ -229,6 +221,7 @@ def test_tree_malformed_repo_not_string(
         monkeypatch: Pytest fixture.
         output: Output class object.
         tmp_path: Pytest fixture.
+        capsys: Pytest stdout capture fixture.
     """
     venv_path = tmp_path / "venv"
     EnvBuilder().create(venv_path)
@@ -247,12 +240,9 @@ def test_tree_malformed_repo_not_string(
         Args:
             target: Target path.
             venv_cache_dir: Venv cache directory.
-        <<<<<<< HEAD
 
         Returns:
             Collection info.
-        =======
-        >>>>>>> 556acba (Add some tests)
         """
         assert target
         assert venv_cache_dir
@@ -272,5 +262,62 @@ def test_tree_malformed_repo_not_string(
     config = Config(args=args, output=output, term_features=output.term_features)
     config.init()
     treemaker = TreeMaker(config=config, output=output)
-    with pytest.raises(TypeError, match="Link is not a string."):
-        treemaker.run()
+    treemaker.run()
+    captured = capsys.readouterr()
+    assert "Collection collection_one has malformed repository metadata." in captured.err
+
+
+def test_tree_verbose(session_venv: Config, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test tree verbose, the session_venv has v=3.
+
+    Args:
+        session_venv: Pytest fixture.
+        capsys: Pytest stdout capture fixture.
+    """
+    treemaker = TreeMaker(config=session_venv, output=session_venv._output)
+    treemaker.run()
+    captured = capsys.readouterr()
+    assert "└──python requirements" in captured.out
+    assert "xmltodict" in captured.out
+
+
+def test_reqs_no_pound(
+    session_venv: Config,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test python deps with no pound signs in the line, cannot be attributed to a collection.
+
+    Args:
+        session_venv: Pytest fixture.
+        capsys: Pytest stdout capture fixture.
+        monkeypatch: Pytest fixture for patching.
+    """
+
+    def builder_introspect(config: Config, output: Output) -> None:
+        """Mock builder introspect.
+
+        Args:
+            config: The application configuration.
+            output: The application output object.
+        """
+        assert output
+        config.discovered_python_reqs.write_text("xmltodict\n")
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.treemaker.builder_introspect",
+        builder_introspect,
+    )
+
+    treemaker = TreeMaker(config=session_venv, output=session_venv._output)
+    treemaker.run()
+    captured = capsys.readouterr()
+    assert "└──python requirements" in captured.out
+    assert "xmltodict" not in captured.out
+
+
+def test_collection_is_a_list() -> None:
+    """Confirm a TypeError is the collection isn't a dict."""
+    tree_dict: TreeWithReqs = {"test_collection": []}
+    with pytest.raises(TypeError):
+        add_python_reqs(tree_dict, "test_collection", ["xmltodict"])

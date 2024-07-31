@@ -21,3 +21,4 @@ reqs
 setenv
 treemaker
 usefixtures
+xmltodict
