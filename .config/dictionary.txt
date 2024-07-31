@@ -16,6 +16,9 @@ fileh
 fqcn
 levelname
 netcommon
+platinclude
+platlib
+platstdlib
 purelib
 reqs
 setenv
