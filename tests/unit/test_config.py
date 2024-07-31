@@ -466,8 +466,6 @@ def test_sys_packages_path_fail_invalid_json(
             *args: The positional arguments.
             **kwargs: The keyword arguments.
 
-        Raises:
-            subprocess.CalledProcessError: For the venv command
         Returns:
             The completed process.
 
@@ -513,11 +511,9 @@ def test_sys_packages_path_fail_empty(
         """Mock the subprocess.run function.
 
         Args:
-            args: The positional arguments.
-            kwargs: The keyword arguments.
+            *args: The positional arguments.
+            **kwargs: The keyword arguments.
 
-        Raises:
-            subprocess.CalledProcessError: For the get_paths command
         Returns:
             The completed process.
 
@@ -566,8 +562,6 @@ def test_sys_packages_path_missing_purelib(
             *args: The positional arguments.
             **kwargs: The keyword arguments.
 
-        Raises:
-            subprocess.CalledProcessError: For the sysconfig command
         Returns:
             The completed process.
 
