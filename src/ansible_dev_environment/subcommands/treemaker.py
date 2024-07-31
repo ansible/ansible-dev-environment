@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Union, cast
 
 from ansible_dev_environment.tree import Tree
 from ansible_dev_environment.utils import builder_introspect, collect_manifests
@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 ScalarVal = bool | str | float | int | None
 JSONVal = ScalarVal | list["JSONVal"] | dict[str, "JSONVal"]
 
-NOT_A_DICT = "Tree dict is not a dict."
+TreeWithReqs = dict[str, Union[list[str], "TreeWithReqs"]]
+TreeWithoutReqs = dict[str, "TreeWithoutReqs"]
 
 
 class TreeMaker:
@@ -32,11 +33,7 @@ class TreeMaker:
         self._output = output
 
     def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
-        """Run the command.
-
-        Raises:
-            TypeError: If the tree dict is not a dict.
-        """
+        """Run the command."""
         builder_introspect(self._config, self._output)
 
         with self._config.discovered_python_reqs.open("r") as reqs_file:
@@ -46,7 +43,7 @@ class TreeMaker:
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,
         )
-        tree_dict: dict[str, dict[str, JSONVal]] = {c: {} for c in collections}
+        tree_dict: TreeWithoutReqs = {c: {} for c in collections}
 
         links: dict[str, str] = {}
         for collection_name, collection in collections.items():
@@ -70,15 +67,17 @@ class TreeMaker:
             homepage = collection["collection_info"].get("homepage")
             repository = collection["collection_info"].get("repository")
             issues = collection["collection_info"].get("issues")
-            link = repository or homepage or docs or issues or "http://ansible.com"
+            fallback = "https://ansible.com"
+            link = repository or homepage or docs or issues or fallback
             if not isinstance(link, str):
-                msg = "Link is not a string."
-                raise TypeError(msg)
+                err = f"Collection {collection_name} has malformed repository metadata."
+                self._output.error(err)
+                link = fallback
             links[collection_name] = link
 
             if self._config.args.verbose >= 1:
                 add_python_reqs(
-                    tree_dict=tree_dict,
+                    tree_dict=cast(TreeWithReqs, tree_dict),
                     collection_name=collection_name,
                     python_deps=python_deps,
                 )
@@ -92,27 +91,25 @@ class TreeMaker:
 
         more_verbose = 2
         if self._config.args.verbose >= more_verbose:
-            j_tree_dict = cast(JSONVal, tree_dict)
-            tree = Tree(obj=j_tree_dict, term_features=self._config.term_features)
+            tree = Tree(obj=cast(JSONVal, tree_dict), term_features=self._config.term_features)
             tree.links = links
             tree.green.extend(green)
             rendered = tree.render()
             print(rendered)  # noqa: T201
         else:
-            pruned_tree_dict: JSONVal = {}
-            if not isinstance(pruned_tree_dict, dict):
-                raise TypeError(NOT_A_DICT)
-            for collection_name in list(tree_dict.keys()):
+            pruned_tree_dict: TreeWithoutReqs = {}
+            for collection_name in tree_dict:
                 found = False
                 for value in tree_dict.values():
-                    if not isinstance(value, dict):
-                        raise TypeError(NOT_A_DICT)
                     if collection_name in value:
                         found = True
                 if not found:
                     pruned_tree_dict[collection_name] = tree_dict[collection_name]
 
-            tree = Tree(obj=pruned_tree_dict, term_features=self._config.term_features)
+            tree = Tree(
+                obj=cast(JSONVal, pruned_tree_dict),
+                term_features=self._config.term_features,
+            )
             tree.links = links
             tree.green.extend(green)
             rendered = tree.render()
@@ -126,7 +123,7 @@ class TreeMaker:
 
 
 def add_python_reqs(
-    tree_dict: dict[str, dict[str, JSONVal]],
+    tree_dict: TreeWithReqs,
     collection_name: str,
     python_deps: list[str],
 ) -> None:
@@ -140,17 +137,19 @@ def add_python_reqs(
     Raises:
         TypeError: If the tree dict is not a dict.
     """
-    if not isinstance(tree_dict, dict):
-        raise TypeError(NOT_A_DICT)
     collection = tree_dict[collection_name]
     if not isinstance(collection, dict):
-        raise TypeError(NOT_A_DICT)
-    collection["python requirements"] = []
+        msg = "Did you really name a collection 'python requirements'?"
+        raise TypeError(msg)
 
+    deps = []
     for dep in sorted(python_deps):
-        name, comment = dep.split("#", 1)
+        if "#" in dep:
+            name, comment = dep.split("#", 1)
+        else:
+            name = dep
+            comment = ""
         if collection_name in comment:
-            if not isinstance(collection["python requirements"], list):
-                msg = "Python requirements is not a list."
-                raise TypeError(msg)
-            collection["python requirements"].append(name.strip())
+            deps.append(name.strip())
+
+    collection["python requirements"] = deps

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import sys
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,14 +33,14 @@ class Collection:  # pylint: disable=too-many-instance-attributes
     """
 
     config: Config
-    path: Path | None = None
-    opt_deps: str | None = None
-    local: bool | None = None
-    cnamespace: str | None = None
-    cname: str | None = None
-    csource: list[str] | None = None
-    specifier: str | None = None
-    original: str | None = None
+    path: Path
+    opt_deps: str
+    local: bool
+    cnamespace: str
+    cname: str
+    csource: list[str]
+    specifier: str
+    original: str
 
     @property
     def name(self: Collection) -> str:
@@ -70,12 +69,7 @@ class Collection:  # pylint: disable=too-many-instance-attributes
 
         Returns:
             The site packages collection path
-        Raises:
-            RuntimeError: If the collection namespace or name is not set
         """
-        if not self.cnamespace or not self.cname:
-            msg = "Collection namespace or name not set."
-            raise RuntimeError(msg)
         return self.config.site_pkg_collections_path / self.cnamespace / self.cname
 
 
@@ -90,10 +84,12 @@ def parse_collection_request(  # noqa: PLR0915
         string: The collection request string
         config: The configuration object
         output: The output object
+
+    Raises:
+        SystemExit: If the collection request is invalid
     Returns:
         A collection object
     """
-    collection = Collection(config=config, original=string)
     # spec with dep, local
     if "[" in string and "]" in string:
         msg = f"Found optional dependencies in collection request: {string}"
@@ -106,15 +102,25 @@ def parse_collection_request(  # noqa: PLR0915
             output.critical(msg)
         msg = f"Found local collection request with dependencies: {string}"
         output.debug(msg)
-        collection.path = path
-        msg = f"Setting collection path: {collection.path}"
+        msg = f"Setting collection path: {path}"
         output.debug(msg)
-        collection.opt_deps = string.split("[")[1].split("]")[0]
-        msg = f"Setting optional dependencies: {collection.opt_deps}"
+        opt_deps = string.split("[")[1].split("]")[0]
+        msg = f"Setting optional dependencies: {opt_deps}"
         output.debug(msg)
-        collection.local = True
+        local = True
         msg = "Setting request as local"
         output.debug(msg)
+        collection = Collection(
+            config=config,
+            path=path,
+            opt_deps=opt_deps,
+            local=local,
+            cnamespace="",
+            cname="",
+            csource=[],
+            specifier="",
+            original=string,
+        )
         get_galaxy(collection=collection, output=output)
         return collection
     # spec without dep, local
@@ -124,10 +130,20 @@ def parse_collection_request(  # noqa: PLR0915
         output.debug(msg)
         msg = f"Setting collection path: {path}"
         output.debug(msg)
-        collection.path = path
         msg = "Setting request as local"
         output.debug(msg)
-        collection.local = True
+        local = True
+        collection = Collection(
+            config=config,
+            path=path,
+            opt_deps="",
+            local=local,
+            cnamespace="",
+            cname="",
+            csource=[],
+            specifier="",
+            original=string,
+        )
         get_galaxy(collection=collection, output=output)
         return collection
     non_local_re = re.compile(
@@ -145,28 +161,42 @@ def parse_collection_request(  # noqa: PLR0915
         output.hint(msg)
         msg = f"Failed to parse collection request: {string}"
         output.critical(msg)
-        sys.exit(1)
+        raise SystemExit(1)  # pragma: no cover # (critical is a sys.exit)
     msg = f"Found non-local collection request: {string}"
     output.debug(msg)
 
-    collection.cnamespace = matched.group("cnamespace")
-    msg = f"Setting collection namespace: {collection.cnamespace}"
+    cnamespace = matched.group("cnamespace")
+    msg = f"Setting collection namespace: {cnamespace}"
     output.debug(msg)
 
-    collection.cname = matched.group("cname")
-    msg = f"Setting collection name: {collection.cname}"
+    cname = matched.group("cname")
+    msg = f"Setting collection name: {cname}"
     output.debug(msg)
 
     if matched.group("specifier"):
-        collection.specifier = matched.group("specifier")
-        msg = f"Setting collection specifier: {collection.specifier}"
+        specifier = matched.group("specifier")
+        msg = f"Setting collection specifier: {specifier}"
+        output.debug(msg)
+    else:
+        specifier = ""
+        msg = "Setting collection specifier as empty"
         output.debug(msg)
 
-    collection.local = False
+    local = False
     msg = "Setting request as non-local"
     output.debug(msg)
 
-    return collection
+    return Collection(
+        config=config,
+        path=Path(),
+        opt_deps="",
+        local=local,
+        cnamespace=cnamespace,
+        cname=cname,
+        csource=[],
+        specifier=specifier,
+        original=string,
+    )
 
 
 def get_galaxy(collection: Collection, output: Output) -> None:
@@ -178,9 +208,6 @@ def get_galaxy(collection: Collection, output: Output) -> None:
     Raises:
         SystemExit: If the collection name is not found
     """
-    if collection is None or collection.path is None:
-        msg = "get_galaxy called without a collection or path"
-        raise RuntimeError(msg)
     file_name = collection.path / "galaxy.yml"
     if not file_name.exists():
         err = f"Failed to find {file_name} in {collection.path}"
@@ -203,4 +230,4 @@ def get_galaxy(collection: Collection, output: Output) -> None:
         output.critical(err)
     else:
         return
-    raise SystemExit(1)  # We shouldn't be here
+    raise SystemExit(1)  # pragma: no cover # (critical is a sys.exit)

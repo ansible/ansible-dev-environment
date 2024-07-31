@@ -45,7 +45,7 @@ line-length = 100
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:", "pragma: no cover"]
-fail_under = 72
+fail_under = 81
 ignore_errors = true
 show_missing = true
 skip_covered = true
