@@ -16,18 +16,80 @@ Imported source package 'ansible_dev_environment' as '/**/src/<package>/__init__
 Tracing '/**/src/<package>/__init__.py'
 """
 
+import os
 import shutil
+import subprocess
 import tempfile
+import warnings
 
 from collections.abc import Generator
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+import yaml
 
 import ansible_dev_environment  # noqa: F401
 
 from ansible_dev_environment.cli import Cli
 from ansible_dev_environment.config import Config
+
+
+TESTING_CACHE = Path(__file__).parent.parent / ".cache" / ".galaxy_cache"
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Start the server.
+
+    Args:
+        session: The pytest session.
+    """
+    if session.config.option.collectonly:
+        return
+
+    if os.environ.get("PYTEST_XDIST_WORKER"):
+        return
+
+    if not TESTING_CACHE.exists():
+        TESTING_CACHE.mkdir(parents=True, exist_ok=True)
+
+    warnings.warn(f"Checking the galaxy cache: {TESTING_CACHE}", stacklevel=0)
+    update_needed = not any(TESTING_CACHE.iterdir())
+    warnings.warn(f"Update needed: {update_needed}", stacklevel=0)
+    tz = datetime.now().astimezone().tzinfo
+    one_week_ago = datetime.now(tz) - timedelta(weeks=1)
+
+    if not update_needed:
+        for file in TESTING_CACHE.glob("*"):
+            file_creation = datetime.fromtimestamp(file.stat().st_mtime, tz=tz)
+            warnings.warn(f"File: {file.name}, created: {file_creation}", stacklevel=0)
+            if file_creation < one_week_ago:
+                update_needed = True
+                break
+
+    if not update_needed:
+        warnings.warn("Galaxy cache is up to date.", stacklevel=0)
+        return
+
+    warnings.warn("Updating the galaxy cache.", stacklevel=0)
+    shutil.rmtree(TESTING_CACHE, ignore_errors=True)
+    TESTING_CACHE.mkdir(parents=True, exist_ok=True)
+
+    command = (
+        "ansible-galaxy collection download"
+        f" ansible.utils ansible.scm ansible.posix -p {TESTING_CACHE}/ -vvv"
+    )
+    warnings.warn(f"Running: {command}", stacklevel=0)
+    subprocess.run(command, shell=True, check=True)
+
+    files = ",".join(str(f.name) for f in list(TESTING_CACHE.glob("*")))
+    warnings.warn(f"Galaxy cache updated, contains: {files}", stacklevel=0)
+
+    requirements = TESTING_CACHE / "requirements.yml"
+    contents = yaml.load(requirements.read_text(), Loader=yaml.SafeLoader)
+    for collection in contents["collections"]:
+        collection["name"] = f"file://{TESTING_CACHE / collection['name']}"
+    requirements.write_text(yaml.dump(contents))
 
 
 @pytest.fixture(name="monkey_session", scope="session")
@@ -76,9 +138,8 @@ def session_venv(session_dir: Path, monkey_session: pytest.MonkeyPatch) -> Confi
         [
             "ade",
             "install",
-            "ansible.utils",
-            "ansible.scm",
-            "ansible.posix",
+            "-r",
+            str(TESTING_CACHE / "requirements.yml"),
             "--venv",
             str(venv_path),
             "--ll",
