@@ -65,7 +65,11 @@ class Config:
 
     @property
     def venv(self: Config) -> Path:
-        """Return the virtual environment path."""
+        """Return the virtual environment path.
+
+        Raises:
+            SystemExit: If the virtual environment cannot be found.
+        """
         if self.args.venv:
             return Path(self.args.venv).expanduser().resolve()
         venv_str = os.environ.get("VIRTUAL_ENV")
@@ -73,7 +77,7 @@ class Config:
             return Path(venv_str).expanduser().resolve()
         err = "Failed to find a virtual environment."
         self._output.critical(err)
-        sys.exit(1)
+        raise SystemExit(1)  # pragma: no cover # critical exits
 
     @property
     def venv_cache_dir(self: Config) -> Path:
@@ -109,10 +113,13 @@ class Config:
         return Path(sys.executable)
 
     @property
-    def galaxy_bin(self: Config) -> Path | None:
+    def galaxy_bin(self: Config) -> Path:
         """Find the ansible galaxy command.
 
         Prefer the venv over the system package over the PATH.
+
+        Raises:
+            SystemExit: If the command cannot be found.
         """
         within_venv = self.venv_bindir / "ansible-galaxy"
         if within_venv.exists():
@@ -131,7 +138,7 @@ class Config:
             return Path(last_resort)
         msg = "Failed to find ansible-galaxy."
         self._output.critical(msg)
-        return None
+        raise SystemExit(1)  # pragma: no cover # critical exits
 
     def _set_interpreter(
         self: Config,
