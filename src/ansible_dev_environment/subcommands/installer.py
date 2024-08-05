@@ -50,7 +50,9 @@ class Installer:
 
     def run(self: Installer) -> None:
         """Run the installer."""
-        if self._config.args.collection_specifier and "," in self._config.args.collection_specifier:
+        if self._config.args.collection_specifier and any(
+            "," in s for s in self._config.args.collection_specifier
+        ):
             err = "Multiple optional dependencies are not supported at this time."
             self._output.critical(err)
 
