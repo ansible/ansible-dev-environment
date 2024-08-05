@@ -22,6 +22,7 @@ platlib
 platstdlib
 purelib
 reqs
+sessionstart
 setenv
 treemaker
 usefixtures

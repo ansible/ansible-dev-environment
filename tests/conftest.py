@@ -16,15 +16,15 @@ Imported source package 'ansible_dev_environment' as '/**/src/<package>/__init__
 Tracing '/**/src/<package>/__init__.py'
 """
 
+import json
 import os
 import shutil
-import subprocess
 import tempfile
 import warnings
 
 from collections.abc import Generator
-from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.request import HTTPError, urlopen
 
 import pytest
 import yaml
@@ -35,7 +35,55 @@ from ansible_dev_environment.cli import Cli
 from ansible_dev_environment.config import Config
 
 
-TESTING_CACHE = Path(__file__).parent.parent / ".cache" / ".galaxy_cache"
+GALAXY_CACHE = Path(__file__).parent.parent / ".cache" / ".galaxy_cache"
+REQS_FILE_NAME = "requirements.yml"
+
+
+@pytest.fixture()
+def galaxy_cache() -> Path:
+    """Return the galaxy cache directory.
+
+    Returns:
+        The galaxy cache directory.
+    """
+    return GALAXY_CACHE
+
+
+def check_download_collection(name: str, dest: Path) -> None:
+    """Download a collection if necessary.
+
+    Args:
+        name: The collection name.
+        dest: The destination directory.
+    """
+    namespace, name = name.split(".")
+    base_url = "https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections"
+
+    url = f"{base_url}/index/{namespace}/{name}/versions/?is_highest=true"
+    try:
+        with urlopen(url) as response:  # noqa: S310
+            body = response.read()
+    except HTTPError:
+        err = f"Failed to check collection version: {name}"
+        pytest.fail(err)
+    with urlopen(url) as response:  # noqa: S310
+        body = response.read()
+    json_response = json.loads(body)
+    version = json_response["data"][0]["version"]
+    file_name = f"{namespace}-{name}-{version}.tar.gz"
+    file_path = dest / file_name
+    if file_path.exists():
+        return
+    for found_file in dest.glob(f"{namespace}-{name}-*"):
+        found_file.unlink()
+    url = f"{base_url}/artifacts/{file_name}"
+    warnings.warn(f"Downloading collection: {file_name}", stacklevel=0)
+    try:
+        with urlopen(url) as response, file_path.open(mode="wb") as file:  # noqa: S310
+            file.write(response.read())
+    except HTTPError:
+        err = f"Failed to download collection: {name}"
+        pytest.fail(err)
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -50,46 +98,19 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     if os.environ.get("PYTEST_XDIST_WORKER"):
         return
 
-    if not TESTING_CACHE.exists():
-        TESTING_CACHE.mkdir(parents=True, exist_ok=True)
+    if not GALAXY_CACHE.exists():
+        GALAXY_CACHE.mkdir(parents=True, exist_ok=True)
 
-    warnings.warn(f"Checking the galaxy cache: {TESTING_CACHE}", stacklevel=0)
-    update_needed = not any(TESTING_CACHE.iterdir())
-    warnings.warn(f"Update needed: {update_needed}", stacklevel=0)
-    tz = datetime.now().astimezone().tzinfo
-    one_week_ago = datetime.now(tz) - timedelta(weeks=1)
+    for collection in ("ansible.utils", "ansible.scm", "ansible.posix"):
+        check_download_collection(collection, GALAXY_CACHE)
 
-    if not update_needed:
-        for file in TESTING_CACHE.glob("*"):
-            file_creation = datetime.fromtimestamp(file.stat().st_mtime, tz=tz)
-            warnings.warn(f"File: {file.name}, created: {file_creation}", stacklevel=0)
-            if file_creation < one_week_ago:
-                update_needed = True
-                break
+    reqs: dict[str, list[dict[str, str]]] = {"collections": []}
 
-    if not update_needed:
-        warnings.warn("Galaxy cache is up to date.", stacklevel=0)
-        return
+    for found_file in GALAXY_CACHE.glob("*.tar.gz"):
+        reqs["collections"].append({"name": str(found_file)})
 
-    warnings.warn("Updating the galaxy cache.", stacklevel=0)
-    shutil.rmtree(TESTING_CACHE, ignore_errors=True)
-    TESTING_CACHE.mkdir(parents=True, exist_ok=True)
-
-    command = (
-        "ansible-galaxy collection download"
-        f" ansible.utils ansible.scm ansible.posix -p {TESTING_CACHE}/ -vvv"
-    )
-    warnings.warn(f"Running: {command}", stacklevel=0)
-    subprocess.run(command, shell=True, check=True)
-
-    files = ",".join(str(f.name) for f in list(TESTING_CACHE.glob("*")))
-    warnings.warn(f"Galaxy cache updated, contains: {files}", stacklevel=0)
-
-    requirements = TESTING_CACHE / "requirements.yml"
-    contents = yaml.load(requirements.read_text(), Loader=yaml.SafeLoader)
-    for collection in contents["collections"]:
-        collection["name"] = f"file://{TESTING_CACHE / collection['name']}"
-    requirements.write_text(yaml.dump(contents))
+    requirements = GALAXY_CACHE / REQS_FILE_NAME
+    requirements.write_text(yaml.dump(reqs))
 
 
 @pytest.fixture(name="monkey_session", scope="session")
@@ -139,7 +160,7 @@ def session_venv(session_dir: Path, monkey_session: pytest.MonkeyPatch) -> Confi
             "ade",
             "install",
             "-r",
-            str(TESTING_CACHE / "requirements.yml"),
+            str(GALAXY_CACHE / REQS_FILE_NAME),
             "--venv",
             str(venv_path),
             "--ll",
@@ -148,6 +169,51 @@ def session_venv(session_dir: Path, monkey_session: pytest.MonkeyPatch) -> Confi
             "true",
             "--lf",
             str(session_dir / "ade.log"),
+            "-vvv",
+        ],
+    )
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.args_sanity()
+    cli.ensure_isolated()
+    with pytest.raises(SystemExit):
+        cli.run()
+    return cli.config
+
+
+@pytest.fixture()
+def function_venv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Config:
+    """Create a temporary venv for the session.
+
+    Add some common collections to the venv.
+
+    Since this is a session level fixture, care should be taken to not manipulate it
+    or the resulting config in a way that would affect other tests.
+
+    Args:
+        tmp_path: Temporary directory.
+        monkeypatch: Pytest monkeypatch fixture.
+
+    Returns:
+        The configuration object for the venv.
+    """
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "-r",
+            str(GALAXY_CACHE / REQS_FILE_NAME),
+            "--venv",
+            str(venv_path),
+            "--ll",
+            "debug",
+            "--la",
+            "true",
+            "--lf",
+            str(tmp_path / "ade.log"),
             "-vvv",
         ],
     )

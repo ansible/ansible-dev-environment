@@ -26,11 +26,7 @@ class Lister:
         self._output = output
 
     def run(self: Lister) -> None:
-        """Run the Lister.
-
-        Raises:
-            TypeError: If the link is not a string.
-        """
+        """Run the Lister."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
             venv_cache_dir=self._config.venv_cache_dir,
@@ -80,10 +76,10 @@ class Lister:
             homepage = ci.get("homepage")
             repository = ci.get("repository")
             issues = ci.get("issues")
-            link = repository or homepage or docs or issues or "http://ansible.com"
+            link = repository or homepage or docs or issues or "https://ansible.com"
             if not isinstance(link, str):
-                msg = "Link is not a string."
-                raise TypeError(msg)
+                self._output.error(err)
+                link = "https://ansible.com"
             fqcn_linked = term_link(
                 uri=link,
                 label=fqcn,
