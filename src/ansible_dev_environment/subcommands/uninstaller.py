@@ -92,22 +92,21 @@ class UnInstaller:
                 self._output.debug(msg)
 
         collection_namespace_root = self._collection.site_pkg_path.parent
-        try:
-            collection_namespace_root.rmdir()
-            msg = f"Removed collection namespace root: {collection_namespace_root}"
-            self._output.debug(msg)
-        except FileNotFoundError:
-            pass
-        except OSError as exc:
-            msg = f"Failed to remove collection namespace root: {exc}"
-            self._output.debug(msg)
 
-        try:
-            self._config.site_pkg_collections_path.rmdir()
-            msg = f"Removed collection root: {self._config.site_pkg_collections_path}"
-            self._output.debug(msg)
-        except FileNotFoundError:
-            pass
-        except OSError as exc:
-            msg = f"Failed to remove collection root: {exc}"
-            self._output.debug(msg)
+        if collection_namespace_root.exists():
+            try:
+                collection_namespace_root.rmdir()
+                msg = f"Removed collection namespace root: {collection_namespace_root}"
+                self._output.debug(msg)
+            except OSError as exc:
+                msg = f"Failed to remove collection namespace root: {exc}"
+                self._output.debug(msg)
+
+        if self._config.site_pkg_collections_path.exists():
+            try:
+                self._config.site_pkg_collections_path.rmdir()
+                msg = f"Removed collection root: {self._config.site_pkg_collections_path}"
+                self._output.debug(msg)
+            except OSError as exc:
+                msg = f"Failed to remove collection root: {exc}"
+                self._output.debug(msg)

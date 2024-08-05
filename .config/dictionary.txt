@@ -7,6 +7,7 @@ capsys
 cauthor
 cdescription
 cnamespace
+collectonly
 cpath
 crepository
 csource
@@ -21,7 +22,9 @@ platlib
 platstdlib
 purelib
 reqs
+sessionstart
 setenv
 treemaker
 usefixtures
+XDIST
 xmltodict
