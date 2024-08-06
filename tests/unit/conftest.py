@@ -29,7 +29,7 @@ def output(tmp_path: Path) -> Output:
         log_level="notset",
         log_append="false",
         term_features=TermFeatures(color=False, links=False),
-        verbosity=0,
+        verbosity=3,
     )
 
 

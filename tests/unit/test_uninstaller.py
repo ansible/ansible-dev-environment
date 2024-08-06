@@ -1,12 +1,10 @@
 """Test the uninstaller module."""
 
 import copy
-import tarfile
 
 from pathlib import Path
 
 import pytest
-import yaml
 
 from ansible_dev_environment.arg_parser import parse
 from ansible_dev_environment.config import Config
@@ -56,8 +54,8 @@ def test_missing_reqs(
 
 def test_editable_uninstall(
     tmp_path: Path,
+    installable_local_collection: Path,
     output: Output,
-    galaxy_cache: Path,
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -69,35 +67,19 @@ def test_editable_uninstall(
 
     Args:
         tmp_path: The tmp_path fixture.
+        installable_local_collection: The installable_local_collection fixture.
         output: The output fixture.
-        galaxy_cache: The galaxy_cache fixture.
         capsys: The capsys fixture.
         monkeypatch: The monkeypatch fixture.
 
     """
-    src_dir = tmp_path / "ansible.posix"
-    tar_file_path = next(galaxy_cache.glob("ansible-posix*"))
-    with tarfile.open(tar_file_path, "r") as tar:
-        try:
-            tar.extractall(src_dir, filter="data")
-        except TypeError:
-            tar.extractall(src_dir)  # noqa: S202
-    galaxy_contents = {
-        "authors": "author",
-        "name": "posix",
-        "namespace": "ansible",
-        "readme": "readme",
-        "version": "1.0.0",
-    }
-    yaml.dump(galaxy_contents, (src_dir / "galaxy.yml").open("w"))
-
     monkeypatch.setattr(
         "sys.argv",
         [
             "ade",
             "install",
             "--editable",
-            str(src_dir),
+            str(installable_local_collection),
             "--lf",
             str(tmp_path / "ade.log"),
             "--venv",

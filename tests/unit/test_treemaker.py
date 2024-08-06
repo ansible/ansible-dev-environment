@@ -31,6 +31,7 @@ def test_tree_empty(
         venv=venv_path,
         verbose=0,
     )
+    output._verbosity = 0
     config = Config(args=args, output=output, term_features=output.term_features)
     config.init()
     treemaker = TreeMaker(config=config, output=output)
