@@ -149,6 +149,9 @@ class Installer:
 
         Args:
             collections: The collection objects.
+
+        Raises:
+            SystemExit: If the collection installation fails.
         """
         collections_str = " ".join(
             [f"'{collection.original}'" for collection in collections],
@@ -187,27 +190,19 @@ class Installer:
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collection: {exc}\n{exc.stderr}"
             self._output.critical(err)
-            return
+            raise SystemError(err) from exc  # pragma: no cover # critical exits
         installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
     def _install_galaxy_requirements(self: Installer) -> None:
         """Install the collections using requirements.yml."""
-        if self._config.args.requirement and not self._config.args.cpi:
-            msg = f"Installing collections from requirements file: {self._config.args.requirement}"
-            self._output.info(msg)
-            collections = collections_from_requirements(
-                file=self._config.args.requirement,
-            )
-        elif self._config.args.cpi:
-            msg = "Source installing collections from requirements file source-requirement.yml"
-            self._output.info(msg)
-            collections = collections_from_requirements(
-                file=self._config.args.requirement,
-            )
-        else:
-            collections = []
+        method = "Pre-installing" if self._config.args.cpi else "Installing"
+        msg = f"{method} collections from requirements file: {self._config.args.requirement}"
+
+        self._output.info(msg)
+
+        collections = collections_from_requirements(file=self._config.args.requirement)
 
         for collection in collections:
             cnamespace = collection["name"].split(".")[0]
@@ -312,7 +307,7 @@ class Installer:
 
     def _copy_repo_files(
         self: Installer,
-        local_repo_path: Path | None,
+        local_repo_path: Path,
         destination_path: Path,
     ) -> None:
         """Copy collection files tracked in git to the build directory.
@@ -321,12 +316,10 @@ class Installer:
             local_repo_path: The collection local path.
             destination_path: The build destination path.
 
-        """
-        if local_repo_path is None:
-            msg = "Invalid repo path, no files to copy"
-            self._output.debug(msg)
-            return
+        Raises:
+            SystemExit: If no files are found.
 
+        """
         # Get tracked files from git ls-files command
         found_using, files_stdout = self._find_files_using_git_ls_files(
             local_repo_path=local_repo_path,
@@ -340,7 +333,7 @@ class Installer:
         if not files_stdout:
             msg = "No files found with either 'git ls-files' or 'ls"
             self._output.critical(msg)
-            return
+            raise SystemExit(msg)  # pragma: no cover # critical exits
 
         msg = f"File list generated with '{found_using}'"
         self._output.info(msg)
@@ -380,6 +373,7 @@ class Installer:
 
         Raises:
             RuntimeError: If tarball is not found or if more than one tarball is found.
+            SystemExit: If the collection installation fails.
         """
         msg = f"Installing local collection from: {collection.build_dir}"
         self._output.info(msg)
@@ -464,7 +458,7 @@ class Installer:
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install collection: {exc} {exc.stderr}"
             self._output.critical(err)
-            return
+            raise SystemError(err) from exc  # pragma: no cover # critical exits
 
         # ansible-galaxy collection install does not include the galaxy.yml for version
         # nor does it create an info file that can be used to determine the version.
@@ -490,15 +484,10 @@ class Installer:
         Args:
             collection: The collection object.
 
-        Raises:
-            RuntimeError: If the collection path is not set.
         """
         msg = f"Swapping {collection.name} with {collection.path}"
         self._output.info(msg)
 
-        if collection.path is None:
-            msg = "Collection path not set"
-            raise RuntimeError(msg)
         msg = f"Removing installed {collection.site_pkg_path}"
         self._output.debug(msg)
         if collection.site_pkg_path.exists():

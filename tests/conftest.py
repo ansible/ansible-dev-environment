@@ -19,6 +19,7 @@ Tracing '/**/src/<package>/__init__.py'
 import json
 import os
 import shutil
+import tarfile
 import tempfile
 import warnings
 
@@ -135,6 +136,34 @@ def fixture_session_dir() -> Generator[Path, None, None]:
     temp_dir = Path(tempfile.mkdtemp())
     yield temp_dir
     shutil.rmtree(temp_dir)
+
+
+@pytest.fixture()
+def installable_local_collection(tmp_path: Path) -> Path:
+    """Provide a local collection that can be installed.
+
+    Args:
+        tmp_path: Temporary directory.
+
+    Returns:
+        The path to the local collection.
+    """
+    src_dir = tmp_path / "ansible.posix"
+    tar_file_path = next(GALAXY_CACHE.glob("ansible-posix*"))
+    with tarfile.open(tar_file_path, "r") as tar:
+        try:
+            tar.extractall(src_dir, filter="data")
+        except TypeError:
+            tar.extractall(src_dir)  # noqa: S202
+    galaxy_contents = {
+        "authors": "author",
+        "name": "posix",
+        "namespace": "ansible",
+        "readme": "readme",
+        "version": "1.0.0",
+    }
+    yaml.dump(galaxy_contents, (src_dir / "galaxy.yml").open("w"))
+    return src_dir
 
 
 @pytest.fixture(scope="session")

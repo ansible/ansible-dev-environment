@@ -1,5 +1,8 @@
+# pylint: disable=C0302
 """Tests for the installer."""
 
+import os
+import shutil
 import subprocess
 
 from argparse import Namespace
@@ -7,11 +10,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 
 from ansible_dev_environment.arg_parser import parse
+from ansible_dev_environment.cli import Cli
+from ansible_dev_environment.collection import Collection
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
 from ansible_dev_environment.subcommands.installer import Installer
+from ansible_dev_environment.utils import subprocess_run
 
 
 NAMESPACE = Namespace()
@@ -99,6 +106,47 @@ def test_ls_one_found(tmp_path: Path, output: Output) -> None:
     assert files == "file.txt\n"
 
 
+def test_ls_failed(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test one found using ls.
+
+    Args:
+        tmp_path: Temp directory
+        output: Output instance
+        monkeypatch: The monkeypatch fixture
+        capsys: The capsys fixture
+    """
+
+    def mock_subprocess_run(**_kwargs: Any) -> None:  # noqa: ANN401
+        """Raise an exception.
+
+        Args:
+            **_kwargs: Keyword arguments
+
+        Raises:
+            subprocess.CalledProcessError: Always
+
+        """
+        raise subprocess.CalledProcessError(1, "ls")
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+    config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
+    installer = Installer(output=output, config=config)
+    (tmp_path / "file.txt").touch()
+    result = installer._find_files_using_ls(local_repo_path=tmp_path)
+    assert result == (None, None)
+
+    captured = capsys.readouterr()
+    assert "Failed to list collection using ls" in captured.out
+
+
 def test_copy_no_files(tmp_path: Path, output: Output) -> None:
     """Test file copy no files.
 
@@ -157,6 +205,51 @@ def test_copy_using_ls(tmp_path: Path, output: Output) -> None:
     installer._copy_repo_files(local_repo_path=source, destination_path=dest)
     moved = dest.glob("**/*")
     assert sorted([m.name for m in list(moved)]) == ["file1.txt", "file2.txt"]
+
+
+def test_copy_fails(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test file copy using ls.
+
+    Args:
+        tmp_path: Temp directory
+        output: Output instance
+        monkeypatch: The monkeypatch fixture
+        capsys: The capsys fixture
+    """
+    source = tmp_path / "source"
+    source.mkdir()
+    dest = tmp_path / "build"
+    dest.mkdir()
+    config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
+    installer = Installer(output=output, config=config)
+    (source / "file1.txt").touch()
+    (source / "file2.txt").touch()
+
+    def mock_copy2(src: Path, dest: Path) -> None:  # noqa: ARG001
+        """Raise an exception.
+
+        Args:
+            src: Source path
+            dest: Destination path
+
+        Raises:
+            shutil.Error: Always
+
+        """
+        raise shutil.Error
+
+    monkeypatch.setattr(shutil, "copy2", mock_copy2)
+    with pytest.raises(SystemExit) as excinfo:
+        installer._copy_repo_files(local_repo_path=source, destination_path=dest)
+
+    assert excinfo.value.code == 1
+    captured = capsys.readouterr()
+    assert "Failed to copy collection to build directory" in captured.err
 
 
 def test_no_adt_install(
@@ -328,22 +421,21 @@ def test_core_install_fails(
 
     monkeypatch.setattr(Path, "exists", exists)
 
-    def subprocess_run(*_args: Any, **_kwargs: Any) -> None:  # noqa: ANN401
+    def mock_subprocess_run(**kwargs: Any) -> None:  # noqa: ANN401
         """Raise an exception.
 
         Args:
-            *_args: Arguments
-            **_kwargs: Keyword arguments
+            **kwargs: Keyword arguments
 
         Raises:
             subprocess.CalledProcessError: Always
 
         """
-        raise subprocess.CalledProcessError(1, "ansible")
+        raise subprocess.CalledProcessError(1, kwargs["command"])
 
     monkeypatch.setattr(
         "ansible_dev_environment.subcommands.installer.subprocess_run",
-        subprocess_run,
+        mock_subprocess_run,
     )
     installer = Installer(config=session_venv, output=session_venv._output)
 
@@ -396,22 +488,21 @@ def test_adt_install_fails(
         capsys: The capsys fixture.
     """
 
-    def subprocess_run(*_args: Any, **_kwargs: Any) -> None:  # noqa: ANN401
+    def mock_subprocess_run(**kwargs: Any) -> None:  # noqa: ANN401
         """Raise an exception.
 
         Args:
-            *_args: Arguments
-            **_kwargs: Keyword arguments
+            **kwargs: Keyword arguments
 
         Raises:
             subprocess.CalledProcessError: Always
 
         """
-        raise subprocess.CalledProcessError(1, "adt")
+        raise subprocess.CalledProcessError(1, kwargs["command"])
 
     monkeypatch.setattr(
         "ansible_dev_environment.subcommands.installer.subprocess_run",
-        subprocess_run,
+        mock_subprocess_run,
     )
     installer = Installer(config=session_venv, output=session_venv._output)
 
@@ -461,6 +552,62 @@ def test_reinstall(
     assert "Removing installed " in captured.out
 
 
+def test_reinstall_editable(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that reinstalling works if initially editable.
+
+    Add a galaxy.yml file to the extracted collection and install it editable. Then install it
+    non-editable.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "ansible.posix",
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert not (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+
+
 def test_install_fails(
     function_venv: Config,
     monkeypatch: pytest.MonkeyPatch,
@@ -492,7 +639,7 @@ def test_install_fails(
     )
     config.init()
 
-    def subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
         """Raise an exception.
 
         Args:
@@ -506,12 +653,12 @@ def test_install_fails(
 
         """
         if "install 'ansible.posix'" in kwargs["command"]:
-            raise subprocess.CalledProcessError(1, "ansible.posix")
+            raise subprocess.CalledProcessError(1, kwargs["command"])
         return subprocess_run(**kwargs)
 
     monkeypatch.setattr(
         "ansible_dev_environment.subcommands.installer.subprocess_run",
-        subprocess_run,
+        mock_subprocess_run,
     )
 
     installer = Installer(config=config, output=function_venv._output)
@@ -519,3 +666,584 @@ def test_install_fails(
         installer.run()
     captured = capsys.readouterr()
     assert "Failed to install collection" in captured.err
+
+
+def test_collection_pre_install(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    galaxy_cache: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test the collection pre-install functionality.
+
+    Rewrite the galaxy_cache requirements.yml file to only include the ansible-utils collection
+    as the source requirements file in an extracted collection. Add the galaxy.yml file to the
+    extracted collection. Install the collection with the collection pre-install.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        galaxy_cache: The galaxy_cache fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    orig_reqs = galaxy_cache / "requirements.yml"
+    source_reqs = installable_local_collection / ".config" / "source-requirements.yml"
+    source_reqs.parent.mkdir(parents=True)
+    shutil.copy(src=orig_reqs, dst=source_reqs)
+    content = yaml.load(source_reqs.read_text(), Loader=yaml.SafeLoader)
+    content["collections"] = [c for c in content["collections"] if "ansible-utils" in c["name"]]
+    source_reqs.write_text(yaml.dump(content))
+    monkeypatch.chdir(installable_local_collection)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            ".",
+            "--collection-pre-install",
+            "--venv",
+            str(tmp_path / "venv"),
+        ],
+    )
+    cli = Cli()
+    cli.parse_args()
+    cli.output = output
+    cli.args_sanity()
+    config = Config(args=cli.args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    subdirs = (config.site_pkg_collections_path / "ansible").glob("*")
+    assert sorted({c.name for c in subdirs}) == ["posix", "utils"]
+
+
+@pytest.mark.parametrize("first", (True, False), ids=["editable", "not_editable"])
+@pytest.mark.parametrize("second", (True, False), ids=["editable", "not_editable"])
+def test_reinstall_local_collection(  # noqa: PLR0913
+    first: bool,  # noqa: FBT001
+    second: bool,  # noqa: FBT001
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that reinstalling works with a local collection.
+
+    Args:
+        first: A boolean indicating if the collection is installed editable first.
+        second: A boolean indicating if the collection is installed editable second.
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+    """
+    cli_args = [
+        "ade",
+        "install",
+        str(installable_local_collection),
+        "--venv",
+        str(tmp_path / "venv"),
+        "-vvv",
+    ]
+    monkeypatch.setattr("sys.argv", cli_args + (["--editable"] if first else []))
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink() is first
+    monkeypatch.setattr("sys.argv", cli_args + (["--editable"] if second else []))
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink() is second
+
+
+def test_reinstall_local_collection_after_galaxy(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that reinstalling works with a local collection after a galaxy install.
+
+    The galaxy install should be removed and the local collection installed. The galaxy install
+    leaves an info directory in the site-packages directory that should be removed.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ade", "install", "ansible.posix", "--venv", str(tmp_path / "venv")],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert (config.site_pkg_collections_path / "ansible" / "posix").is_dir()
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+
+
+def test_reinstall_requirements_file(
+    tmp_path: Path,
+    function_venv: Config,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test that reinstalling works with a requirements file.
+
+    Args:
+        tmp_path: A temporary directory.
+        function_venv: The function_venv fixture.
+        capsys: The capsys fixture.
+    """
+    galaxy = {
+        "collections": [{"name": "ansible.posix"}],
+    }
+    galaxy_file = tmp_path / "requirements.yml"
+    yaml.dump(galaxy, galaxy_file.open("w"))
+    function_venv.args.requirement = galaxy_file
+    installer = Installer(config=function_venv, output=function_venv._output)
+    installer._install_galaxy_requirements()
+    captured = capsys.readouterr()
+    assert "Removing installed " in captured.out
+    assert (function_venv.site_pkg_collections_path / "ansible" / "posix").exists()
+
+
+def test_reinstall_requirements_file_after_editable(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that reinstalling works with a requirements file after an editable install.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+    galaxy = {
+        "collections": [{"name": "ansible.posix"}],
+    }
+    galaxy_file = tmp_path / "requirements.yml"
+    yaml.dump(galaxy, galaxy_file.open("w"))
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--requirement",
+            str(galaxy_file),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    cli = Cli()
+    cli.parse_args()
+    args = cli.args
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    assert not (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+
+
+def test_install_requirements_file_failed(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test that reinstalling works with a requirements file after an editable install.
+
+    Args:
+        tmp_path: A temporary directory.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+        capsys: The capsys fixture.
+
+    """
+    galaxy = {
+        "collections": [{"name": "ansible.posix"}],
+    }
+    galaxy_file = tmp_path / "requirements.yml"
+    yaml.dump(galaxy, galaxy_file.open("w"))
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--requirement",
+            str(galaxy_file),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+
+    def mock_subprocess_run(
+        **kwargs: Any,  # noqa: ANN401
+    ) -> subprocess.CompletedProcess[str]:
+        """Raise an exception.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Raises:
+            subprocess.CalledProcessError: if requirements file is being installed
+
+        Returns:
+            The completed process
+
+        """
+        if str(tmp_path / "requirements.yml") in kwargs["command"]:
+            raise subprocess.CalledProcessError(1, kwargs["command"])
+        return subprocess_run(**kwargs)
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+
+    cli = Cli()
+    cli.parse_args()
+    args = cli.args
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+
+    with pytest.raises(SystemExit):
+        installer.run()
+
+    captured = capsys.readouterr()
+    assert "Failed to install collection" in captured.err
+
+
+def test_local_collection_build_fails(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test that a clean exit occurs if the local collection build fails.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+        capsys: The capsys fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+
+    def mock_subprocess_run(
+        **kwargs: Any,  # noqa: ANN401
+    ) -> subprocess.CompletedProcess[str]:
+        """Raise an exception.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Raises:
+            subprocess.CalledProcessError: if requirements file is being installed
+
+        Returns:
+            The completed process
+
+        """
+        if "collection build" in kwargs["command"]:
+            raise subprocess.CalledProcessError(1, kwargs["command"])
+        return subprocess_run(**kwargs)
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+
+    with pytest.raises(SystemExit):
+        installer.run()
+    captured = capsys.readouterr()
+    assert "Failed to build collection" in captured.err
+
+
+def test_local_collection_build_no_tar(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that a clean exit occurs if the local collection build fails.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+
+    def mock_subprocess_run(
+        **kwargs: Any,  # noqa: ANN401
+    ) -> subprocess.CompletedProcess[str]:
+        """Raise an exception.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Returns:
+            A completed process
+
+        """
+        if "collection build" in kwargs["command"]:
+            return subprocess.CompletedProcess(
+                args=kwargs["command"],
+                returncode=0,
+                stdout="",
+                stderr="",
+            )
+        return subprocess_run(**kwargs)
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+
+    with pytest.raises(RuntimeError, match="Expected to find one collection tarball"):
+        installer.run()
+
+
+def test_local_collection_install_fails(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test that a clean exit occurs if the local collection install fails.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+        capsys: The capsys fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+
+    def mock_subprocess_run(
+        **kwargs: Any,  # noqa: ANN401
+    ) -> subprocess.CompletedProcess[str]:
+        """Raise an exception.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Raises:
+            subprocess.CalledProcessError: if requirements file is being installed
+
+        Returns:
+            The completed process
+
+        """
+        if "collection install" in kwargs["command"]:
+            raise subprocess.CalledProcessError(1, kwargs["command"])
+        return subprocess_run(**kwargs)
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+
+    with pytest.raises(SystemExit):
+        installer.run()
+
+    captured = capsys.readouterr()
+    assert "Failed to install collection" in captured.err
+
+
+def test_local_collection_without_tar_install(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test a collection is installed editable if previously editable.
+
+    This should never happen since the collection tarball is always created and always used
+    prior to symlinking the collection. Use os.lstat here to get the mtime of the symlink itself.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(tmp_path / "venv"),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    pre_mtime = os.lstat(config.site_pkg_collections_path / "ansible" / "posix").st_mtime
+
+    def install_local_collection(self: Installer, collection: Collection) -> None:  # noqa: ARG001
+        """Do nothing.
+
+        Args:
+            self: The installer instance.
+            collection: The collection to install.
+
+        """
+
+    monkeypatch.setattr(Installer, "_install_local_collection", install_local_collection)
+    installer.run()
+    post_mtime = os.lstat(config.site_pkg_collections_path / "ansible" / "posix").st_mtime
+    assert post_mtime > pre_mtime
+
+
+def test_failed_pip_install(
+    function_venv: Config,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test a clean exit if the pip install fails.
+
+    Args:
+        function_venv: The function_venv fixture.
+        monkeypatch: The monkeypatch fixture.
+        capsys: The capsys fixture.
+    """
+    installer = Installer(config=function_venv, output=function_venv._output)
+
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
+        """Raise an exception.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Raises:
+            subprocess.CalledProcessError: if pip install is being run
+
+        Returns:
+            The completed process
+
+        """
+        if "pip install" in kwargs["command"]:
+            raise subprocess.CalledProcessError(1, kwargs["command"])
+        return subprocess_run(**kwargs)
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+
+    with pytest.raises(SystemExit):
+        installer.run()
+
+    captured = capsys.readouterr()
+    assert "Failed to install requirements from" in captured.err
