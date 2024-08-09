@@ -1,4 +1,5 @@
 """Test the treemaker module."""
+from __future__ import annotations
 
 from argparse import Namespace
 from pathlib import Path

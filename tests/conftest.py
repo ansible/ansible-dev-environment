@@ -15,6 +15,7 @@ Imported source package 'ansible_dev_environment' as '/**/src/<package>/__init__
 <...>
 Tracing '/**/src/<package>/__init__.py'
 """
+from __future__ import annotations
 
 import json
 import os

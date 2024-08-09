@@ -1,4 +1,5 @@
 """Test the uninstaller module."""
+from __future__ import annotations
 
 import copy
 

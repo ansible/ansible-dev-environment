@@ -1,4 +1,5 @@
 """Test the lister module."""
+from __future__ import annotations
 
 import copy
 import tarfile

@@ -1,5 +1,6 @@
 # pylint: disable=C0302
 """Tests for the installer."""
+from __future__ import annotations
 
 import os
 import shutil

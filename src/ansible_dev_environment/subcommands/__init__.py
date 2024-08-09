@@ -1,6 +1,7 @@
 """The subcommands module contains all the subcommands for ansible-dev-environment."""
 
 # ruff: noqa: F401
+from __future__ import annotations
 
 from .checker import Checker as Check
 from .inspector import Inspector as Inspect

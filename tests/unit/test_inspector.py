@@ -1,4 +1,5 @@
 """Tests for the inspector module."""
+from __future__ import annotations
 
 import copy
 import importlib
