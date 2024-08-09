@@ -26,5 +26,5 @@ sessionstart
 setenv
 treemaker
 usefixtures
-XDIST
+xdist
 xmltodict
