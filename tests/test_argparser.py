@@ -1,5 +1,7 @@
 """Tests for the arg_parser module."""
 
+from __future__ import annotations
+
 import pytest
 
 from ansible_dev_environment.arg_parser import (

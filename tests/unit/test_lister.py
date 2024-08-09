@@ -1,19 +1,27 @@
 """Test the lister module."""
 
+from __future__ import annotations
+
 import copy
 import tarfile
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-import pytest
 import yaml
 
 from ansible_dev_environment.arg_parser import parse
 from ansible_dev_environment.config import Config
-from ansible_dev_environment.output import Output
 from ansible_dev_environment.subcommands.installer import Installer
 from ansible_dev_environment.subcommands.lister import Lister
 from ansible_dev_environment.utils import JSONVal, collect_manifests
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import pytest
+
+    from ansible_dev_environment.output import Output
 
 
 def test_success(session_venv: Config, capsys: pytest.CaptureFixture[str]) -> None:

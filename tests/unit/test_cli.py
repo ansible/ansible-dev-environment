@@ -1,11 +1,17 @@
 """Test cli functionality."""
 
-from collections.abc import Generator
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from ansible_dev_environment.cli import Cli
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 def main(cli: Cli) -> None:

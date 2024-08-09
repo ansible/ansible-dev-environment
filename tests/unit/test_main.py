@@ -1,5 +1,7 @@
 """Test the main file."""
 
+from __future__ import annotations
+
 import runpy
 
 import pytest
