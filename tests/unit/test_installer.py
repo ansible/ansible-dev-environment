@@ -8,18 +8,21 @@ import subprocess
 
 from argparse import Namespace
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 import yaml
 
 from ansible_dev_environment.arg_parser import parse
 from ansible_dev_environment.cli import Cli
-from ansible_dev_environment.collection import Collection
 from ansible_dev_environment.config import Config
-from ansible_dev_environment.output import Output
 from ansible_dev_environment.subcommands.installer import Installer
 from ansible_dev_environment.utils import subprocess_run
+
+
+if TYPE_CHECKING:
+    from ansible_dev_environment.collection import Collection
+    from ansible_dev_environment.output import Output
 
 
 NAMESPACE = Namespace()

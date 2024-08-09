@@ -1,16 +1,22 @@
 """Test the treemaker module."""
+
 from __future__ import annotations
 
 from argparse import Namespace
-from pathlib import Path
+from typing import TYPE_CHECKING
 from venv import EnvBuilder
 
 import pytest
 
 from ansible_dev_environment.config import Config
-from ansible_dev_environment.output import Output
 from ansible_dev_environment.subcommands.treemaker import TreeMaker, TreeWithReqs, add_python_reqs
-from ansible_dev_environment.utils import JSONVal
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from ansible_dev_environment.output import Output
+    from ansible_dev_environment.utils import JSONVal
 
 
 def test_tree_empty(

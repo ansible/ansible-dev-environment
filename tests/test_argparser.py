@@ -1,4 +1,5 @@
 """Tests for the arg_parser module."""
+
 from __future__ import annotations
 
 import pytest

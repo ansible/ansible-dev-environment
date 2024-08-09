@@ -15,6 +15,7 @@ Imported source package 'ansible_dev_environment' as '/**/src/<package>/__init__
 <...>
 Tracing '/**/src/<package>/__init__.py'
 """
+
 from __future__ import annotations
 
 import json
@@ -24,8 +25,8 @@ import tarfile
 import tempfile
 import warnings
 
-from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.request import HTTPError, urlopen
 
 import pytest
@@ -34,7 +35,12 @@ import yaml
 import ansible_dev_environment  # noqa: F401
 
 from ansible_dev_environment.cli import Cli
-from ansible_dev_environment.config import Config
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from ansible_dev_environment.config import Config
 
 
 GALAXY_CACHE = Path(__file__).parent.parent / ".cache" / ".galaxy_cache"

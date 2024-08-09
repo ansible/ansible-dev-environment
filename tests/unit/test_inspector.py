@@ -1,4 +1,5 @@
 """Tests for the inspector module."""
+
 from __future__ import annotations
 
 import copy
@@ -7,10 +8,15 @@ import json
 import re
 import sys
 
-import pytest
+from typing import TYPE_CHECKING
 
-from ansible_dev_environment.config import Config
 from ansible_dev_environment.subcommands import inspector
+
+
+if TYPE_CHECKING:
+    import pytest
+
+    from ansible_dev_environment.config import Config
 
 
 def test_output_no_color(session_venv: Config, capsys: pytest.CaptureFixture[str]) -> None:

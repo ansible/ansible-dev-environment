@@ -1,17 +1,23 @@
 """Test the uninstaller module."""
+
 from __future__ import annotations
 
 import copy
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from ansible_dev_environment.arg_parser import parse
 from ansible_dev_environment.config import Config
-from ansible_dev_environment.output import Output
 from ansible_dev_environment.subcommands.installer import Installer
 from ansible_dev_environment.subcommands.uninstaller import UnInstaller
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from ansible_dev_environment.output import Output
 
 
 def test_many(session_venv: Config, capsys: pytest.CaptureFixture[str]) -> None:
