@@ -369,7 +369,7 @@ def test_editable_not_local(
         config=config,
     )
 
-    def install_core(self: Installer) -> None:  # noqa: ARG001
+    def install_core(self: Installer) -> None:
         """Don't install core.
 
         Args:
@@ -1195,7 +1195,7 @@ def test_local_collection_without_tar_install(
     installer.run()
     pre_mtime = os.lstat(config.site_pkg_collections_path / "ansible" / "posix").st_mtime
 
-    def install_local_collection(self: Installer, collection: Collection) -> None:  # noqa: ARG001
+    def install_local_collection(self: Installer, collection: Collection) -> None:
         """Do nothing.
 
         Args:
