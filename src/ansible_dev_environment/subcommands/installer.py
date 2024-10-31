@@ -151,7 +151,7 @@ class Installer:
             collections: The collection objects.
 
         Raises:
-            SystemExit: If the collection installation fails.
+            SystemError: If the collection installation fails.
         """
         collections_str = " ".join(
             [f"'{collection.original}'" for collection in collections],
@@ -373,7 +373,7 @@ class Installer:
 
         Raises:
             RuntimeError: If tarball is not found or if more than one tarball is found.
-            SystemExit: If the collection installation fails.
+            SystemError: If the collection installation fails.
         """
         msg = f"Installing local collection from: {collection.build_dir}"
         self._output.info(msg)

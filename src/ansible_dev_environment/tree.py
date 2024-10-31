@@ -107,7 +107,7 @@ class Tree:  # pylint: disable=R0902
         """
         return isinstance(obj, str | int | float | bool) or obj is None
 
-    def _print_tree(  # noqa: C901, PLR0912
+    def _print_tree(  # noqa: C901, PLR0912  # pylint: disable=too-many-positional-arguments
         self: Tree,
         obj: JSONVal,
         is_last: bool,  # noqa: FBT001
