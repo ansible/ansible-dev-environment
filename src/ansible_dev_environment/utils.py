@@ -112,7 +112,7 @@ class Ansi:
     GREY = "\x1b[90m"
 
 
-def subprocess_run(  # noqa: PLR0913
+def subprocess_run(  # noqa: PLR0913  # pylint: disable=too-many-positional-arguments
     command: str,
     verbose: int,
     msg: str,
