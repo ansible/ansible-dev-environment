@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture()
+@pytest.fixture
 def output(tmp_path: Path) -> Output:
     """Create an Output class object as fixture.
 
