@@ -47,7 +47,7 @@ GALAXY_CACHE = Path(__file__).parent.parent / ".cache" / ".galaxy_cache"
 REQS_FILE_NAME = "requirements.yml"
 
 
-@pytest.fixture()
+@pytest.fixture
 def galaxy_cache() -> Path:
     """Return the galaxy cache directory.
 
@@ -145,7 +145,7 @@ def fixture_session_dir() -> Generator[Path, None, None]:
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture()
+@pytest.fixture
 def installable_local_collection(tmp_path: Path) -> Path:
     """Provide a local collection that can be installed.
 
@@ -218,7 +218,7 @@ def session_venv(session_dir: Path, monkey_session: pytest.MonkeyPatch) -> Confi
     return cli.config
 
 
-@pytest.fixture()
+@pytest.fixture
 def function_venv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Config:
     """Create a temporary venv for the session.
 
