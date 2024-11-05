@@ -98,6 +98,7 @@ repos:
       - id: mypy
         additional_dependencies:
           - pytest
+          - pip
           - subprocess_tee
           - types-pyyaml
           - types-setuptools
