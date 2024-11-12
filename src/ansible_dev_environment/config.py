@@ -26,7 +26,7 @@ class Config:
 
     # pylint: disable=too-many-instance-attributes
     def __init__(
-        self: Config,
+        self,
         args: Namespace,
         output: Output,
         term_features: TermFeatures,
@@ -47,7 +47,7 @@ class Config:
         self.venv_interpreter: Path
         self.term_features: TermFeatures = term_features
 
-    def init(self: Config) -> None:
+    def init(self) -> None:
         """Initialize the configuration."""
         if self.args.venv:
             self._create_venv = True
@@ -56,7 +56,7 @@ class Config:
         self._set_site_pkg_path()
 
     @property
-    def cache_dir(self: Config) -> Path:
+    def cache_dir(self) -> Path:
         """Return the cache directory."""
         cache_dir = self.venv / ".ansible-dev-environment"
         if not cache_dir.exists():
@@ -64,7 +64,7 @@ class Config:
         return cache_dir
 
     @property
-    def venv(self: Config) -> Path:
+    def venv(self) -> Path:
         """Return the virtual environment path.
 
         Raises:
@@ -80,22 +80,22 @@ class Config:
         raise SystemExit(1)  # pragma: no cover # critical exits
 
     @property
-    def venv_cache_dir(self: Config) -> Path:
+    def venv_cache_dir(self) -> Path:
         """Return the virtual environment cache directory."""
         return self.cache_dir
 
     @property
-    def discovered_python_reqs(self: Config) -> Path:
+    def discovered_python_reqs(self) -> Path:
         """Return the discovered python requirements file."""
         return self.venv_cache_dir / "discovered_requirements.txt"
 
     @property
-    def discovered_bindep_reqs(self: Config) -> Path:
+    def discovered_bindep_reqs(self) -> Path:
         """Return the discovered system package requirements file."""
         return self.venv_cache_dir / "discovered_bindep.txt"
 
     @property
-    def site_pkg_collections_path(self: Config) -> Path:
+    def site_pkg_collections_path(self) -> Path:
         """Return the site packages collection path."""
         site_pkg_collections_path = self.site_pkg_path / "ansible_collections"
         if not site_pkg_collections_path.exists():
@@ -103,17 +103,17 @@ class Config:
         return site_pkg_collections_path
 
     @property
-    def venv_bindir(self: Config) -> Path:
+    def venv_bindir(self) -> Path:
         """Return the virtual environment bin directory."""
         return self.venv / "bin"
 
     @property
-    def interpreter(self: Config) -> Path:
+    def interpreter(self) -> Path:
         """Return the current interpreter."""
         return Path(sys.executable)
 
     @property
-    def galaxy_bin(self: Config) -> Path:
+    def galaxy_bin(self) -> Path:
         """Find the ansible galaxy command.
 
         Prefer the venv over the system package over the PATH.
@@ -141,7 +141,7 @@ class Config:
         raise SystemExit(1)  # pragma: no cover # critical exits
 
     def _set_interpreter(
-        self: Config,
+        self,
     ) -> None:
         """Set the interpreter."""
         if not self.venv.exists():
@@ -179,7 +179,7 @@ class Config:
         self._output.debug(msg)
         self.venv_interpreter = venv_interpreter
 
-    def _set_site_pkg_path(self: Config) -> None:
+    def _set_site_pkg_path(self) -> None:
         """Use the interpreter to find the site packages path."""
         command = (
             f"{self.venv_interpreter} -c"

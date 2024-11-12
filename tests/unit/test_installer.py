@@ -1,5 +1,6 @@
 # pylint: disable=C0302
 """Tests for the installer."""
+
 from __future__ import annotations
 
 import os
@@ -332,7 +333,13 @@ def test_multiple_specifiers(
         monkeypatch: The monkeypatch fixture.
         capsys: The capsys fixture.
     """
-    command = ["ade", "install", "ansible.utils[dev,test]", "--venv", str(tmp_path / "venv")]
+    command = [
+        "ade",
+        "install",
+        "ansible.utils[dev,test]",
+        "--venv",
+        str(tmp_path / "venv"),
+    ]
     monkeypatch.setattr("sys.argv", command)
     args = parse()
     installer = Installer(
@@ -359,7 +366,14 @@ def test_editable_not_local(
         monkeypatch: The monkeypatch fixture.
         capsys: The capsys fixture.
     """
-    command = ["ade", "install", "-e", "ansible.utils", "--venv", str(tmp_path / "venv")]
+    command = [
+        "ade",
+        "install",
+        "-e",
+        "ansible.utils",
+        "--venv",
+        str(tmp_path / "venv"),
+    ]
     monkeypatch.setattr("sys.argv", command)
     args = parse()
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -369,11 +383,11 @@ def test_editable_not_local(
         config=config,
     )
 
-    def install_core(self: Installer) -> None:
+    def install_core(installer: Installer) -> None:
         """Don't install core.
 
         Args:
-            self: The installer instance.
+            installer: Installer instance.
         """
 
     monkeypatch.setattr(Installer, "_install_core", install_core)
@@ -1193,20 +1207,28 @@ def test_local_collection_without_tar_install(
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    pre_mtime = os.lstat(config.site_pkg_collections_path / "ansible" / "posix").st_mtime
+    pre_mtime = os.lstat(
+        config.site_pkg_collections_path / "ansible" / "posix",
+    ).st_mtime
 
-    def install_local_collection(self: Installer, collection: Collection) -> None:
+    def install_local_collection(installer: Installer, collection: Collection) -> None:
         """Do nothing.
 
         Args:
-            self: The installer instance.
+            installer: Installer instance.
             collection: The collection to install.
 
         """
 
-    monkeypatch.setattr(Installer, "_install_local_collection", install_local_collection)
+    monkeypatch.setattr(
+        Installer,
+        "_install_local_collection",
+        install_local_collection,
+    )
     installer.run()
-    post_mtime = os.lstat(config.site_pkg_collections_path / "ansible" / "posix").st_mtime
+    post_mtime = os.lstat(
+        config.site_pkg_collections_path / "ansible" / "posix",
+    ).st_mtime
     assert post_mtime > pre_mtime
 
 

@@ -203,35 +203,35 @@ def test_collections_in_user(
     usr_path = Path("/usr/share/ansible/collections")
     exists = Path.exists
 
-    def _exists(self: Path) -> bool:
+    def _exists(path: Path) -> bool:
         """Patch the exists method.
 
         Args:
-            self: Path object.
+            path: Path object.
 
         Returns:
             bool: True if the path exists.
         """
-        if self == usr_path:
+        if path == usr_path:
             return True
-        return exists(self)
+        return exists(path)
 
     monkeypatch.setattr(Path, "exists", _exists)
 
     iterdir = Path.iterdir
 
-    def _iterdir(self: Path) -> list[Path] | Generator[Path, None, None]:
+    def _iterdir(path: Path) -> list[Path] | Generator[Path, None, None]:
         """Patch the iterdir method.
 
         Args:
-            self: Path object.
+            path: Path object.
 
         Returns:
             List of paths or generator.
         """
-        if self == usr_path:
+        if path == usr_path:
             return [usr_path / "ansible_collections"]
-        return iterdir(self)
+        return iterdir(path)
 
     monkeypatch.setattr(Path, "iterdir", _iterdir)
 

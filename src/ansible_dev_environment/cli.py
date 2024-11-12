@@ -24,14 +24,14 @@ if TYPE_CHECKING:
 class Cli:
     """The Cli class."""
 
-    def __init__(self: Cli) -> None:
+    def __init__(self) -> None:
         """Initialize the CLI and parse CLI args."""
         self.args: Namespace
         self.config: Config
         self.output: Output
         self.term_features: TermFeatures
 
-    def parse_args(self: Cli) -> None:
+    def parse_args(self) -> None:
         """Parse the command line arguments."""
         self.args = parse()
         if hasattr(self.args, "requirement") and self.args.requirement:
@@ -39,7 +39,7 @@ class Cli:
         if self.args.cpi:
             self.args.requirement = Path(".config/source-requirements.yml").expanduser().resolve()
 
-    def init_output(self: Cli) -> None:
+    def init_output(self) -> None:
         """Initialize the output object."""
         if not sys.stdout.isatty():
             self.term_features = TermFeatures(color=False, links=False)
@@ -57,7 +57,7 @@ class Cli:
             verbosity=self.args.verbose,
         )
 
-    def args_sanity(self: Cli) -> None:
+    def args_sanity(self) -> None:
         """Perform some sanity checking on the args."""
         # Missing args
         if (
@@ -88,7 +88,7 @@ class Cli:
             err = "Editable can not be used with a requirements file."
             self.output.critical(err)
 
-    def ensure_isolated(self: Cli) -> None:
+    def ensure_isolated(self) -> None:
         """Ensure the environment is isolated."""
         env_vars = os.environ
         errored = False
@@ -139,7 +139,7 @@ class Cli:
 
             self.output.critical(err)
 
-    def run(self: Cli) -> None:
+    def run(self) -> None:
         """Run the application."""
         self.config = Config(
             args=self.args,
@@ -153,7 +153,7 @@ class Cli:
         subcommand.run()
         self._exit()
 
-    def _exit(self: Cli) -> None:
+    def _exit(self) -> None:
         """Exit the application setting the return code."""
         if self.output.call_count["error"]:
             sys.exit(1)

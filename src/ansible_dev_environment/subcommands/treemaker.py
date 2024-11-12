@@ -22,7 +22,7 @@ TreeWithoutReqs = dict[str, "TreeWithoutReqs"]
 class TreeMaker:
     """Generate a dependency tree."""
 
-    def __init__(self: TreeMaker, config: Config, output: Output) -> None:
+    def __init__(self, config: Config, output: Output) -> None:
         """Initialize the object.
 
         Args:
@@ -32,7 +32,7 @@ class TreeMaker:
         self._config = config
         self._output = output
 
-    def run(self: TreeMaker) -> None:  # noqa: C901, PLR0912, PLR0915
+    def run(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Run the command."""
         builder_introspect(self._config, self._output)
 

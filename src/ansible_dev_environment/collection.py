@@ -43,12 +43,12 @@ class Collection:  # pylint: disable=too-many-instance-attributes
     original: str
 
     @property
-    def name(self: Collection) -> str:
+    def name(self) -> str:
         """Return the collection name."""
         return f"{self.cnamespace}.{self.cname}"
 
     @property
-    def cache_dir(self: Collection) -> Path:
+    def cache_dir(self) -> Path:
         """Return the collection cache directory."""
         collection_cache_dir = self.config.venv_cache_dir / self.name
         if not collection_cache_dir.exists():
@@ -56,7 +56,7 @@ class Collection:  # pylint: disable=too-many-instance-attributes
         return collection_cache_dir
 
     @property
-    def build_dir(self: Collection) -> Path:
+    def build_dir(self) -> Path:
         """Return the collection cache directory."""
         collection_build_dir = self.cache_dir / "build"
         if not collection_build_dir.exists():
@@ -64,7 +64,7 @@ class Collection:  # pylint: disable=too-many-instance-attributes
         return collection_build_dir
 
     @property
-    def site_pkg_path(self: Collection) -> Path:
+    def site_pkg_path(self) -> Path:
         """Return the site packages collection path.
 
         Returns:

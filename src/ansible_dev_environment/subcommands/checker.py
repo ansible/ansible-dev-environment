@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class Checker:
     """The dependency checker."""
 
-    def __init__(self: Checker, config: Config, output: Output) -> None:
+    def __init__(self, config: Config, output: Output) -> None:
         """Initialize the checker.
 
         Args:
@@ -38,14 +38,14 @@ class Checker:
         self._output: Output = output
         self._system_dep_missing: bool
 
-    def run(self: Checker) -> None:
+    def run(self) -> None:
         """Run the checker."""
         builder_introspect(config=self._config, output=self._output)
         self._collection_deps()
         self.system_deps()
         self._python_deps()
 
-    def _collection_deps(self: Checker) -> None:  # noqa: C901, PLR0912, PLR0915
+    def _collection_deps(self) -> None:  # noqa: C901, PLR0912, PLR0915
         """Check collection dependencies."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
@@ -131,7 +131,7 @@ class Checker:
             self._output.note(msg)
         self._collections_missing = missing
 
-    def _python_deps(self: Checker) -> None:
+    def _python_deps(self) -> None:
         """Check Python dependencies."""
         if self._system_dep_missing:
             msg = "System packages are missing. Python dependency checking may fail."
@@ -179,7 +179,7 @@ class Checker:
         msg = f"Try running `pip install {' '.join(missing)}`."
         self._output.hint(msg)
 
-    def system_deps(self: Checker) -> None:
+    def system_deps(self) -> None:
         """Check the bindep file."""
         msg = "Checking system packages."
         self._output.info(msg)
