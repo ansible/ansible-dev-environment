@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Lister:
     """The Lister class."""
 
-    def __init__(self: Lister, config: Config, output: Output) -> None:
+    def __init__(self, config: Config, output: Output) -> None:
         """Initialize the Lister.
 
         Args:
@@ -25,7 +25,7 @@ class Lister:
         self._config = config
         self._output = output
 
-    def run(self: Lister) -> None:
+    def run(self) -> None:
         """Run the Lister."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,

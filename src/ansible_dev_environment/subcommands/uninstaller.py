@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class UnInstaller:
     """The uninstaller class."""
 
-    def __init__(self: UnInstaller, config: Config, output: Output) -> None:
+    def __init__(self, config: Config, output: Output) -> None:
         """Initialize the installer.
 
         Args:
@@ -33,7 +33,7 @@ class UnInstaller:
         self._output = output
         self._collection: Collection
 
-    def run(self: UnInstaller) -> None:
+    def run(self) -> None:
         """Run the uninstaller."""
         if len(self._config.args.collection_specifier) > 1:
             msg = "Only one collection can be uninstalled at a time."
@@ -60,7 +60,7 @@ class UnInstaller:
             )
             self._remove_collection()
 
-    def _remove_collection(self: UnInstaller) -> None:
+    def _remove_collection(self) -> None:
         """Remove the collection."""
         msg = f"Checking {self._collection.name} at {self._collection.site_pkg_path}"
         self._output.debug(msg)

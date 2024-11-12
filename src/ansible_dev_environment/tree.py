@@ -27,7 +27,7 @@ class Tree:  # pylint: disable=R0902
     SPACE_PREFIX = "   "
 
     def __init__(
-        self: Tree,
+        self,
         obj: JSONVal,
         term_features: TermFeatures,
     ) -> None:
@@ -53,7 +53,7 @@ class Tree:  # pylint: disable=R0902
         self.links: dict[str, str] = {}
         self.term_features = term_features
 
-    def in_color(self: Tree, val: ScalarVal) -> str:
+    def in_color(self, val: ScalarVal) -> str:
         """Colorize the string.
 
         Args:
@@ -108,7 +108,7 @@ class Tree:  # pylint: disable=R0902
         return isinstance(obj, str | int | float | bool) or obj is None
 
     def _print_tree(  # noqa: C901, PLR0912  # pylint: disable=too-many-positional-arguments
-        self: Tree,
+        self,
         obj: JSONVal,
         is_last: bool,  # noqa: FBT001
         is_root: bool,  # noqa: FBT001
@@ -184,7 +184,7 @@ class Tree:  # pylint: disable=R0902
             err = f"Invalid type {type(obj)}"
             raise TypeError(err)
 
-    def append(self: Tree, string: str) -> None:
+    def append(self, string: str) -> None:
         """Append a line to the output.
 
         Args:
@@ -192,7 +192,7 @@ class Tree:  # pylint: disable=R0902
         """
         self._lines.append(string)
 
-    def render(self: Tree) -> str:
+    def render(self) -> str:
         """Render the root of the tree.
 
         Returns:

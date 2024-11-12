@@ -37,7 +37,7 @@ class Installer:
 
     RE_GALAXY_INSTALLED = re.compile(r"(\w+\.\w+):.*installed")
 
-    def __init__(self: Installer, config: Config, output: Output) -> None:
+    def __init__(self, config: Config, output: Output) -> None:
         """Initialize the installer.
 
         Args:
@@ -48,7 +48,7 @@ class Installer:
         self._output = output
         self._current_collection_spec: str
 
-    def run(self: Installer) -> None:
+    def run(self) -> None:
         """Run the installer."""
         if self._config.args.collection_specifier and any(
             "," in s for s in self._config.args.collection_specifier
@@ -97,7 +97,7 @@ class Installer:
             )
             self._output.note(msg)
 
-    def _install_core(self: Installer) -> None:
+    def _install_core(self) -> None:
         """Install ansible-core if not installed already."""
         msg = "Installing ansible-core."
         self._output.info(msg)
@@ -119,7 +119,7 @@ class Installer:
             err = f"Failed to install ansible-core: {exc}"
             self._output.critical(err)
 
-    def _install_dev_tools(self: Installer) -> None:
+    def _install_dev_tools(self) -> None:
         """Install ansible developer tools."""
         msg = "Installing ansible-dev-tools."
         self._output.info(msg)
@@ -142,7 +142,7 @@ class Installer:
             self._output.critical(err)
 
     def _install_galaxy_collections(
-        self: Installer,
+        self,
         collections: list[Collection],
     ) -> None:
         """Install the collection from galaxy.
@@ -195,7 +195,7 @@ class Installer:
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
-    def _install_galaxy_requirements(self: Installer) -> None:
+    def _install_galaxy_requirements(self) -> None:
         """Install the collections using requirements.yml."""
         method = "Pre-installing" if self._config.args.cpi else "Installing"
         msg = f"{method} collections from requirements file: {self._config.args.requirement}"
@@ -242,7 +242,7 @@ class Installer:
         self._output.note(msg)
 
     def _find_files_using_git_ls_files(
-        self: Installer,
+        self,
         local_repo_path: Path | None,
     ) -> tuple[str | None, str | None]:
         """Copy collection files tracked using git ls-files to the build directory.
@@ -274,7 +274,7 @@ class Installer:
         return "git ls-files", tracked_files_output.stdout
 
     def _find_files_using_ls(
-        self: Installer,
+        self,
         local_repo_path: Path | None,
     ) -> tuple[str | None, str | None]:
         """Copy collection files tracked using ls to the build directory.
@@ -306,7 +306,7 @@ class Installer:
         return "ls", tracked_files_output.stdout
 
     def _copy_repo_files(
-        self: Installer,
+        self,
         local_repo_path: Path,
         destination_path: Path,
     ) -> None:
@@ -363,7 +363,7 @@ class Installer:
                 self._output.critical(err)
 
     def _install_local_collection(
-        self: Installer,
+        self,
         collection: Collection,
     ) -> None:
         """Install the collection from the build directory.
@@ -478,7 +478,7 @@ class Installer:
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
 
-    def _swap_editable_collection(self: Installer, collection: Collection) -> None:
+    def _swap_editable_collection(self, collection: Collection) -> None:
         """Swap the installed collection with the current working directory.
 
         Args:
@@ -500,7 +500,7 @@ class Installer:
         self._output.debug(msg)
         collection.site_pkg_path.symlink_to(collection.path)
 
-    def _pip_install(self: Installer) -> None:
+    def _pip_install(self) -> None:
         """Install the dependencies."""
         msg = "Installing python requirements."
         self._output.info(msg)

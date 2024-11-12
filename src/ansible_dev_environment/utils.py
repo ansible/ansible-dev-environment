@@ -46,7 +46,7 @@ class TermFeatures:
     color: bool
     links: bool
 
-    def any_enabled(self: TermFeatures) -> bool:
+    def any_enabled(self) -> bool:
         """Return True if any features are enabled.
 
         Returns:
@@ -408,7 +408,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
     """A spinner."""
 
     def __init__(
-        self: Spinner,
+        self,
         message: str,
         term_features: TermFeatures,
         delay: float = 0.1,
@@ -430,7 +430,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
         self.thread: threading.Thread
         self.msg: str = message.rstrip(".").rstrip(":").rstrip()
 
-    def write_next(self: Spinner) -> None:
+    def write_next(self) -> None:
         """Write the next char."""
         with self._screen_lock:
             if not self.spinner_visible:
@@ -443,7 +443,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
                 sys.stdout.flush()
 
     def remove_spinner(
-        self: Spinner,
+        self,
         cleanup: bool = False,  # noqa: FBT001,FBT002
     ) -> None:
         """Remove the spinner.
@@ -463,14 +463,14 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
                     sys.stdout.write("\033[K")  # clear line
                 sys.stdout.flush()
 
-    def spinner_task(self: Spinner) -> None:
+    def spinner_task(self) -> None:
         """Spin the spinner."""
         while self.busy:
             self.write_next()
             time.sleep(self.delay)
             self.remove_spinner()
 
-    def __enter__(self: Spinner) -> None:
+    def __enter__(self) -> None:
         """Enter the context handler."""
         # set the start time
         self._start_time = time.time()
@@ -488,7 +488,7 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
             self.thread.start()
 
     def __exit__(
-        self: Spinner,
+        self,
         typ: type[BaseException] | None,
         exc: BaseException | None,
         tb: TracebackType | None,

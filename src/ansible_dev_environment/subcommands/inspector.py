@@ -24,7 +24,7 @@ except ImportError:
 class Inspector:
     """The Inspector class."""
 
-    def __init__(self: Inspector, config: Config, output: Output) -> None:
+    def __init__(self, config: Config, output: Output) -> None:
         """Initialize the Inspector.
 
         Args:
@@ -34,7 +34,7 @@ class Inspector:
         self._config = config
         self._output = output
 
-    def run(self: Inspector) -> None:
+    def run(self) -> None:
         """Run the Inspector."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,

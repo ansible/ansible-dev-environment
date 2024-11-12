@@ -223,7 +223,7 @@ class ArgumentParser(argparse.ArgumentParser):
     """A custom argument parser."""
 
     def add_argument(  # type: ignore[override]
-        self: ArgumentParser,
+        self,
         *args: Any,  # noqa: ANN401
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
@@ -244,7 +244,7 @@ class ArgumentParser(argparse.ArgumentParser):
 class CustomHelpFormatter(HelpFormatter):
     """A custom help formatter."""
 
-    def __init__(self: CustomHelpFormatter, prog: str) -> None:
+    def __init__(self, prog: str) -> None:
         """Initialize the help formatter.
 
         Args:
@@ -260,7 +260,7 @@ class CustomHelpFormatter(HelpFormatter):
         )
 
     def _format_action_invocation(
-        self: CustomHelpFormatter,
+        self,
         action: argparse.Action,
     ) -> str:
         """Format the action invocation.
