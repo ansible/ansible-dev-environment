@@ -335,6 +335,7 @@ target-version = "py310"
 [tool.ruff.lint]
 ignore = [
   "COM812", # conflicts with ISC001 on format
+  "E501", # line-too-long (ruff-format or black will take care of it)
   "ISC001" # conflicts with COM812 on format
 ]
 select = ["ALL"]

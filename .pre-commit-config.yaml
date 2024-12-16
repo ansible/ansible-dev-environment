@@ -43,11 +43,6 @@ repos:
           - prettier-plugin-toml
           - prettier-plugin-sort-json
 
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.24.2
     hooks:
