@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import logging
+import sys
 
 from argparse import HelpFormatter
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from typing import Any
@@ -186,11 +190,11 @@ def parse() -> argparse.Namespace:
     )
 
     install.add_argument(
-        "-adt",
-        "--ansible-dev-tools",
+        # "-adt",
+        "--seed",
         action="store_true",
         dest="adt",
-        help="Install ansible-dev-tools in the virtual environment.",
+        help="Install seed packages inside the virtual environment (ansible-dev-tools).",
     )
 
     _uninstall = subparsers.add_parser(
@@ -204,7 +208,14 @@ def parse() -> argparse.Namespace:
     for subparser in subparsers.choices.values():
         _group_titles(subparser)
 
-    return parser.parse_args()
+    args = sys.argv[1:]
+    for i, v in enumerate(args):
+        for old in ("-adt", "--ansible-dev-tools"):
+            if v == old:
+                msg = f"Replace the deprecated {old} argument with --seed to avoid future execution failure."
+                logger.warning(msg)
+                args[i] = "--seed"
+    return parser.parse_args(args)
 
 
 def _group_titles(parser: ArgumentParser) -> None:

@@ -6,6 +6,7 @@ pre-commit
 pydoclint
 pylint
 pytest
+pytest-instafail
 pytest-xdist
 ruff
 toml-sort
