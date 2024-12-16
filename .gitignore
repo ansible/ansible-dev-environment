@@ -169,3 +169,4 @@ cython_debug/
 /src/*/_version.py
 
 .DS_Store
+_readthedocs/

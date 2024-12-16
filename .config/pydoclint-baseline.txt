@@ -1,0 +1,4 @@
+tests/unit/test_treemaker.py
+    DOC101: Method `SafeEnvBuilder.__init__`: Docstring contains fewer arguments than in function signature.
+    DOC103: Method `SafeEnvBuilder.__init__`: Docstring arguments are different from function arguments. (Or could be other formatting issues: https://jsh9.github.io/pydoclint/violation_codes.html#notes-on-doc103 ). Arguments in the function signature but not in the docstring: [clear: bool, prompt: str | None, symlinks: bool, system_site_packages: bool, upgrade: bool, upgrade_deps: bool, with_pip: bool].
+--------------------

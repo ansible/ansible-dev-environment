@@ -19,6 +19,33 @@ if TYPE_CHECKING:
     from ansible_dev_environment.utils import JSONVal
 
 
+class SafeEnvBuilder(EnvBuilder):
+    """Safer EnvBuilder that defaults symlinks to True."""
+
+    # pylint: disable=too-many-arguments
+    def __init__(  # noqa: PLR0913
+        self,
+        *,
+        system_site_packages: bool = False,
+        clear: bool = False,
+        symlinks: bool = True,
+        upgrade: bool = False,
+        with_pip: bool = False,
+        prompt: str | None = None,
+        upgrade_deps: bool = False,
+    ) -> None:
+        """Ensure that symlinks defaults to True because otherwise it will create broken venvs with tools like pyenv, asdf or mise."""
+        super().__init__(
+            system_site_packages=system_site_packages,
+            clear=clear,
+            symlinks=symlinks,
+            upgrade=upgrade,
+            with_pip=with_pip,
+            prompt=prompt,
+            upgrade_deps=upgrade_deps,
+        )
+
+
 def test_tree_empty(
     capsys: pytest.CaptureFixture[str],
     output: Output,
@@ -32,7 +59,8 @@ def test_tree_empty(
         tmp_path: Pytest fixture.
     """
     venv_path = tmp_path / "venv"
-    EnvBuilder().create(venv_path)
+    env = SafeEnvBuilder()
+    env.create(venv_path)
 
     args = Namespace(
         venv=venv_path,
@@ -63,7 +91,7 @@ def test_tree_malformed_info(
         tmp_path: Pytest fixture.
     """
     venv_path = tmp_path / "venv"
-    EnvBuilder().create(venv_path)
+    SafeEnvBuilder().create(venv_path)
 
     args = Namespace(
         venv=venv_path,
@@ -118,7 +146,7 @@ def test_tree_malformed_deps(
         tmp_path: Pytest fixture.
     """
     venv_path = tmp_path / "venv"
-    EnvBuilder().create(venv_path)
+    SafeEnvBuilder().create(venv_path)
 
     args = Namespace(
         venv=venv_path,
@@ -175,7 +203,7 @@ def test_tree_malformed_deps_not_string(
         tmp_path: Pytest fixture.
     """
     venv_path = tmp_path / "venv"
-    EnvBuilder().create(venv_path)
+    SafeEnvBuilder().create(venv_path)
 
     args = Namespace(
         venv=venv_path,
@@ -232,7 +260,7 @@ def test_tree_malformed_repo_not_string(
         capsys: Pytest stdout capture fixture.
     """
     venv_path = tmp_path / "venv"
-    EnvBuilder().create(venv_path)
+    SafeEnvBuilder().create(venv_path)
 
     args = Namespace(
         venv=venv_path,
