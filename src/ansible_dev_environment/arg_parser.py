@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
+import warnings
 
 from argparse import HelpFormatter
 from pathlib import Path
@@ -99,10 +101,14 @@ def parse() -> argparse.Namespace:
 
     level1 = ArgumentParser(add_help=False)
 
+    venv_path = os.environ.get("VIRTUAL_ENV", None)
+    if not venv_path:
+        warnings.warn("No virtualenv found active, we will assume .venv", stacklevel=1)
     level1.add_argument(
         "--ve",
         "--venv <directory>",
         help="Target virtual environment.",
+        default=".venv",
         dest="venv",
     )
 

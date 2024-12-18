@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
-import site
 import sys
+import warnings
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -121,19 +121,6 @@ class Cli:
             self.output.hint(hint)
             errored = True
 
-        if "VIRTUAL_ENV" not in env_vars and not self.args.venv:
-            err = (
-                "Unable to use user site packages directory:"
-                f" {site.getusersitepackages()}, please activate or specify a virtual environment"
-            )
-            self.output.error(err)
-            hint = (
-                "Use `--venv <directory>` to specify a virtual environment"
-                " or enable an existing one."
-            )
-            self.output.hint(hint)
-            errored = True
-
         if errored:
             err = "The development environment is not isolated, please resolve the above errors."
 
@@ -162,11 +149,21 @@ class Cli:
         sys.exit(0)
 
 
-def main() -> None:
-    """Entry point for ansible-creator CLI."""
-    cli = Cli()
-    cli.parse_args()
-    cli.init_output()
+def main(*, dry: bool = False) -> None:
+    """Entry point for ansible-creator CLI.
+
+    Args:
+        dry: Skip main execution, used internally for testing.
+    """
+    with warnings.catch_warnings(record=True) as warns:
+        warnings.simplefilter(action="default")
+        cli = Cli()
+        cli.parse_args()
+        cli.init_output()
+    for warn in warns:
+        cli.output.warning(str(warn.message))
+    warnings.resetwarnings()
     cli.args_sanity()
     cli.ensure_isolated()
-    cli.run()
+    if not dry:
+        cli.run()
