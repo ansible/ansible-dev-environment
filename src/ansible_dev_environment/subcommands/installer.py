@@ -505,10 +505,7 @@ class Installer:
         msg = "Installing python requirements."
         self._output.info(msg)
 
-        command = (
-            f"{self._config.venv_interpreter} -m pip install"
-            f" -r {self._config.discovered_python_reqs}"
-        )
+        command = f"{self._config.pip_cmd} install" f" -r {self._config.discovered_python_reqs}"
 
         msg = f"Installing python requirements from {self._config.discovered_python_reqs}"
         self._output.debug(msg)

@@ -21,8 +21,6 @@ repos:
     rev: v3.1.0
     hooks:
       - id: add-trailing-comma
-        args:
-          - --py36-plus
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks.git
     rev: v1.5.5
@@ -101,11 +99,12 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - pytest
           - pip
+          - pytest
           - subprocess_tee
           - types-pyyaml
           - types-setuptools
+          - uv
         # Override default pre-commit '--ignore-missing-imports'
         args: [--strict]
 

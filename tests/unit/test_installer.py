@@ -739,7 +739,7 @@ def test_collection_pre_install(
 
 @pytest.mark.parametrize("first", (True, False), ids=["editable", "not_editable"])
 @pytest.mark.parametrize("second", (True, False), ids=["editable", "not_editable"])
-def test_reinstall_local_collection(  # noqa: PLR0913  # pylint: disable=too-many-positional-arguments
+def test_reinstall_local_collection(  # pylint: disable=too-many-positional-arguments
     first: bool,  # noqa: FBT001
     second: bool,  # noqa: FBT001
     tmp_path: Path,

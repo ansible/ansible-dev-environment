@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -21,10 +22,39 @@ if TYPE_CHECKING:
     from .utils import TermFeatures
 
 
-class Config:
-    """The application configuration."""
+_logger = logging.getLogger(__name__)
 
-    # pylint: disable=too-many-instance-attributes
+
+def use_uv() -> bool:
+    """Return whether to use uv commands like venv or pip.
+
+    Returns:
+        True if uv is to be used.
+    """
+    if int(os.environ.get("SKIP_UV", "0")):
+        return False
+    try:
+        import uv  # noqa: F401
+    except ImportError:  # pragma: no cover
+        return False
+    else:
+        _logger.info(
+            "UV detected and will be used instead of venv/pip. To disable that define SKIP_UP=1 in your environment.",
+        )
+        return True
+
+
+class Config:  # pylint: disable=too-many-instance-attributes
+    """The application configuration.
+
+    Attributes:
+        pip_cmd: The pip command.
+        venv_cmd: The venv command.
+    """
+
+    pip_cmd: str
+    venv_cmd: str
+
     def __init__(
         self,
         args: Namespace,
@@ -144,11 +174,18 @@ class Config:
         self,
     ) -> None:
         """Set the interpreter."""
+        self.pip_cmd = f"{sys.executable} -m pip"
+        self.venv_cmd = f"{sys.executable} -m venv"
+        if use_uv():
+            self.pip_cmd = f"{sys.executable} -m uv pip"
+            # seed and python-preference make uv venv match python -m venv behavior:
+            self.venv_cmd = f"{sys.executable} -m uv venv --seed --python-preference=system"
+
         if not self.venv.exists():
             if self._create_venv:
                 msg = f"Creating virtual environment: {self.venv}"
                 self._output.debug(msg)
-                command = f"python -m venv {self.venv}"
+                command = f"{self.venv_cmd} {self.venv}"
                 msg = f"Creating virtual environment: {self.venv}"
                 if self.args.system_site_packages:
                     command = f"{command} --system-site-packages"

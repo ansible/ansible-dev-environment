@@ -22,6 +22,7 @@ For more information about communication, see the [Ansible communication guide](
 - Checks for missing system packages
 - Symlinks the current collection into the current python interpreter's site-packages
 - Install all collection collection dependencies into the current python interpreter's site-packages
+- Uses `uv env` instead of python's venv when available to boost performance. Can be disabled with `SKIP_UV=1`
 
 By placing collections into the python site-packages directory they are discoverable by ansible as well as python and pytest.
 

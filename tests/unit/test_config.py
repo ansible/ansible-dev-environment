@@ -42,14 +42,22 @@ def gen_args(
 
 
 @pytest.mark.parametrize(
-    "system_site_packages",
-    ((True, False)),
-    ids=["ssp_true", "ssp_false"],
+    ("system_site_packages", "uv"),
+    (
+        pytest.param(True, False, id="ssp1-uv0"),
+        pytest.param(False, False, id="ssp0-uv0"),
+        pytest.param(True, True, id="ssp1-uv1"),
+        pytest.param(False, True, id="ssp0-uv1"),
+    ),
 )
 def test_paths(
+    *,
     tmpdir: Path,
-    system_site_packages: bool,  # noqa: FBT001
+    system_site_packages: bool,
+    uv: bool,
+    monkeypatch: pytest.MonkeyPatch,
     output: Output,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test the paths.
 
@@ -58,16 +66,31 @@ def test_paths(
     Args:
         tmpdir: A temporary directory.
         system_site_packages: Whether to include system site packages.
+        uv: Whether to use the uv module.
+        monkeypatch: A pytest fixture for monkey patching.
         output: The output fixture.
+        caplog: A pytest fixture for capturing logs.
     """
-    venv = tmpdir / "test_venv"
-    args = gen_args(
-        venv=str(venv),
-        system_site_packages=system_site_packages,
-    )
+    with caplog.at_level(10):
+        monkeypatch.setenv("SKIP_UV", "0" if uv else "1")
+        venv = tmpdir / "test_venv"
+        args = gen_args(
+            venv=str(venv),
+            system_site_packages=system_site_packages,
+        )
 
-    config = Config(args=args, output=output, term_features=output.term_features)
-    config.init()
+        config = Config(args=args, output=output, term_features=output.term_features)
+        config.init()
+
+    if uv:
+        assert len(caplog.messages) == 1
+        assert "UV detected" in caplog.records[0].msg
+        assert "-m uv venv" in config.venv_cmd
+        assert "-m uv pip" in config.pip_cmd
+    else:
+        assert len(caplog.messages) == 0
+        assert "-m venv" in config.venv_cmd
+        assert "-m pip" in config.pip_cmd
 
     assert config.venv == venv
     for attr in (
