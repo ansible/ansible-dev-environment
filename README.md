@@ -33,7 +33,7 @@ For more information about communication, see the [Ansible communication guide](
 $ pip install ansible-dev-environment --user
 $ git clone <collection_repo>
 $ cd <collection_repo>
-$ ade install -e .\[test] --venv venv
+$ ade install -e .\[test] --venv .venv
 INFO: Found collection name: network.interfaces from /home/bthornto/github/network.interfaces/galaxy.yml.
 INFO: Creating virtual environment: /home/bthornto/github/network.interfaces/venv
 INFO: Virtual environment: /home/bthornto/github/network.interfaces/venv

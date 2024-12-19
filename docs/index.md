@@ -32,13 +32,13 @@ By placing collections into the python site-packages directory they are discover
 {{ install_from_adt("ansible-dev-environment") }}
 
 ```bash
-pip install ansible-dev-environment --user
+pip3 install ansible-dev-environment --user
 ```
 
 ```
 $ git clone <collection_repo>
 $ cd <collection_repo>
-$ ade install -e .\[test] --venv venv
+$ ade install -e .\[test] --venv .venv
 INFO: Found collection name: network.interfaces from /home/bthornto/github/network.interfaces/galaxy.yml.
 INFO: Creating virtual environment: /home/bthornto/github/network.interfaces/venv
 INFO: Virtual environment: /home/bthornto/github/network.interfaces/venv

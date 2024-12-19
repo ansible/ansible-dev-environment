@@ -7,23 +7,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from ansible_dev_environment.cli import Cli
+from ansible_dev_environment.cli import Cli, main
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-
-
-def main(cli: Cli) -> None:
-    """Stub main function for testing.
-
-    Args:
-        cli: Cli object.
-    """
-    cli.parse_args()
-    cli.init_output()
-    cli.args_sanity()
-    cli.ensure_isolated()
 
 
 def test_cpi(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -42,6 +30,7 @@ def test_cpi(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
+@pytest.mark.filterwarnings("ignore")
 def test_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test term features with tty.
 
@@ -77,9 +66,8 @@ def test_missing_requirements(
         ["ansible-dev-environment", "install", "-r", str(requirements_file)],
     )
     match = f"Requirements file not found: {requirements_file}"
-    cli = Cli()
     with pytest.raises(SystemExit):
-        main(cli)
+        main(dry=True)
     captured = capsys.readouterr()
     assert match in captured.err
 
@@ -98,10 +86,8 @@ def test_editable_many(
         "sys.argv",
         ["ansible-dev-environment", "install", "--venv", "venv", "-e", "one", "two"],
     )
-    cli = Cli()
-    cli.parse_args()
     with pytest.raises(SystemExit):
-        main(cli)
+        main(dry=True)
     captured = capsys.readouterr()
     assert "Editable can only be used with a single collection specifier." in captured.err
 
@@ -124,10 +110,8 @@ def test_editable_requirements(
         "sys.argv",
         ["ansible-dev-environment", "install", "-r", str(requirements_file), "-e"],
     )
-    cli = Cli()
-    cli.parse_args()
     with pytest.raises(SystemExit):
-        main(cli)
+        main(dry=True)
     captured = capsys.readouterr()
     assert "Editable can not be used with a requirements file." in captured.err
 
@@ -153,10 +137,8 @@ def test_acp_env_var_set(
     """
     monkeypatch.setenv(env_var, "test")
     monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install"])
-    cli = Cli()
-    cli.parse_args()
     with pytest.raises(SystemExit):
-        main(cli)
+        main(dry=True)
     captured = capsys.readouterr()
     assert f"{env_var} is set" in captured.err
 
@@ -181,10 +163,8 @@ def test_collections_in_home(
     monkeypatch.setenv("HOME", str(tmp_path))
     collection_root = tmp_path / ".ansible" / "collections" / "ansible_collections"
     (collection_root / "ansible" / "utils").mkdir(parents=True)
-    cli = Cli()
-    cli.parse_args()
     with pytest.raises(SystemExit):
-        main(cli)
+        main(dry=True)
     captured = capsys.readouterr()
     msg = f"Collections found in {collection_root}"
     assert msg in captured.err
@@ -239,10 +219,8 @@ def test_collections_in_user(
         "sys.argv",
         ["ansible-dev-environment", "install", "--venv", "venv"],
     )
-    cli = Cli()
-    cli.parse_args()
     with pytest.raises(SystemExit):
-        main(cli)
+        main(dry=True)
     captured = capsys.readouterr()
     msg = f"Collections found in {usr_path}"
     assert msg in captured.err
@@ -263,12 +241,9 @@ def test_no_venv_specified(
         ["ansible-dev-environment", "install"],
     )
     monkeypatch.delenv("VIRTUAL_ENV", raising=False)
-    cli = Cli()
-    cli.parse_args()
-    with pytest.raises(SystemExit):
-        main(cli)
+    main(dry=True)
     captured = capsys.readouterr()
-    assert "Unable to use user site packages directory" in captured.err
+    assert "No virtualenv found active, we will assume .venv" in captured.out
 
 
 def test_exit_code_one(
