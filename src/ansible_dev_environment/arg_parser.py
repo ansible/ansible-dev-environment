@@ -105,7 +105,6 @@ def parse() -> argparse.Namespace:
     if not venv_path:
         warnings.warn("No virtualenv found active, we will assume .venv", stacklevel=1)
     level1.add_argument(
-        "--ve",
         "--venv <directory>",
         help="Target virtual environment.",
         default=".venv",
