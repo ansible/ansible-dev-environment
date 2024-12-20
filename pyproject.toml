@@ -70,7 +70,7 @@ allow-init-docstring = true
 arg-type-hints-in-docstring = false
 baseline = ".config/pydoclint-baseline.txt"
 check-return-types = false
-exclude = '\.git|\.tox|build|out|venv'
+exclude = '\.git|\.tox|\.venv|build|out|venv'
 should-document-private-class-attributes = true
 show-filenames-in-every-violation-message = true
 skip-checking-short-docstrings = false
@@ -355,6 +355,9 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.pylint]
+max-args = 6 # 5 is the default
 
 [tool.setuptools.dynamic]
 dependencies = {file = [".config/requirements.in"]}

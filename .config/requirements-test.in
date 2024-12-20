@@ -12,3 +12,4 @@ ruff
 toml-sort
 tox
 types-PyYAML
+uv

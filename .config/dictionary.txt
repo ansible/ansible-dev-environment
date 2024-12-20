@@ -3,6 +3,7 @@ argvalues
 bindep
 bindir
 bthornto
+caplog
 capsys
 cauthor
 cdescription
