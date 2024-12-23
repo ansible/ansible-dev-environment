@@ -59,6 +59,10 @@ class Cli:
 
     def args_sanity(self) -> None:
         """Perform some sanity checking on the args."""
+        # Ensure PATH is not broken (~ should not present as many tools do not expand it)
+        if "~" in os.environ.get("PATH", ""):
+            err = "~ character was found inside PATH, correct your environment configuration to avoid it. See https://stackoverflow.com/a/44704799/99834"
+            self.output.critical(err)
         # Missing args
         if (
             hasattr(self.args, "requirement")

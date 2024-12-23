@@ -15,7 +15,7 @@ import pytest
 import yaml
 
 from ansible_dev_environment.arg_parser import parse
-from ansible_dev_environment.cli import Cli
+from ansible_dev_environment.cli import Cli, main
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.subcommands.installer import Installer
 from ansible_dev_environment.utils import subprocess_run
@@ -735,6 +735,25 @@ def test_collection_pre_install(
     installer.run()
     subdirs = (config.site_pkg_collections_path / "ansible").glob("*")
     assert sorted({c.name for c in subdirs}) == ["posix", "utils"]
+
+
+def test_args_sanity(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test the args_sanity method.
+
+    Args:
+        monkeypatch: The monkeypatch fixture.
+        capsys: The capsys fixture.
+    """
+    # Adds invalid entry in PATH to detect that we can detect it and exit
+    monkeypatch.setenv("PATH", "~/bin", prepend=os.pathsep)
+    monkeypatch.setattr("sys.argv", ["ade", "check"])
+
+    with pytest.raises(SystemExit) as exc:
+        main(dry=True)
+    assert exc.value.code == 1
+
+    captured = capsys.readouterr()
+    assert "~ character was found inside PATH" in captured.err
 
 
 @pytest.mark.parametrize("first", (True, False), ids=["editable", "not_editable"])
