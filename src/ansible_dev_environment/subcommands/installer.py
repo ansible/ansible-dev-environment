@@ -56,7 +56,7 @@ class Installer:
             err = "Multiple optional dependencies are not supported at this time."
             self._output.critical(err)
 
-        if self._config.args.adt:
+        if self._config.args.seed:
             self._install_dev_tools()
         else:
             self._install_core()

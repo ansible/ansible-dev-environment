@@ -271,7 +271,7 @@ def test_no_adt_install(
     args = Namespace(
         venv=venv,
         verbose=0,
-        adt=False,
+        seed=False,
         system_site_packages=False,
         collection_specifier=None,
         requirement=None,
@@ -302,7 +302,7 @@ def test_adt_install(
     args = Namespace(
         venv=venv,
         verbose=0,
-        adt=True,
+        seed=True,
         system_site_packages=False,
         collection_specifier=None,
         requirement=None,
