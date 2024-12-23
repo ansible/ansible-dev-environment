@@ -197,8 +197,9 @@ def parse() -> argparse.Namespace:
     install.add_argument(
         # "-adt",
         "--seed",
-        action="store_true",
-        dest="adt",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        dest="seed",
         help="Install seed packages inside the virtual environment (ansible-dev-tools).",
     )
 

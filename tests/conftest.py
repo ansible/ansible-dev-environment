@@ -195,6 +195,7 @@ def session_venv(session_dir: Path, monkey_session: pytest.MonkeyPatch) -> Confi
         [
             "ade",
             "install",
+            "--no-seed",
             "-r",
             str(GALAXY_CACHE / REQS_FILE_NAME),
             "--venv",
