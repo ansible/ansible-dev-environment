@@ -163,11 +163,10 @@ def test_collections_in_home(
     monkeypatch.setenv("HOME", str(tmp_path))
     collection_root = tmp_path / ".ansible" / "collections" / "ansible_collections"
     (collection_root / "ansible" / "utils").mkdir(parents=True)
-    with pytest.raises(SystemExit):
-        main(dry=True)
+    main(dry=True)
     captured = capsys.readouterr()
-    msg = f"Collections found in {collection_root}"
-    assert msg in captured.err
+    msg = "Declaring ANSIBLE_HOME="
+    assert msg in captured.out
 
 
 def test_collections_in_user(
@@ -219,8 +218,7 @@ def test_collections_in_user(
         "sys.argv",
         ["ansible-dev-environment", "install", "--venv", "venv"],
     )
-    with pytest.raises(SystemExit):
-        main(dry=True)
+    main(dry=True)
     captured = capsys.readouterr()
     msg = f"Collections found in {usr_path}"
     assert msg in captured.err

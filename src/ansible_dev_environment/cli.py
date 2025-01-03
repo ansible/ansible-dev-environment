@@ -109,21 +109,26 @@ class Cli:
             self.output.hint(hint)
             errored = True
 
-        home_coll = Path.home() / ".ansible/collections/ansible_collections"
-        if home_coll.exists() and tuple(home_coll.iterdir()):
-            err = f"Collections found in {home_coll}"
-            self.output.error(err)
-            hint = "Run `rm -rf ~/.ansible/collections` to remove them."
-            self.output.hint(hint)
-            errored = True
+        ansible_home: Path
+        if "ANSIBLE_HOME" not in os.environ:
+            ansible_home = Path(os.environ.get("VIRTUAL_ENV", "~/.ansible"))
+            self.output.warning(
+                f"Declaring ANSIBLE_HOME={ansible_home} to ensure isolation from user environment.",
+            )
+            os.environ["ANSIBLE_HOME"] = str(ansible_home)
+        else:
+            ansible_home = Path(os.environ.get("ANSIBLE_HOME", "~/.ansible"))
+            self.output.info(
+                f"Using ANSIBLE_HOME={ansible_home} to ensure isolation from user environment.",
+            )
 
-        usr_coll = Path("/usr/share/ansible/collections")
-        if usr_coll.exists() and tuple(usr_coll.iterdir()):
-            err = f"Collections found in {usr_coll}"
-            self.output.error(err)
-            hint = "Run `sudo rm -rf /usr/share/ansible/collections` to remove them."
-            self.output.hint(hint)
-            errored = True
+        if "ANSIBLE_COLLECTIONS_SCAN_SYS_PATH" not in os.environ:
+            usr_coll = Path("/usr/share/ansible/collections")
+            if usr_coll.exists() and tuple(usr_coll.iterdir()):
+                err = f"Collections found in {usr_coll}, declaring ANSIBLE_COLLECTIONS_SCAN_SYS_PATH=False to ensure isolation."
+                self.output.error(err)
+                hint = "You can also `sudo rm -rf /usr/share/ansible/collections` to remove them or explicitly define ANSIBLE_COLLECTIONS_SCAN_SYS_PATH variable to avoid this message."
+                self.output.hint(hint)
 
         if errored:
             err = "The development environment is not isolated, please resolve the above errors."
