@@ -28,6 +28,23 @@ if TYPE_CHECKING:
     from ansible_dev_environment.output import Output
 
 
+def format_process(exc: subprocess.CalledProcessError) -> str:
+    """Format the subprocess exception.
+
+    Args:
+        exc: The exception.
+
+    Returns:
+        The formatted exception.
+    """
+    result = f"Got {exc.returncode} return code from: {exc.cmd}\n"
+    if exc.stdout:  # pragma: no cover
+        result += f"stdout:\n{exc.stdout}"
+    if exc.stderr:
+        result += f"stderr:\n{exc.stderr}"
+    return result
+
+
 class Installer:
     """The installer class.
 
@@ -116,7 +133,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to install ansible-core: {exc}"
+            err = f"Failed to install ansible-core: {format_process(exc)}"
             self._output.critical(err)
 
     def _install_dev_tools(self) -> None:
@@ -138,7 +155,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to install ansible-dev-tools: {exc}"
+            err = f"Failed to install ansible-dev-tools: {format_process(exc)}"
             self._output.critical(err)
 
     def _install_galaxy_collections(
@@ -188,7 +205,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to install collection: {exc}\n{exc.stderr}"
+            err = f"Failed to install collection: {format_process(exc)}"
             self._output.critical(err)
             raise SystemError(err) from exc  # pragma: no cover # critical exits
         installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
@@ -231,7 +248,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to install collections: {exc} {exc.stderr}"
+            err = f"Failed to install collections: {format_process(exc)}"
             self._output.critical(err)
 
         installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
@@ -267,7 +284,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to list collection using git ls-files: {exc} {exc.stderr}"
+            err = f"Failed to list collection using git ls-files: {format_process(exc)}"
             self._output.info(err)
             return None, None
 
@@ -299,7 +316,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to list collection using ls: {exc} {exc.stderr}"
+            err = f"Failed to list collection using ls: {format_process(exc)}"
             self._output.debug(err)
             return None, None
 
@@ -401,7 +418,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to build collection: {exc} {exc.stderr}"
+            err = f"Failed to build collection: {format_process(exc)}"
             self._output.critical(err)
 
         built = [
@@ -456,7 +473,7 @@ class Installer:
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
-            err = f"Failed to install collection: {exc} {exc.stderr}"
+            err = f"Failed to install collection: {format_process(exc)}"
             self._output.critical(err)
             raise SystemError(err) from exc  # pragma: no cover # critical exits
 
@@ -505,7 +522,7 @@ class Installer:
         msg = "Installing python requirements."
         self._output.info(msg)
 
-        command = f"{self._config.pip_cmd} install" f" -r {self._config.discovered_python_reqs}"
+        command = f"{self._config.pip_cmd} install -r {self._config.discovered_python_reqs}"
 
         msg = f"Installing python requirements from {self._config.discovered_python_reqs}"
         self._output.debug(msg)
@@ -520,7 +537,7 @@ class Installer:
         except subprocess.CalledProcessError as exc:
             err = (
                 "Failed to install requirements from"
-                f" {self._config.discovered_python_reqs}: {exc} {exc.stderr}"
+                f" {self._config.discovered_python_reqs}: {format_process(exc)}"
             )
             self._output.critical(err)
         else:
