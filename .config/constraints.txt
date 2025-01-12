@@ -30,7 +30,7 @@ dill==0.3.9
 distlib==0.3.9
 distro==1.9.0
 dnspython==2.7.0
-docstring-parser-fork==0.0.9
+docstring-parser-fork==0.0.10
 exceptiongroup==1.2.2
 execnet==2.1.1
 filelock==3.16.1
@@ -80,10 +80,10 @@ platformdirs==4.3.6
 pluggy==1.5.0
 pre-commit==4.0.1
 pycparser==2.22
-pydoclint==0.5.14
-pygments==2.18.0
+pydoclint==0.5.16
+pygments==2.19.1
 pylint==3.3.3
-pymdown-extensions==10.13
+pymdown-extensions==10.14
 pyproject-api==1.8.0
 pyproject-hooks==1.2.0
 pytest==8.3.4
@@ -97,7 +97,7 @@ referencing==0.35.1
 regex==2024.11.6
 requests==2.32.3
 rpds-py==0.22.3
-ruff==0.8.6
+ruff==0.9.1
 six==1.17.0
 soupsieve==2.6
 subprocess-tee==0.4.2
