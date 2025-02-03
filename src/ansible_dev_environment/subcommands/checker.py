@@ -76,8 +76,7 @@ class Checker:
             for dep, version in deps.items():
                 if not isinstance(version, str):
                     err = (
-                        f"Collection {collection_name} has malformed"
-                        f" dependency version for {dep}."
+                        f"Collection {collection_name} has malformed dependency version for {dep}."
                     )
                     self._output.error(err)
                     continue

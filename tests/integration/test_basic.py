@@ -35,8 +35,7 @@ def test_venv(
         verbosity=0,
     )
     command = (
-        "git clone https://github.com/ansible-collections/cisco.nxos.git"
-        f" {tmp_path/ 'cisco.nxos'}"
+        f"git clone https://github.com/ansible-collections/cisco.nxos.git {tmp_path / 'cisco.nxos'}"
     )
     subprocess_run(
         command=command,
