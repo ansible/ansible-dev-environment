@@ -67,17 +67,16 @@ def check_download_collection(name: str, dest: Path) -> None:
     namespace, name = name.split(".")
     base_url = "https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections"
 
-    url = f"{base_url}/index/{namespace}/{name}/versions/?is_highest=true"
+    url = f"{base_url}/index/{namespace}/{name}/"
     try:
         with urlopen(url) as response:  # noqa: S310
             body = response.read()
     except HTTPError:
         err = f"Failed to check collection version: {name}"
         pytest.fail(err)
-    with urlopen(url) as response:  # noqa: S310
-        body = response.read()
+
     json_response = json.loads(body)
-    version = json_response["data"][0]["version"]
+    version = json_response["highest_version"]["version"]
     file_name = f"{namespace}-{name}-{version}.tar.gz"
     file_path = dest / file_name
     if file_path.exists():
