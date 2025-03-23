@@ -16,7 +16,8 @@ For more information about communication, see the [Ansible communication guide](
 ## Features
 
 - Promotes an "ephemeral" development approach
-- Ensures the current development environment is isolated
+- Ensures the current development environment is isolated by using python virtual
+  environments and redefining ANSIBLE_HOME to point to inside them.
 - Install all collection python requirements
 - Install all collection test requirements
 - Checks for missing system packages
