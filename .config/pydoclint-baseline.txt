@@ -1,4 +1,218 @@
+tests/integration/test_basic.py
+    DOC501: Function `test_venv` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_venv` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_non_local` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_non_local` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_requirements` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_requirements` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/test_argparser.py
+    DOC501: Function `test_no_option_string` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_no_option_string` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_one_string` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_one_string` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_group_no_title` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_group_no_title` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_cli.py
+    DOC501: Function `test_cpi` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_cpi` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tty` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tty` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_missing_requirements` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_missing_requirements` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_editable_many` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_editable_many` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_editable_requirements` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_editable_requirements` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_acp_env_var_set` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_acp_env_var_set` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_collections_in_home` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_collections_in_home` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_collections_in_user` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_collections_in_user` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_no_venv_specified` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_no_venv_specified` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_exit_code_one` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_exit_code_one` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_exit_code_two` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_exit_code_two` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_collection.py
+    DOC501: Function `test_get_galaxy_missing` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_get_galaxy_missing` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_get_galaxy_no_meta` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_get_galaxy_no_meta` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_get_galaxy_corrupt` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_get_galaxy_corrupt` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_config.py
+    DOC501: Function `test_paths` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_paths` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_galaxy_bin_venv` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_galaxy_bin_venv` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_galaxy_bin_site` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_galaxy_bin_site` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_galaxy_bin_path` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_galaxy_bin_path` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_galaxy_bin_not_found` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_galaxy_bin_not_found` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_venv_from_env_var` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_venv_from_env_var` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_venv_not_found` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_venv_not_found` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_venv_creation_failed` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_venv_creation_failed` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_venv_env_var_wrong` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_venv_env_var_wrong` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_venv_env_var_missing_interpreter` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_venv_env_var_missing_interpreter` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_sys_packages_path_fail_call` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_sys_packages_path_fail_call` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_sys_packages_path_fail_invalid_json` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_sys_packages_path_fail_invalid_json` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_sys_packages_path_fail_empty` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_sys_packages_path_fail_empty` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_sys_packages_path_missing_purelib` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_sys_packages_path_missing_purelib` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_inspector.py
+    DOC501: Function `test_output_no_color` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_output_no_color` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_output_color` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_output_color` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_no_rich` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_no_rich` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_installer.py
+    DOC501: Function `test_git_no_files` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_git_no_files` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_git_none_tracked` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_git_none_tracked` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_git_one_tracked` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_git_one_tracked` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_ls_no_files` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_ls_no_files` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_ls_one_found` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_ls_one_found` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_ls_failed` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_ls_failed` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_copy_no_files` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_copy_no_files` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_copy_using_git` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_copy_using_git` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_copy_using_ls` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_copy_using_ls` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_copy_fails` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_copy_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_no_adt_install` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_no_adt_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_adt_install` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_adt_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_multiple_specifiers` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_multiple_specifiers` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_editable_not_local` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_editable_not_local` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_core_installed` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_core_installed` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_core_install_fails` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_core_install_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_adt_installed` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_adt_installed` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_adt_install_fails` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_adt_install_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reinstall` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reinstall` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reinstall_editable` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reinstall_editable` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_install_fails` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_install_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_collection_pre_install` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_collection_pre_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_args_sanity` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_args_sanity` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reinstall_local_collection` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reinstall_local_collection` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reinstall_local_collection_after_galaxy` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reinstall_local_collection_after_galaxy` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reinstall_requirements_file` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reinstall_requirements_file` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reinstall_requirements_file_after_editable` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reinstall_requirements_file_after_editable` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_install_requirements_file_failed` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_install_requirements_file_failed` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_local_collection_build_fails` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_local_collection_build_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_local_collection_install_fails` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_local_collection_install_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_local_collection_without_tar_install` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_local_collection_without_tar_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_failed_pip_install` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_failed_pip_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_lister.py
+    DOC501: Function `test_success` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_success` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_collection_info_corrupt` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_collection_info_corrupt` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_collection_info_collection_corrupt` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_collection_info_collection_corrupt` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `mock_collect_manifests` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `mock_collect_manifests` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_broken_link` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_broken_link` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `mock_collect_manifests` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `mock_collect_manifests` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_editable` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_editable` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_main.py
+    DOC501: Function `test_main` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_main` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_tree.py
+    DOC501: Function `test_tree_large` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_large` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tree_color` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_color` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
 tests/unit/test_treemaker.py
     DOC101: Method `SafeEnvBuilder.__init__`: Docstring contains fewer arguments than in function signature.
     DOC103: Method `SafeEnvBuilder.__init__`: Docstring arguments are different from function arguments. (Or could be other formatting issues: https://jsh9.github.io/pydoclint/violation_codes.html#notes-on-doc103 ). Arguments in the function signature but not in the docstring: [clear: bool, prompt: str | None, symlinks: bool, system_site_packages: bool, upgrade: bool, upgrade_deps: bool, with_pip: bool].
+    DOC501: Function `test_tree_empty` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_empty` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tree_malformed_info` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_malformed_info` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `collect_manifests` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `collect_manifests` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tree_malformed_deps` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_malformed_deps` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `collect_manifests` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `collect_manifests` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tree_malformed_deps_not_string` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_malformed_deps_not_string` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `collect_manifests` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `collect_manifests` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tree_malformed_repo_not_string` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_malformed_repo_not_string` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `collect_manifests` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `collect_manifests` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_tree_verbose` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_tree_verbose` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_reqs_no_pound` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_reqs_no_pound` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `builder_introspect` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `builder_introspect` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_uninstaller.py
+    DOC501: Function `test_many` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_many` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_missing_reqs` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_missing_reqs` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+    DOC501: Function `test_editable_uninstall` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_editable_uninstall` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
+--------------------
+tests/unit/test_utils.py
+    DOC501: Function `test_parse_collection_request` has raise/assert statements, but the docstring does not have a "Raises" section
+    DOC503: Function `test_parse_collection_request` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
 --------------------
