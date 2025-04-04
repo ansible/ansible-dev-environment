@@ -161,8 +161,8 @@ def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
     builder_introspect(cfg, output)
 
-    assert config.discovered_bindep_reqs.exists() is True
-    assert config.discovered_python_reqs.exists() is True
+    assert cfg.discovered_bindep_reqs.exists() is True
+    assert cfg.discovered_python_reqs.exists() is True
 
 
 def test_builder_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
