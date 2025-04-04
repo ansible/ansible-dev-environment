@@ -13,7 +13,7 @@ from ansible_dev_environment.collection import (
 )
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
-from ansible_dev_environment.utils import TermFeatures
+from ansible_dev_environment.utils import TermFeatures, builder_introspect
 
 
 term_features = TermFeatures(color=False, links=False)
@@ -123,3 +123,73 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
             parse_collection_request(string=string, config=config, output=output)
     else:
         assert parse_collection_request(string=string, config=config, output=output) == spec
+
+
+def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that builder is found.
+
+    Args:
+        tmp_path: A temporary path
+        monkeypatch: The pytest Monkeypatch fixture
+
+    Raises:
+        AssertionError: if either file is not found
+    """
+
+    @property  # type: ignore[misc]
+    def cache_dir(_self: Config) -> Path:
+        """Return a temporary cache directory.
+
+        Args:
+            _self: The Config object
+
+        Returns:
+            A temporary cache directory.
+        """
+        return tmp_path
+
+    monkeypatch.setattr(Config, "cache_dir", cache_dir)
+
+    args = Namespace(venv=str(tmp_path / ".venv"), system_site_packages=False, verbose=0)
+
+    cfg = Config(
+        args=args,
+        term_features=term_features,
+        output=output,
+    )
+    cfg.init()
+
+    builder_introspect(cfg, output)
+
+    assert config.discovered_bindep_reqs.exists() is True
+    assert config.discovered_python_reqs.exists() is True
+
+
+def test_builder_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test builder not found raises a system exit.
+
+    Args:
+        monkeypatch: The pytest Monkeypatch fixture
+
+    Raises:
+        AssertionError: When the exit code is not 1
+    """
+
+    def exists(_self: Path) -> bool:
+        """Mock path exists.
+
+        Args:
+            _self: The path object
+
+        Returns:
+            False indicating the path does not exist
+
+        """
+        return False
+
+    monkeypatch.setattr(Path, "exists", exists)
+
+    with pytest.raises(SystemExit) as exc_info:
+        builder_introspect(config, output)
+
+    assert exc_info.value.code == 1
