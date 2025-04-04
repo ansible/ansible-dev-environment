@@ -11,7 +11,6 @@ import threading
 import time
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import subprocess_tee
@@ -19,6 +18,7 @@ import yaml
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from types import TracebackType
 
     from .config import Config
@@ -280,25 +280,15 @@ def collect_manifests(  # noqa: C901
 def builder_introspect(config: Config, output: Output) -> None:
     """Introspect a collection.
 
-    Default to the path of ansible-builder adjacent to the python executable.
-    Since ansible-builder is a dependency of ade, it should be in the same bin directory
-    as the python interpreter that spawned the ade process.
-    If not found, we cannot introspect.
+    Use the sys executable to run builder, since it is a direct dependency
+    it should be accessible to the current interpreter.
 
     Args:
         config: The configuration object.
         output: The output object.
     """
-    builder_path = Path(sys.executable).parent / "ansible-builder"
-    if not builder_path.exists():
-        output.critical(
-            "Failed to find ansible-builder. Please check the installation"
-            " of ade as it should have been installed by default.",
-        )
-        return  # pragma: no cover
-
     command = (
-        f"{builder_path} introspect {config.site_pkg_path}"
+        f"{sys.executable} -m ansible_builder introspect {config.site_pkg_path}"
         f" --write-pip {config.discovered_python_reqs}"
         f" --write-bindep {config.discovered_bindep_reqs}"
         " --sanitize"
@@ -329,7 +319,7 @@ def builder_introspect(config: Config, output: Output) -> None:
         )
     except subprocess.CalledProcessError as exc:
         err = f"Failed to discover requirements: {exc} {exc.stderr}"
-        logger.critical(err)
+        output.critical(err)
 
     if not config.discovered_python_reqs.exists():
         config.discovered_python_reqs.touch()
