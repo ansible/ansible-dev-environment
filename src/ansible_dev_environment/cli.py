@@ -109,11 +109,14 @@ class Cli:
             self.output.hint(hint)
             errored = True
 
-        home_coll = Path.home() / ".ansible/collections/ansible_collections"
+        home_coll = (
+            Path(os.environ.get("ANSIBLE_HOME", "~/.ansible")).expanduser()
+            / "collections/ansible_collections"
+        )
         if home_coll.exists() and tuple(home_coll.iterdir()):
             err = f"Collections found in {home_coll}"
             self.output.error(err)
-            hint = "Run `rm -rf ~/.ansible/collections` to remove them."
+            hint = f"Run `rm -rf {home_coll}` to remove them or configure ANSIBLE_HOME to point to a different location."
             self.output.hint(hint)
             errored = True
 
