@@ -124,7 +124,7 @@ class Installer:
             return
         msg = "Installing ansible-core."
         self._output.debug(msg)
-        command = f"{self._config.venv_interpreter} -m pip install ansible-core"
+        command = f"{self._config.venv_pip_install_cmd} ansible-core"
         try:
             subprocess_run(
                 command=command,
@@ -146,7 +146,7 @@ class Installer:
             return
         msg = "Installing ansible-dev-tools."
         self._output.debug(msg)
-        command = f"{self._config.venv_interpreter} -m pip install ansible-dev-tools"
+        command = f"{self._config.venv_pip_install_cmd} ansible-dev-tools"
         try:
             subprocess_run(
                 command=command,
@@ -522,7 +522,7 @@ class Installer:
         msg = "Installing python requirements."
         self._output.info(msg)
 
-        command = f"{self._config.pip_cmd} install -r {self._config.discovered_python_reqs}"
+        command = f"{self._config.venv_pip_install_cmd} -r {self._config.discovered_python_reqs}"
 
         msg = f"Installing python requirements from {self._config.discovered_python_reqs}"
         self._output.debug(msg)
