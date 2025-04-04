@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 
 from typing import TYPE_CHECKING
 
@@ -183,7 +184,7 @@ class Checker:
         msg = "Checking system packages."
         self._output.info(msg)
 
-        command = f"bindep -b -f {self._config.discovered_bindep_reqs}"
+        command = f"{sys.executable} -m bindep -b -f {self._config.discovered_bindep_reqs}"
         work = "Checking system package requirements"
         try:
             subprocess_run(
