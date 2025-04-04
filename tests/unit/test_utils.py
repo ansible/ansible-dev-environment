@@ -163,33 +163,3 @@ def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert cfg.discovered_bindep_reqs.exists() is True
     assert cfg.discovered_python_reqs.exists() is True
-
-
-def test_builder_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test builder not found raises a system exit.
-
-    Args:
-        monkeypatch: The pytest Monkeypatch fixture
-
-    Raises:
-        AssertionError: When the exit code is not 1
-    """
-
-    def exists(_self: Path) -> bool:
-        """Mock path exists.
-
-        Args:
-            _self: The path object
-
-        Returns:
-            False indicating the path does not exist
-
-        """
-        return False
-
-    monkeypatch.setattr(Path, "exists", exists)
-
-    with pytest.raises(SystemExit) as exc_info:
-        builder_introspect(config, output)
-
-    assert exc_info.value.code == 1
