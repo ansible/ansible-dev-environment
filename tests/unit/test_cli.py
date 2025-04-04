@@ -161,6 +161,7 @@ def test_collections_in_home(
         ["ansible-dev-environment", "install", "--venv", "venv"],
     )
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("ANSIBLE_HOME", str(tmp_path / ".ansible"))
     collection_root = tmp_path / ".ansible" / "collections" / "ansible_collections"
     (collection_root / "ansible" / "utils").mkdir(parents=True)
     with pytest.raises(SystemExit):
