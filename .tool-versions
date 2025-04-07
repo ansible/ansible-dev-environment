@@ -1,2 +1,0 @@
-# mise: 'latest' for python might pick 3.13.0t which is not yet supported
-python 3.13.0
