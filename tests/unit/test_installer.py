@@ -297,6 +297,9 @@ def test_adt_install(
     Args:
         tmp_path: A temporary directory.
         output: The output fixture.
+
+    Raises:
+        AssertionError: If the adt installation fails.
     """
     venv = tmp_path / "test_venv"
     args = Namespace(
