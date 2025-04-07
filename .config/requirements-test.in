@@ -7,7 +7,6 @@ pydoclint
 pylint
 pytest
 pytest-instafail
-pytest-timeout
 pytest-xdist
 ruff
 toml-sort
