@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 
 from pathlib import Path
 
@@ -13,6 +14,10 @@ from ansible_dev_environment.output import Output
 from ansible_dev_environment.utils import TermFeatures, subprocess_run
 
 
+@pytest.mark.skipif(
+    sys.version_info > (3, 12),
+    reason="pylibssh issues 3.13, https://github.com/ansible/pylibssh/issues/699",
+)
 def test_venv(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
@@ -147,6 +152,10 @@ def test_non_local(
     assert "├──jsonschema" in captured.out
 
 
+@pytest.mark.skipif(
+    sys.version_info > (3, 12),
+    reason="pylibssh issues 3.13, https://github.com/ansible/pylibssh/issues/699",
+)
 def test_requirements(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
