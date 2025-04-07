@@ -24,7 +24,7 @@ def test_console_width(width: int, expected: int, monkeypatch: pytest.MonkeyPatc
     """Test the console width function."""
 
     def mock_get_terminal_size(
-        fallback: tuple[int, int] = (80, 24)  # noqa: ARG001
+        fallback: tuple[int, int] = (80, 24),  # noqa: ARG001
     ) -> tuple[int, int]:
         """Mock the get_terminal_size function.
 
