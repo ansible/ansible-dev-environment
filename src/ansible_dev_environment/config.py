@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import shutil
 import subprocess
 import sys
 
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -22,38 +22,8 @@ if TYPE_CHECKING:
     from .utils import TermFeatures
 
 
-_logger = logging.getLogger(__name__)
-
-
-def use_uv() -> bool:
-    """Return whether to use uv commands like venv or pip.
-
-    Returns:
-        True if uv is to be used.
-    """
-    if int(os.environ.get("SKIP_UV", "0")):
-        return False
-    try:
-        import uv  # noqa: F401
-    except ImportError:  # pragma: no cover
-        return False
-    else:
-        _logger.info(
-            "UV detected and will be used instead of venv/pip. To disable that define SKIP_UP=1 in your environment.",
-        )
-        return True
-
-
 class Config:  # pylint: disable=too-many-instance-attributes
-    """The application configuration.
-
-    Attributes:
-        pip_cmd: The pip command.
-        venv_cmd: The venv command.
-    """
-
-    pip_cmd: str
-    venv_cmd: str
+    """The application configuration."""
 
     def __init__(
         self,
@@ -115,6 +85,38 @@ class Config:  # pylint: disable=too-many-instance-attributes
         return self.cache_dir
 
     @property
+    def venv_pip_install_cmd(self) -> str:
+        """Return the pip command for the virtual environment.
+
+        Returns:
+            The pip install command for the virtual environment.
+        """
+        if self.uv_available:
+            return f"uv pip install --python {self.venv_interpreter}"
+        return f"{self.venv}/bin/python -m pip install"
+
+    @cached_property
+    def uv_available(self) -> bool:
+        """Return whether to use uv commands like venv or pip.
+
+        Returns:
+            True if uv is to be used.
+        """
+        if int(os.environ.get("SKIP_UV", "0")):
+            self._output.debug("uv is disabled by SKIP_UV=1 in the environment.")
+            return False
+
+        if not (uv_path := shutil.which("uv")):
+            self._output.debug("uv is not available in the environment.")
+            return False
+
+        self._output.debug(f"uv is available at {uv_path}")
+        self._output.info(
+            "uv is available and will be used instead of venv/pip. To disable that define SKIP_UV=1 in your environment.",
+        )
+        return True
+
+    @property
     def discovered_python_reqs(self) -> Path:
         """Return the discovered python requirements file."""
         return self.venv_cache_dir / "discovered_requirements.txt"
@@ -174,18 +176,16 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self,
     ) -> None:
         """Set the interpreter."""
-        self.pip_cmd = f"{sys.executable} -m pip"
-        self.venv_cmd = f"{sys.executable} -m venv"
-        if use_uv():
-            self.pip_cmd = f"{sys.executable} -m uv pip"
-            # seed and python-preference make uv venv match python -m venv behavior:
-            self.venv_cmd = f"{sys.executable} -m uv venv --seed --python-preference=system"
+        if self.uv_available:
+            venv_cmd = "uv venv --seed --python-preference=system"
+        else:
+            venv_cmd = f"{sys.executable} -m venv"
 
         if not self.venv.exists():
             if self._create_venv:
                 msg = f"Creating virtual environment: {self.venv}"
                 self._output.debug(msg)
-                command = f"{self.venv_cmd} {self.venv}"
+                command = f"{venv_cmd} {self.venv}"
                 msg = f"Creating virtual environment: {self.venv}"
                 if self.args.system_site_packages:
                     command = f"{command} --system-site-packages"
