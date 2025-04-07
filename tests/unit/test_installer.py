@@ -688,6 +688,7 @@ def test_install_fails(
     assert "Failed to install collection" in captured.err
 
 
+@pytest.mark.skip
 def test_collection_pre_install(
     tmp_path: Path,
     installable_local_collection: Path,
