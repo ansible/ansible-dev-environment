@@ -107,8 +107,6 @@ tests/unit/test_installer.py
     DOC503: Function `test_copy_fails` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
     DOC501: Function `test_no_adt_install` has raise/assert statements, but the docstring does not have a "Raises" section
     DOC503: Function `test_no_adt_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
-    DOC501: Function `test_adt_install` has raise/assert statements, but the docstring does not have a "Raises" section
-    DOC503: Function `test_adt_install` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
     DOC501: Function `test_multiple_specifiers` has raise/assert statements, but the docstring does not have a "Raises" section
     DOC503: Function `test_multiple_specifiers` exceptions in the "Raises" section in the docstring do not match those in the function body. Raised exceptions in the docstring: []. Raised exceptions in the body: ['AssertionError (implicitly from the `assert` statement)'].
     DOC501: Function `test_editable_not_local` has raise/assert statements, but the docstring does not have a "Raises" section
