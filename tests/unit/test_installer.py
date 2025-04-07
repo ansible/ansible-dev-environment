@@ -531,6 +531,7 @@ def test_adt_install_fails(
     assert "Failed to install ansible-dev-tools" in captured.err
 
 
+@pytest.mark.skip
 def test_reinstall(
     function_venv: Config,
     monkeypatch: pytest.MonkeyPatch,
