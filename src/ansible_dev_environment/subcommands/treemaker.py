@@ -77,7 +77,7 @@ class TreeMaker:
 
             if self._config.args.verbose >= 1:
                 add_python_reqs(
-                    tree_dict=cast(TreeWithReqs, tree_dict),
+                    tree_dict=cast("TreeWithReqs", tree_dict),
                     collection_name=collection_name,
                     python_deps=python_deps,
                 )
@@ -91,7 +91,7 @@ class TreeMaker:
 
         more_verbose = 2
         if self._config.args.verbose >= more_verbose:
-            tree = Tree(obj=cast(JSONVal, tree_dict), term_features=self._config.term_features)
+            tree = Tree(obj=cast("JSONVal", tree_dict), term_features=self._config.term_features)
             tree.links = links
             tree.green.extend(green)
             rendered = tree.render()
@@ -107,7 +107,7 @@ class TreeMaker:
                     pruned_tree_dict[collection_name] = tree_dict[collection_name]
 
             tree = Tree(
-                obj=cast(JSONVal, pruned_tree_dict),
+                obj=cast("JSONVal", pruned_tree_dict),
                 term_features=self._config.term_features,
             )
             tree.links = links
