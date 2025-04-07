@@ -319,7 +319,7 @@ fail-on = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-ra --showlocals --durations=10 -n 0 -vv"
+addopts = "-ra --showlocals --durations=10 -n 0 -vv --timeout=60"
 cache_dir = "./.cache/.pytest"
 testpaths = "tests"
 tmp_path_retention_policy = "failed"

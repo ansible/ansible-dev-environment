@@ -288,7 +288,6 @@ def test_no_adt_install(
     assert not (venv / "bin" / "adt").exists()
 
 
-@pytest.mark.skip
 def test_adt_install(
     tmp_path: Path,
     output: Output,
@@ -532,7 +531,6 @@ def test_adt_install_fails(
     assert "Failed to install ansible-dev-tools" in captured.err
 
 
-@pytest.mark.skip
 def test_reinstall(
     function_venv: Config,
     monkeypatch: pytest.MonkeyPatch,
@@ -688,7 +686,6 @@ def test_install_fails(
     assert "Failed to install collection" in captured.err
 
 
-@pytest.mark.skip
 def test_collection_pre_install(
     tmp_path: Path,
     installable_local_collection: Path,
