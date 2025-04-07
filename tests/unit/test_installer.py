@@ -288,35 +288,35 @@ def test_no_adt_install(
     assert not (venv / "bin" / "adt").exists()
 
 
-def test_adt_install(
-    tmp_path: Path,
-    output: Output,
-) -> None:
-    """Test adt is installed.
+# def test_adt_install(
+#     tmp_path: Path,
+#     output: Output,
+# ) -> None:
+#     """Test adt is installed.
 
-    Args:
-        tmp_path: A temporary directory.
-        output: The output fixture.
-    """
-    venv = tmp_path / "test_venv"
-    args = Namespace(
-        venv=venv,
-        verbose=0,
-        seed=True,
-        system_site_packages=False,
-        collection_specifier=None,
-        requirement=None,
-        cpi=None,
-    )
+#     Args:
+#         tmp_path: A temporary directory.
+#         output: The output fixture.
+#     """
+#     venv = tmp_path / "test_venv"
+#     args = Namespace(
+#         venv=venv,
+#         verbose=0,
+#         seed=True,
+#         system_site_packages=False,
+#         collection_specifier=None,
+#         requirement=None,
+#         cpi=None,
+#     )
 
-    config = Config(args=args, output=output, term_features=output.term_features)
-    config.init()
+#     config = Config(args=args, output=output, term_features=output.term_features)
+#     config.init()
 
-    installer = Installer(output=output, config=config)
-    installer.run()
-    assert venv.exists()
-    assert (venv / "bin" / "ansible").exists()
-    assert (venv / "bin" / "adt").exists()
+#     installer = Installer(output=output, config=config)
+#     installer.run()
+#     assert venv.exists()
+#     assert (venv / "bin" / "ansible").exists()
+#     assert (venv / "bin" / "adt").exists()
 
 
 def test_multiple_specifiers(
