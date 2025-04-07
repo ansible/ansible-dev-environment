@@ -203,6 +203,20 @@ def parse() -> argparse.Namespace:
         help="Install seed packages inside the virtual environment (ansible-dev-tools).",
     )
 
+    install.add_argument(
+        "--im",
+        "--isolation-mode",
+        dest="isolation_mode",
+        help=(
+            "Isolation mode to use. restrictive: Exit if collections are found in ansible home or the system collection directory. "
+            " cfg: Update or add an ansible.cfg file in the current working directory to isolate the workspace"
+            " none: No isolation, not recommended."
+        ),
+        default="restrictive",
+        choices=["restrictive", "cfg", "none"],
+        type=str,
+    )
+
     _uninstall = subparsers.add_parser(
         "uninstall",
         formatter_class=CustomHelpFormatter,

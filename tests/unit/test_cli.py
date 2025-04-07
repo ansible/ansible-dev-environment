@@ -266,7 +266,7 @@ def test_exit_code_one(
     cli.init_output()
     cli.output.error("Test error")
     with pytest.raises(SystemExit) as excinfo:
-        cli._exit()
+        cli.exit()
     expected = 1
     assert excinfo.value.code == expected
     captured = capsys.readouterr()
@@ -292,7 +292,7 @@ def test_exit_code_two(
     cli.init_output()
     cli.output.warning("Test warning")
     with pytest.raises(SystemExit) as excinfo:
-        cli._exit()
+        cli.exit()
     expected = 2
     assert excinfo.value.code == expected
     captured = capsys.readouterr()

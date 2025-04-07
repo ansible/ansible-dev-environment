@@ -27,6 +27,7 @@ reqs
 sessionstart
 setenv
 treemaker
+unisolated
 usefixtures
 xdist
 xmltodict

@@ -13,6 +13,7 @@ from ansible_dev_environment import subcommands
 
 from .arg_parser import parse
 from .config import Config
+from .definitions import AnsibleCfg
 from .output import Output
 from .utils import TermFeatures
 
@@ -92,8 +93,83 @@ class Cli:
             err = "Editable can not be used with a requirements file."
             self.output.critical(err)
 
-    def ensure_isolated(self) -> None:
-        """Ensure the environment is isolated."""
+    def isolation_check(self) -> bool:
+        """Check the environment for isolation.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
+        if not hasattr(self.args, "isolation_mode"):
+            return True
+        if self.args.isolation_mode == "restrictive":
+            return self.isolation_restrictive()
+        if self.args.isolation_mode == "cfg":
+            return self.isolation_cfg()
+        if self.args.isolation_mode == "none":
+            return self.isolation_none()
+        return False
+
+    def isolation_cfg(self) -> bool:
+        """Ensure the environment is isolated using cfg isolation.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
+        if os.environ.get("ANSIBLE_CONFIG"):
+            err = "ANSIBLE_CONFIG is set"
+            self.output.error(err)
+            hint = "Run `unset ANSIBLE_CONFIG` to unset it using cfg isolation mode."
+            self.output.hint(hint)
+            return False
+
+        cwd = AnsibleCfg(path=Path("./ansible.cfg"))
+        home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
+        system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
+
+        if cwd.exists and cwd.collections_path_is_dot:
+            self.output.info(f"{cwd.path} has collections_path=. which isolates this workspace.")
+            return True
+        if cwd.exists and not cwd.collections_path_is_dot:
+            cwd.set_or_update_collection_path()
+            self.output.warning(
+                f"{cwd.path} has been updated with collections_path=. to isolate this workspace.",
+            )
+            return True
+        if home.exists and not home.collections_path_is_dot:
+            self.output.warning(
+                f"{home.path} has been updated with collections_path=. to isolate this and all workspaces.",
+            )
+            return True
+        if system.exists and system.collections_path_is_dot:
+            self.output.info(
+                f"{system.path} has collections_path=. which isolates this and all workspaces.",
+            )
+            return True
+
+        cwd.author_new()
+        self.output.info(
+            f"{cwd.path} has been created with collections_path=. to isolate this workspace.",
+        )
+        return True
+
+    def isolation_none(self) -> bool:
+        """No isolation.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
+        self.output.warning(
+            "An unisolated development environment can cause issues with conflicting dependency"
+            " versions and the use of incompatible collections.",
+        )
+        return True
+
+    def isolation_restrictive(self) -> bool:
+        """Ensure the environment is isolated.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
         env_vars = os.environ
         errored = False
         if "ANSIBLE_COLLECTIONS_PATHS" in env_vars:
@@ -127,11 +203,11 @@ class Cli:
             hint = "Run `sudo rm -rf /usr/share/ansible/collections` to remove them."
             self.output.hint(hint)
             errored = True
-
         if errored:
             err = "The development environment is not isolated, please resolve the above errors."
-
-            self.output.critical(err)
+            self.output.warning(err)
+            return False
+        return True
 
     def run(self) -> None:
         """Run the application."""
@@ -145,9 +221,9 @@ class Cli:
         subcommand_cls = getattr(subcommands, self.config.args.subcommand.capitalize())
         subcommand = subcommand_cls(config=self.config, output=self.output)
         subcommand.run()
-        self._exit()
+        self.exit()
 
-    def _exit(self) -> None:
+    def exit(self) -> None:
         """Exit the application setting the return code."""
         if self.output.call_count["error"]:
             sys.exit(1)
@@ -171,6 +247,7 @@ def main(*, dry: bool = False) -> None:
         cli.output.warning(str(warn.message))
     warnings.resetwarnings()
     cli.args_sanity()
-    cli.ensure_isolated()
+    if not cli.isolation_check():
+        cli.exit()
     if not dry:
         cli.run()
