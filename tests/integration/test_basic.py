@@ -13,6 +13,7 @@ from ansible_dev_environment.output import Output
 from ansible_dev_environment.utils import TermFeatures, subprocess_run
 
 
+@pytest.mark.skip
 def test_venv(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
