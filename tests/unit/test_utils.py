@@ -13,7 +13,7 @@ from ansible_dev_environment.collection import (
 )
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
-from ansible_dev_environment.utils import TermFeatures
+from ansible_dev_environment.utils import TermFeatures, builder_introspect
 
 
 term_features = TermFeatures(color=False, links=False)
@@ -123,3 +123,43 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
             parse_collection_request(string=string, config=config, output=output)
     else:
         assert parse_collection_request(string=string, config=config, output=output) == spec
+
+
+def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that builder is found.
+
+    Args:
+        tmp_path: A temporary path
+        monkeypatch: The pytest Monkeypatch fixture
+
+    Raises:
+        AssertionError: if either file is not found
+    """
+
+    @property  # type: ignore[misc]
+    def cache_dir(_self: Config) -> Path:
+        """Return a temporary cache directory.
+
+        Args:
+            _self: The Config object
+
+        Returns:
+            A temporary cache directory.
+        """
+        return tmp_path
+
+    monkeypatch.setattr(Config, "cache_dir", cache_dir)
+
+    args = Namespace(venv=str(tmp_path / ".venv"), system_site_packages=False, verbose=0)
+
+    cfg = Config(
+        args=args,
+        term_features=term_features,
+        output=output,
+    )
+    cfg.init()
+
+    builder_introspect(cfg, output)
+
+    assert cfg.discovered_bindep_reqs.exists() is True
+    assert cfg.discovered_python_reqs.exists() is True

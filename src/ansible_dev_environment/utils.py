@@ -280,12 +280,15 @@ def collect_manifests(  # noqa: C901
 def builder_introspect(config: Config, output: Output) -> None:
     """Introspect a collection.
 
+    Use the sys executable to run builder, since it is a direct dependency
+    it should be accessible to the current interpreter.
+
     Args:
         config: The configuration object.
         output: The output object.
     """
     command = (
-        f"ansible-builder introspect {config.site_pkg_path}"
+        f"{sys.executable} -m ansible_builder introspect {config.site_pkg_path}"
         f" --write-pip {config.discovered_python_reqs}"
         f" --write-bindep {config.discovered_bindep_reqs}"
         " --sanitize"
@@ -316,7 +319,7 @@ def builder_introspect(config: Config, output: Output) -> None:
         )
     except subprocess.CalledProcessError as exc:
         err = f"Failed to discover requirements: {exc} {exc.stderr}"
-        logger.critical(err)
+        output.critical(err)
 
     if not config.discovered_python_reqs.exists():
         config.discovered_python_reqs.touch()

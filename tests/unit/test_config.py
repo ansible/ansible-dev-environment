@@ -57,7 +57,6 @@ def test_paths(
     uv: bool,
     monkeypatch: pytest.MonkeyPatch,
     output: Output,
-    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test the paths.
 
@@ -69,28 +68,23 @@ def test_paths(
         uv: Whether to use the uv module.
         monkeypatch: A pytest fixture for monkey patching.
         output: The output fixture.
-        caplog: A pytest fixture for capturing logs.
     """
-    with caplog.at_level(10):
-        monkeypatch.setenv("SKIP_UV", "0" if uv else "1")
-        venv = tmpdir / "test_venv"
-        args = gen_args(
-            venv=str(venv),
-            system_site_packages=system_site_packages,
-        )
+    monkeypatch.setenv("SKIP_UV", str(int(not uv)))
+    venv = tmpdir / "test_venv"
+    args = gen_args(
+        venv=str(venv),
+        system_site_packages=system_site_packages,
+    )
 
-        config = Config(args=args, output=output, term_features=output.term_features)
-        config.init()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
 
     if uv:
-        assert len(caplog.messages) == 1
-        assert "UV detected" in caplog.records[0].msg
-        assert "-m uv venv" in config.venv_cmd
-        assert "-m uv pip" in config.pip_cmd
+        assert config.uv_available
+        assert "uv pip install --python" in config.venv_pip_install_cmd
     else:
-        assert len(caplog.messages) == 0
-        assert "-m venv" in config.venv_cmd
-        assert "-m pip" in config.pip_cmd
+        assert not config.uv_available
+        assert "-m pip install" in config.venv_pip_install_cmd
 
     assert config.venv == venv
     for attr in (
