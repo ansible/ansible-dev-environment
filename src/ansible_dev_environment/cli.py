@@ -13,6 +13,7 @@ from ansible_dev_environment import subcommands
 
 from .arg_parser import parse
 from .config import Config
+from .definitions import COLLECTIONS_PATH as CP
 from .definitions import AnsibleCfg
 from .output import Output
 from .utils import TermFeatures
@@ -31,6 +32,9 @@ class Cli:
         self.config: Config
         self.output: Output
         self.term_features: TermFeatures
+        self.acfg_cwd = AnsibleCfg(path=Path("./ansible.cfg"))
+        self.acfg_home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
+        self.acfg_system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
 
     def parse_args(self) -> None:
         """Parse the command line arguments."""
@@ -122,34 +126,34 @@ class Cli:
             self.output.hint(hint)
             return False
 
-        cwd = AnsibleCfg(path=Path("./ansible.cfg"))
-        home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
-        system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
-
-        if cwd.exists and cwd.collections_path_is_dot:
-            self.output.info(f"{cwd.path} has collections_path=. which isolates this workspace.")
-            return True
-        if cwd.exists and not cwd.collections_path_is_dot:
-            cwd.set_or_update_collection_path()
-            self.output.warning(
-                f"{cwd.path} has been updated with collections_path=. to isolate this workspace.",
-            )
-            return True
-        if home.exists and not home.collections_path_is_dot:
-            self.output.warning(
-                f"{home.path} has been updated with collections_path=. to isolate this and all workspaces.",
-            )
-            return True
-        if system.exists and system.collections_path_is_dot:
-            self.output.info(
-                f"{system.path} has collections_path=. which isolates this and all workspaces.",
-            )
+        if self.acfg_cwd.exists:
+            if self.acfg_cwd.collections_path_is_dot:
+                msg = f"{self.acfg_cwd.path} has '{CP}' which isolates this workspace."
+                self.output.info(msg)
+                return True
+            self.acfg_cwd.set_or_update_collections_path()
+            msg = f"{self.acfg_cwd.path} has been updated with '{CP}' to isolate this workspace."
+            self.output.warning(msg)
             return True
 
-        cwd.author_new()
-        self.output.info(
-            f"{cwd.path} has been created with collections_path=. to isolate this workspace.",
-        )
+        if self.acfg_home.exists:
+            if self.acfg_home.collections_path_is_dot:
+                msg = f"{self.acfg_home.path} has '{CP}' which isolates this and all workspaces."
+                self.output.info(msg)
+            else:
+                self.acfg_home.set_or_update_collections_path()
+                msg = f"{self.acfg_home.path} has been updated with '{CP}' to isolate this and all workspaces."
+                self.output.warning(msg)
+            return True
+
+        if self.acfg_system.exists and self.acfg_system.collections_path_is_dot:
+            msg = f"{self.acfg_system.path} has '{CP}' which isolates this and all workspaces."
+            self.output.info(msg)
+            return True
+
+        self.acfg_cwd.author_new()
+        msg = f"{self.acfg_cwd.path} has been created with '{CP}' to isolate this workspace."
+        self.output.info(msg)
         return True
 
     def isolation_none(self) -> bool:
