@@ -35,6 +35,7 @@ class Cli:
         self.acfg_cwd = AnsibleCfg(path=Path("./ansible.cfg"))
         self.acfg_home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
         self.acfg_system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
+        self.acfg_trusted: Path
 
     def parse_args(self) -> None:
         """Parse the command line arguments."""
@@ -130,10 +131,11 @@ class Cli:
             if self.acfg_cwd.collections_path_is_dot:
                 msg = f"{self.acfg_cwd.path} has '{CP}' which isolates this workspace."
                 self.output.info(msg)
-                return True
-            self.acfg_cwd.set_or_update_collections_path()
-            msg = f"{self.acfg_cwd.path} has been updated with '{CP}' to isolate this workspace."
-            self.output.warning(msg)
+            else:
+                self.acfg_cwd.set_or_update_collections_path()
+                msg = f"{self.acfg_cwd.path} updated with '{CP}' to isolate this workspace."
+                self.output.warning(msg)
+            self.acfg_trusted = self.acfg_cwd.path
             return True
 
         if self.acfg_home.exists:
@@ -142,18 +144,23 @@ class Cli:
                 self.output.info(msg)
             else:
                 self.acfg_home.set_or_update_collections_path()
-                msg = f"{self.acfg_home.path} has been updated with '{CP}' to isolate this and all workspaces."
+                msg = (
+                    f"{self.acfg_home.path} updated with '{CP}' to isolate this and all workspaces."
+                )
                 self.output.warning(msg)
+            self.acfg_trusted = self.acfg_home.path
             return True
 
         if self.acfg_system.exists and self.acfg_system.collections_path_is_dot:
             msg = f"{self.acfg_system.path} has '{CP}' which isolates this and all workspaces."
             self.output.info(msg)
+            self.acfg_trusted = self.acfg_system.path
             return True
 
         self.acfg_cwd.author_new()
-        msg = f"{self.acfg_cwd.path} has been created with '{CP}' to isolate this workspace."
+        msg = f"{self.acfg_cwd.path} created with '{CP}' to isolate this workspace."
         self.output.info(msg)
+        self.acfg_trusted = self.acfg_cwd.path
         return True
 
     def isolation_none(self) -> bool:
