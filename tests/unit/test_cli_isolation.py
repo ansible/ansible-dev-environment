@@ -41,7 +41,7 @@ def test_acfg_cwd_new(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     system.mkdir()
 
     monkeypatch.chdir(cwd)
-    monkeypatch.delenv("ANSIBLE_CONFIG")
+    monkeypatch.delenv("ANSIBLE_CONFIG", raising=False)
 
     cli = Cli()
     cli.args = ARGS
@@ -74,7 +74,7 @@ def test_acfg_cwd_modified(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
     system.mkdir()
 
     monkeypatch.chdir(cwd)
-    monkeypatch.delenv("ANSIBLE_CONFIG")
+    monkeypatch.delenv("ANSIBLE_CONFIG", raising=False)
 
     cli = Cli()
     cli.args = ARGS
@@ -118,7 +118,7 @@ def test_acfg_home_modified(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     system.mkdir()
 
     monkeypatch.chdir(cwd)
-    monkeypatch.delenv("ANSIBLE_CONFIG")
+    monkeypatch.delenv("ANSIBLE_CONFIG", raising=False)
 
     cli = Cli()
     cli.args = ARGS
@@ -164,7 +164,7 @@ def test_acfg_system_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
     system.mkdir()
 
     monkeypatch.chdir(cwd)
-    monkeypatch.delenv("ANSIBLE_CONFIG")
+    monkeypatch.delenv("ANSIBLE_CONFIG", raising=False)
 
     cli = Cli()
     cli.args = ARGS
