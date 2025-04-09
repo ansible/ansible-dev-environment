@@ -212,7 +212,7 @@ def session_venv(session_dir: Path, monkey_session: pytest.MonkeyPatch) -> Confi
     cli.parse_args()
     cli.init_output()
     cli.args_sanity()
-    cli.ensure_isolated()
+    cli.isolation_check()
     with pytest.raises(SystemExit):
         cli.run()
     return cli.config
@@ -257,7 +257,7 @@ def function_venv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Config:
     cli.parse_args()
     cli.init_output()
     cli.args_sanity()
-    cli.ensure_isolated()
+    cli.isolation_check()
     with pytest.raises(SystemExit):
         cli.run()
     return cli.config

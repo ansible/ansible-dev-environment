@@ -1,3 +1,4 @@
+acfg
 argnames
 argvalues
 bindep
@@ -27,6 +28,7 @@ reqs
 sessionstart
 setenv
 treemaker
+unisolated
 usefixtures
 xdist
 xmltodict

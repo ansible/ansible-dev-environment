@@ -13,6 +13,8 @@ from ansible_dev_environment import subcommands
 
 from .arg_parser import parse
 from .config import Config
+from .definitions import COLLECTIONS_PATH as CP
+from .definitions import AnsibleCfg
 from .output import Output
 from .utils import TermFeatures
 
@@ -30,6 +32,10 @@ class Cli:
         self.config: Config
         self.output: Output
         self.term_features: TermFeatures
+        self.acfg_cwd = AnsibleCfg(path=Path("./ansible.cfg"))
+        self.acfg_home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
+        self.acfg_system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
+        self.acfg_trusted: Path | None
 
     def parse_args(self) -> None:
         """Parse the command line arguments."""
@@ -92,8 +98,92 @@ class Cli:
             err = "Editable can not be used with a requirements file."
             self.output.critical(err)
 
-    def ensure_isolated(self) -> None:
-        """Ensure the environment is isolated."""
+    def isolation_check(self) -> bool:
+        """Check the environment for isolation.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
+        if not hasattr(self.args, "isolation_mode"):
+            return True
+        if self.args.isolation_mode == "restrictive":
+            return self.isolation_restrictive()
+        if self.args.isolation_mode == "cfg":
+            return self.isolation_cfg()
+        if self.args.isolation_mode == "none":
+            return self.isolation_none()
+        self.acfg_trusted = None
+        return False
+
+    def isolation_cfg(self) -> bool:
+        """Ensure the environment is isolated using cfg isolation.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
+        if os.environ.get("ANSIBLE_CONFIG"):
+            err = "ANSIBLE_CONFIG is set"
+            self.output.error(err)
+            hint = "Run `unset ANSIBLE_CONFIG` to unset it using cfg isolation mode."
+            self.output.hint(hint)
+            self.acfg_trusted = None
+            return False
+
+        if self.acfg_cwd.exists:
+            if self.acfg_cwd.collections_path_is_dot:
+                msg = f"{self.acfg_cwd.path} has '{CP}' which isolates this workspace."
+                self.output.info(msg)
+            else:
+                self.acfg_cwd.set_or_update_collections_path()
+                msg = f"{self.acfg_cwd.path} updated with '{CP}' to isolate this workspace."
+                self.output.warning(msg)
+            self.acfg_trusted = self.acfg_cwd.path
+            return True
+
+        if self.acfg_home.exists:
+            if self.acfg_home.collections_path_is_dot:
+                msg = f"{self.acfg_home.path} has '{CP}' which isolates this and all workspaces."
+                self.output.info(msg)
+            else:
+                self.acfg_home.set_or_update_collections_path()
+                msg = (
+                    f"{self.acfg_home.path} updated with '{CP}' to isolate this and all workspaces."
+                )
+                self.output.warning(msg)
+            self.acfg_trusted = self.acfg_home.path
+            return True
+
+        if self.acfg_system.exists and self.acfg_system.collections_path_is_dot:
+            msg = f"{self.acfg_system.path} has '{CP}' which isolates this and all workspaces."
+            self.output.info(msg)
+            self.acfg_trusted = self.acfg_system.path
+            return True
+
+        self.acfg_cwd.author_new()
+        msg = f"{self.acfg_cwd.path} created with '{CP}' to isolate this workspace."
+        self.output.info(msg)
+        self.acfg_trusted = self.acfg_cwd.path
+        return True
+
+    def isolation_none(self) -> bool:
+        """No isolation.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
+        self.output.warning(
+            "An unisolated development environment can cause issues with conflicting dependency"
+            " versions and the use of incompatible collections.",
+        )
+        self.acfg_trusted = None
+        return True
+
+    def isolation_restrictive(self) -> bool:
+        """Ensure the environment is isolated.
+
+        Returns:
+            True if ade can continue, false otherwise.
+        """
         env_vars = os.environ
         errored = False
         if "ANSIBLE_COLLECTIONS_PATHS" in env_vars:
@@ -127,11 +217,11 @@ class Cli:
             hint = "Run `sudo rm -rf /usr/share/ansible/collections` to remove them."
             self.output.hint(hint)
             errored = True
-
         if errored:
             err = "The development environment is not isolated, please resolve the above errors."
-
-            self.output.critical(err)
+            self.output.warning(err)
+            return False
+        return True
 
     def run(self) -> None:
         """Run the application."""
@@ -145,9 +235,9 @@ class Cli:
         subcommand_cls = getattr(subcommands, self.config.args.subcommand.capitalize())
         subcommand = subcommand_cls(config=self.config, output=self.output)
         subcommand.run()
-        self._exit()
+        self.exit()
 
-    def _exit(self) -> None:
+    def exit(self) -> None:
         """Exit the application setting the return code."""
         if self.output.call_count["error"]:
             sys.exit(1)
@@ -171,6 +261,7 @@ def main(*, dry: bool = False) -> None:
         cli.output.warning(str(warn.message))
     warnings.resetwarnings()
     cli.args_sanity()
-    cli.ensure_isolated()
+    if not cli.isolation_check():
+        cli.exit()
     if not dry:
         cli.run()
