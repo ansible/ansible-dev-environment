@@ -17,15 +17,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-ARGS = Namespace(
-    isolation_mode="cfg",
-    log_append=False,
-    log_file="/dev/null",
-    log_level="warning",
-    verbose=0,
-)
-
-
 @pytest.fixture(name="cli")
 def init_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Cli:
     """Fixture to mock the CLI for testing.
@@ -47,8 +38,16 @@ def init_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Cli:
     monkeypatch.chdir(cwd)
     monkeypatch.delenv("ANSIBLE_CONFIG", raising=False)
 
+    args = Namespace(
+        isolation_mode="cfg",
+        log_append=False,
+        log_file="/dev/null",
+        log_level="warning",
+        verbose=0,
+    )
+
     cli = Cli()
-    cli.args = ARGS
+    cli.args = args
     cli.acfg_cwd = AnsibleCfg(path=cwd / "ansible.cfg")
     cli.acfg_home = AnsibleCfg(path=home / "ansible.cfg")
     cli.acfg_system = AnsibleCfg(path=system / "ansible.cfg")
@@ -123,6 +122,9 @@ def test_acfg_home_modified(cli: Cli) -> None:
     assert cli.isolation_check() is True
     assert test_path.read_text() == expected
     assert cli.acfg_trusted == test_path
+    stat = cli.acfg_trusted.stat().st_mtime
+    assert cli.isolation_check() is True
+    assert cli.acfg_trusted.stat().st_mtime == stat
 
 
 def test_acfg_system_ok(cli: Cli) -> None:
@@ -162,21 +164,14 @@ def test_invalid_isolation_mode(cli: Cli) -> None:
     assert cli.acfg_trusted is None
 
 
-def test_isolation_cfg_with_env_var(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
+def test_isolation_cfg_with_env_var(cli: Cli, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test isolation_cfg method with ANSIBLE_CONFIG environment variable.
 
     Args:
+        cli: A Cli instance from a fixture
         monkeypatch: Pytest fixture for monkey patching.
-        tmp_path: Pytest fixture for temporary file paths.
     """
-    cli = Cli()
-    cli.args = ARGS
-    cli.init_output()
-
-    monkeypatch.setenv("ANSIBLE_CONFIG", str(tmp_path / "ansible.cfg"))
+    monkeypatch.setenv("ANSIBLE_CONFIG", str(cli.acfg_cwd.path))
 
     assert cli.isolation_check() is False
     assert cli.acfg_trusted is None
