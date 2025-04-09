@@ -35,7 +35,7 @@ class Cli:
         self.acfg_cwd = AnsibleCfg(path=Path("./ansible.cfg"))
         self.acfg_home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
         self.acfg_system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
-        self.acfg_trusted: Path
+        self.acfg_trusted: Path | None
 
     def parse_args(self) -> None:
         """Parse the command line arguments."""
@@ -112,6 +112,7 @@ class Cli:
             return self.isolation_cfg()
         if self.args.isolation_mode == "none":
             return self.isolation_none()
+        self.acfg_trusted = None
         return False
 
     def isolation_cfg(self) -> bool:
@@ -173,6 +174,7 @@ class Cli:
             "An unisolated development environment can cause issues with conflicting dependency"
             " versions and the use of incompatible collections.",
         )
+        self.acfg_trusted = None
         return True
 
     def isolation_restrictive(self) -> bool:
