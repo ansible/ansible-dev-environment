@@ -45,6 +45,7 @@ repos:
     rev: v0.24.2
     hooks:
       - id: toml-sort-fix
+        alias: toml
 
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: 1.5.0
@@ -55,17 +56,8 @@ repos:
     rev: v0.11.4
     hooks:
       - id: ruff
-        args:
-          - --fix
-          - --exit-non-zero-on-fix
+        entry: sh -c 'ruff check --fix --force-exclude && ruff format --force-exclude'
         types_or: [python, pyi]
-      - id: ruff-format # must be after ruff
-        types_or: [python, pyi]
-
-  - repo: https://github.com/psf/black # must be after ruff
-    rev: 25.1.0
-    hooks:
-      - id: black
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
     rev: v8.17.3
