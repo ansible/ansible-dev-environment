@@ -126,6 +126,7 @@ class Cli:
             self.output.error(err)
             hint = "Run `unset ANSIBLE_CONFIG` to unset it using cfg isolation mode."
             self.output.hint(hint)
+            self.acfg_trusted = None
             return False
 
         if self.acfg_cwd.exists:

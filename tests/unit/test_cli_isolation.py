@@ -49,9 +49,9 @@ def init_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Cli:
 
     cli = Cli()
     cli.args = ARGS
-    cli.acfg_cwd = AnsibleCfg(path=tmp_path / "ansible.cfg")
-    cli.acfg_home = AnsibleCfg(path=tmp_path / "ansible.cfg")
-    cli.acfg_system = AnsibleCfg(path=tmp_path / "ansible.cfg")
+    cli.acfg_cwd = AnsibleCfg(path=cwd / "ansible.cfg")
+    cli.acfg_home = AnsibleCfg(path=home / "ansible.cfg")
+    cli.acfg_system = AnsibleCfg(path=system / "ansible.cfg")
     cli.init_output()
     return cli
 
@@ -163,17 +163,20 @@ def test_invalid_isolation_mode(cli: Cli) -> None:
 
 
 def test_isolation_cfg_with_env_var(
-    cli: Cli,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     """Test isolation_cfg method with ANSIBLE_CONFIG environment variable.
 
     Args:
-        cli: A Cli instance from a fixture
         monkeypatch: Pytest fixture for monkey patching.
         tmp_path: Pytest fixture for temporary file paths.
     """
+    cli = Cli()
+    cli.args = ARGS
+    cli.init_output()
+
     monkeypatch.setenv("ANSIBLE_CONFIG", str(tmp_path / "ansible.cfg"))
+
     assert cli.isolation_check() is False
-    assert not hasattr(cli, "acfg_trusted")
+    assert cli.acfg_trusted is None
