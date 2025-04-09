@@ -6,12 +6,17 @@ A pip-like install for Ansible collections.
 
 - Join the Ansible forum:
 
-  - [Get Help](https://forum.ansible.com/c/help/6): get help or help others. Please add appropriate tags if you start new discussions.
-  - [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact with fellow enthusiasts.
-  - [News & Announcements](https://forum.ansible.com/c/news/5): track project-wide announcements including social events.
-  - [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn): used to announce releases and important changes.
+  - [Get Help](https://forum.ansible.com/c/help/6): get help or help others.
+    Please add appropriate tags if you start new discussions.
+  - [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact
+    with fellow enthusiasts.
+  - [News & Announcements](https://forum.ansible.com/c/news/5): track
+    project-wide announcements including social events.
+  - [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn):
+    used to announce releases and important changes.
 
-For more information about communication, see the [Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
+For more information about communication, see the
+[Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
 
 ## Features
 
@@ -20,11 +25,15 @@ For more information about communication, see the [Ansible communication guide](
 - Install all collection python requirements
 - Install all collection test requirements
 - Checks for missing system packages
-- Symlinks the current collection into the current python interpreter's site-packages
-- Install all collection collection dependencies into the current python interpreter's site-packages
-- Uses `uv env` instead of python's venv when available to boost performance. Can be disabled with `SKIP_UV=1`
+- Symlinks the current collection into the current python interpreter's
+  site-packages
+- Install all collection collection dependencies into the current python
+  interpreter's site-packages
+- Uses `uv env` instead of python's venv when available to boost performance.
+  Can be disabled with `SKIP_UV=1`
 
-By placing collections into the python site-packages directory they are discoverable by ansible as well as python and pytest.
+By placing collections into the python site-packages directory they are
+discoverable by ansible as well as python and pytest.
 
 ## Usage
 
