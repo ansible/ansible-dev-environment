@@ -125,12 +125,17 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
         assert parse_collection_request(string=string, config=config, output=output) == spec
 
 
-def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_builder_found(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    session_venv: Config,
+) -> None:
     """Test that builder is found.
 
     Args:
         tmp_path: A temporary path
         monkeypatch: The pytest Monkeypatch fixture
+        session_venv: The session venv
 
     Raises:
         AssertionError: if either file is not found
@@ -150,7 +155,13 @@ def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(Config, "cache_dir", cache_dir)
 
-    args = Namespace(venv=str(tmp_path / ".venv"), system_site_packages=False, verbose=0)
+    args = Namespace(
+        venv=session_venv.venv,
+        system_site_packages=False,
+        verbose=0,
+        subcommand="check",
+        uv=True,
+    )
 
     cfg = Config(
         args=args,

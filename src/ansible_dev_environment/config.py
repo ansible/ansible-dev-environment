@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -49,7 +48,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
 
     def init(self) -> None:
         """Initialize the configuration."""
-        if self.args.venv:
+        if self.args.subcommand == "install":
             self._create_venv = True
 
         self._set_interpreter()
@@ -65,19 +64,8 @@ class Config:  # pylint: disable=too-many-instance-attributes
 
     @property
     def venv(self) -> Path:
-        """Return the virtual environment path.
-
-        Raises:
-            SystemExit: If the virtual environment cannot be found.
-        """
-        if self.args.venv:
-            return Path(self.args.venv).expanduser().resolve()
-        venv_str = os.environ.get("VIRTUAL_ENV")
-        if venv_str:
-            return Path(venv_str).expanduser().resolve()
-        err = "Failed to find a virtual environment."
-        self._output.critical(err)
-        raise SystemExit(1)  # pragma: no cover # critical exits
+        """Return the virtual environment path."""
+        return Path(self.args.venv).expanduser().resolve()
 
     @property
     def venv_cache_dir(self) -> Path:
@@ -102,8 +90,8 @@ class Config:  # pylint: disable=too-many-instance-attributes
         Returns:
             True if uv is to be used.
         """
-        if int(os.environ.get("SKIP_UV", "0")):
-            self._output.debug("uv is disabled by SKIP_UV=1 in the environment.")
+        if self.args.uv is False:
+            self._output.debug("uv is disabled.")
             return False
 
         if not (uv_path := shutil.which("uv")):
@@ -112,7 +100,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
 
         self._output.debug(f"uv is available at {uv_path}")
         self._output.info(
-            "uv is available and will be used instead of venv/pip. To disable that define SKIP_UV=1 in your environment.",
+            "uv is available and will be used instead of venv/pip. Disable with 'ADE_UV=0' or '--uv false'.",
         )
         return True
 
@@ -184,12 +172,11 @@ class Config:  # pylint: disable=too-many-instance-attributes
         if not self.venv.exists():
             if self._create_venv:
                 msg = f"Creating virtual environment: {self.venv}"
-                self._output.debug(msg)
                 command = f"{venv_cmd} {self.venv}"
-                msg = f"Creating virtual environment: {self.venv}"
                 if self.args.system_site_packages:
                     command = f"{command} --system-site-packages"
-                    msg = f"Creating virtual environment with system site packages: {self.venv}"
+                    msg += " with system site packages"
+                self._output.debug(msg)
                 try:
                     subprocess_run(
                         command=command,
