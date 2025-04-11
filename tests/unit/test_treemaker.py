@@ -65,6 +65,8 @@ def test_tree_empty(
     args = Namespace(
         venv=venv_path,
         verbose=0,
+        subcommand="tree",
+        uv=True,
     )
     output._verbosity = 0
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -96,6 +98,8 @@ def test_tree_malformed_info(
     args = Namespace(
         venv=venv_path,
         verbose=0,
+        subcommand="tree",
+        uv=True,
     )
 
     def collect_manifests(
@@ -151,6 +155,8 @@ def test_tree_malformed_deps(
     args = Namespace(
         venv=venv_path,
         verbose=0,
+        subcommand="tree",
+        uv=True,
     )
 
     def collect_manifests(
@@ -208,6 +214,8 @@ def test_tree_malformed_deps_not_string(
     args = Namespace(
         venv=venv_path,
         verbose=0,
+        subcommand="tree",
+        uv=True,
     )
 
     def collect_manifests(
@@ -262,10 +270,7 @@ def test_tree_malformed_repo_not_string(
     venv_path = tmp_path / "venv"
     SafeEnvBuilder().create(venv_path)
 
-    args = Namespace(
-        venv=venv_path,
-        verbose=0,
-    )
+    args = Namespace(venv=venv_path, verbose=0, subcommand="tree", uv=True)
 
     def collect_manifests(
         target: Path,

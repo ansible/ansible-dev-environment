@@ -276,6 +276,8 @@ def test_no_adt_install(
         collection_specifier=None,
         requirement=None,
         cpi=None,
+        subcommand="install",
+        uv=True,
     )
 
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -310,6 +312,8 @@ def test_adt_install(
         collection_specifier=None,
         requirement=None,
         cpi=None,
+        subcommand="install",
+        uv=True,
     )
 
     config = Config(args=args, output=output, term_features=output.term_features)

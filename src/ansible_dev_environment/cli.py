@@ -51,8 +51,8 @@ class Cli:
             self.term_features = TermFeatures(color=False, links=False)
         else:
             self.term_features = TermFeatures(
-                color=False if os.environ.get("NO_COLOR") else not self.args.no_ansi,
-                links=not self.args.no_ansi,
+                color=self.args.ansi,
+                links=self.args.ansi,
             )
 
         self.output = Output(
@@ -97,6 +97,10 @@ class Cli:
         ):
             err = "Editable can not be used with a requirements file."
             self.output.critical(err)
+
+        self.output.debug("Arguments sanity check passed.")
+        for arg in vars(self.args):
+            self.output.debug(f"{arg}: {getattr(self.args, arg)}")
 
     def isolation_check(self) -> bool:
         """Check the environment for isolation.

@@ -520,3 +520,24 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
             sys.stdout.write("\r")
         # show the cursor
         sys.stdout.write("\033[?25h")
+
+
+def str_to_bool(value: str) -> bool | None:
+    """Converts a string to a boolean based on common truthy and falsy values.
+
+    Args:
+        value: The string to convert.
+
+    Returns:
+        True for truthy values, False for falsy values, None for invalid values.
+    """
+    truthy_values = {"true", "1", "yes", "y", "on"}
+    falsy_values = {"false", "0", "no", "n", "off"}
+
+    value_lower = value.strip().lower()
+
+    if value_lower in truthy_values:
+        return True
+    if value_lower in falsy_values:
+        return False
+    return None
