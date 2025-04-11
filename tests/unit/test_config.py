@@ -284,6 +284,31 @@ def test_venv_from_env_var(
     assert config.venv == venv
 
 
+def test_venv_not_found(
+    output: Output,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Test the venv  not found.
+
+    Args:
+        output: The output fixture.
+        capsys: A pytest fixture for capturing stdout and stderr.
+        monkeypatch: A pytest fixture for patching.
+        tmp_path: A temporary directory.
+    """
+    args = gen_args(venv=str(tmp_path / "test_venv"))
+    config = Config(args=args, output=output, term_features=output.term_features)
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+
+    with pytest.raises(SystemExit) as exc:
+        config.init()
+
+    assert exc.value.code == 1
+    assert "Critical: Cannot find virtual environment:" in capsys.readouterr().err
+
+
 def test_venv_creation_failed(
     tmp_path: Path,
     output: Output,

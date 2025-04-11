@@ -304,7 +304,11 @@ def apply_envvars(args: list[str], parser: ArgumentParser) -> argparse.Namespace
             err = f"Action for {dest} not found in parser"
             raise NotImplementedError(err)
 
-        present = any(o for o in action.option_strings if o.split()[0] in args)
+        present = any(
+            o
+            for o in action.option_strings
+            if any(arg for arg in args if arg.startswith(o.split()[0]))
+        )
         envvar_value = os.environ.get(envvar)
 
         if present or envvar_value is None:
