@@ -335,7 +335,7 @@ def test_apply_envvar_error(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FOO", "42.0")
 
     parser = ArgumentParser()
-    parser.add_argument("--foo", type=float)
+    parser.add_argument("--foo", type=float, help="helpless")
 
     with pytest.raises(NotImplementedError) as excinfo:
         apply_envvars(args=[], parser=parser)
