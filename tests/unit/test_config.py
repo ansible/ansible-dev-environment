@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from ansible_dev_environment.arg_parser import parse
+from ansible_dev_environment.cli import Cli
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.utils import subprocess_run
 
@@ -607,3 +608,64 @@ def test_sys_packages_path_missing_purelib(
 
     assert exc.value.code == 1
     assert "Failed to find purelib in sysconfig paths" in capsys.readouterr().err
+
+
+def test_uv_not_found(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test uv disabled and not available.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest fixture for capturing output.
+    """
+    monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install", "-vvv"])
+
+    orig_which = shutil.which
+
+    def _which(name: str) -> str | None:
+        if name != "uv":
+            return orig_which(name)
+        return None
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.config = Config(
+        args=cli.args,
+        output=cli.output,
+        term_features=cli.term_features,
+    )
+    cli.config.init()
+
+    assert cli.config.uv_available is False
+
+    output = capsys.readouterr()
+    assert "uv is not available" in output.out
+    assert cli.config.venv_pip_install_cmd.endswith("/bin/python -m pip install")
+
+
+def test_uv_disabled(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test uv disabled and not available.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest fixture for capturing output.
+    """
+    monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install", "--no-uv", "-vvv"])
+
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.config = Config(
+        args=cli.args,
+        output=cli.output,
+        term_features=cli.term_features,
+    )
+    cli.config.init()
+
+    assert cli.config.uv_available is False
+
+    output = capsys.readouterr()
+    assert "uv is disabled" in output.out
+    assert cli.config.venv_pip_install_cmd.endswith("/bin/python -m pip install")
