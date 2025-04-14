@@ -58,7 +58,7 @@ def test_venv(
             str(tmp_path / "cisco.nxos"),
             "--venv=venv",
             "--no-ansi",
-            "--site-system-packages",
+            "--system-site-packages",
         ],
     )
     with pytest.raises(SystemExit):
