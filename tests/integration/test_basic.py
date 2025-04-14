@@ -58,6 +58,7 @@ def test_venv(
             str(tmp_path / "cisco.nxos"),
             "--venv=venv",
             "--no-ansi",
+            "--site-system-packages",
         ],
     )
     with pytest.raises(SystemExit):
@@ -66,6 +67,7 @@ def test_venv(
     captured = capsys.readouterr()
 
     assert string in captured.out
+    assert "with system site packages" in captured.out
 
     monkeypatch.setattr(
         "sys.argv",
