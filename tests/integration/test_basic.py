@@ -59,6 +59,7 @@ def test_venv(
             "--venv=venv",
             "--no-ansi",
             "--system-site-packages",
+            "-vvv",
         ],
     )
     with pytest.raises(SystemExit):
