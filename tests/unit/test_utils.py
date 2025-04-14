@@ -13,7 +13,7 @@ from ansible_dev_environment.collection import (
 )
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
-from ansible_dev_environment.utils import TermFeatures, builder_introspect
+from ansible_dev_environment.utils import TermFeatures, builder_introspect, str_to_bool
 
 
 term_features = TermFeatures(color=False, links=False)
@@ -174,3 +174,25 @@ def test_builder_found(
 
     assert cfg.discovered_bindep_reqs.exists() is True
     assert cfg.discovered_python_reqs.exists() is True
+
+
+def test_str_to_bool() -> None:
+    """Test the str_to_bool function.
+
+    This function tests the conversion of string values to boolean values.
+    """
+    assert str_to_bool("true") is True
+    assert str_to_bool("True") is True
+    assert str_to_bool("1") is True
+    assert str_to_bool("yes") is True
+    assert str_to_bool("y") is True
+    assert str_to_bool("on") is True
+
+    assert str_to_bool("false") is False
+    assert str_to_bool("False") is False
+    assert str_to_bool("0") is False
+    assert str_to_bool("no") is False
+    assert str_to_bool("n") is False
+    assert str_to_bool("off") is False
+
+    assert str_to_bool("anything else") is None

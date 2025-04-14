@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from ansible_dev_environment.arg_parser import ArgumentParser, apply_envvars
 from ansible_dev_environment.cli import Cli, main
 
 
@@ -300,3 +301,87 @@ def test_exit_code_two(
     assert excinfo.value.code == expected
     captured = capsys.readouterr()
     assert "Test warning" in captured.out
+
+
+def test_envvar_mapping_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test environment mapping error.
+
+    Args:
+        monkeypatch: Pytest fixture.
+    """
+    monkeypatch.setattr(
+        "ansible_dev_environment.arg_parser.ENVVAR_MAPPING",
+        {"foo": "FOO"},
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-dev-environment", "install"],
+    )
+    cli = Cli()
+    with pytest.raises(NotImplementedError):
+        cli.parse_args()
+
+
+def test_apply_envvar_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test environment mapping error.
+
+    Args:
+        monkeypatch: Pytest fixture.
+    """
+    monkeypatch.setattr(
+        "ansible_dev_environment.arg_parser.ENVVAR_MAPPING",
+        {"foo": "FOO"},
+    )
+    monkeypatch.setenv("FOO", "42.0")
+
+    parser = ArgumentParser()
+    parser.add_argument("--foo", type=float)
+
+    with pytest.raises(NotImplementedError) as excinfo:
+        apply_envvars(args=[], parser=parser)
+
+    assert "not implemented for envvar FOO" in str(excinfo.value)
+
+
+def test_env_wrong_type(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test wrong type.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest stdout capture fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-dev-environment", "install"],
+    )
+    monkeypatch.setenv("ADE_VERBOSE", "not_an_int")
+    cli = Cli()
+    with pytest.raises(SystemExit):
+        cli.parse_args()
+    captured = capsys.readouterr()
+    assert "could not convert to int" in captured.err
+
+
+def test_env_wrong_choice(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test wrong choice.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest stdout capture fixture.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-dev-environment", "install"],
+    )
+    monkeypatch.setenv("ADE_ISOLATION_MODE", "wrong_choice")
+    cli = Cli()
+    with pytest.raises(SystemExit):
+        cli.parse_args()
+    captured = capsys.readouterr()
+    assert "choose from 'restrictive', 'cfg', 'none'" in captured.err

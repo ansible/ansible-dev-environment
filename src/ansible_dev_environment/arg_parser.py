@@ -23,12 +23,12 @@ if TYPE_CHECKING:
 
 
 ENVVAR_MAPPING: dict[str, str] = {
+    "ansi": "NO_COLOR",
     "isolation_mode": "ADE_ISOLATION_MODE",
     "seed": "ADE_SEED",
     "uv": "ADE_UV",
-    "verbose": "ADE_VERBOSE",
-    "ansi": "NO_COLOR",
     "venv": "VIRTUAL_ENV",
+    "verbose": "ADE_VERBOSE",
 }
 
 try:
@@ -305,9 +305,9 @@ def apply_envvars(args: list[str], parser: ArgumentParser) -> argparse.Namespace
             raise NotImplementedError(err)
 
         present = any(
-            o
-            for o in action.option_strings
-            if any(arg for arg in args if arg.startswith(o.split()[0]))
+            option
+            for option in action.option_strings
+            if any(arg for arg in args if arg.startswith(option.split()[0]))
         )
         envvar_value = os.environ.get(envvar)
 
@@ -321,14 +321,14 @@ def apply_envvars(args: list[str], parser: ArgumentParser) -> argparse.Namespace
             if envvar == "NO_COLOR" and envvar_value != "":
                 final_value = False
             elif isinstance(action, (argparse.BooleanOptionalAction, argparse._StoreTrueAction)):  # noqa: SLF001
-                final_value = str_to_bool(envvar_value)
                 named_type = "boolean"
+                final_value = str_to_bool(envvar_value)
             elif isinstance(action, argparse._CountAction) or action.type is int:  # noqa: SLF001
-                final_value = int(envvar_value)
                 named_type = "int"
+                final_value = int(envvar_value)
             elif action.type is str or action.type is None:
-                final_value = envvar_value
                 named_type = "str"
+                final_value = envvar_value
             else:
                 err = f"Action type {action.type} not implemented for envvar {envvar}"
                 raise NotImplementedError(err)
