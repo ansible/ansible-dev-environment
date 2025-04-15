@@ -13,7 +13,7 @@ from ansible_dev_environment.collection import (
 )
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
-from ansible_dev_environment.utils import TermFeatures, builder_introspect
+from ansible_dev_environment.utils import TermFeatures, builder_introspect, str_to_bool
 
 
 term_features = TermFeatures(color=False, links=False)
@@ -125,12 +125,17 @@ def test_parse_collection_request(scenario: tuple[str, Collection | None]) -> No
         assert parse_collection_request(string=string, config=config, output=output) == spec
 
 
-def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_builder_found(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    session_venv: Config,
+) -> None:
     """Test that builder is found.
 
     Args:
         tmp_path: A temporary path
         monkeypatch: The pytest Monkeypatch fixture
+        session_venv: The session venv
 
     Raises:
         AssertionError: if either file is not found
@@ -150,7 +155,13 @@ def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(Config, "cache_dir", cache_dir)
 
-    args = Namespace(venv=str(tmp_path / ".venv"), system_site_packages=False, verbose=0)
+    args = Namespace(
+        venv=session_venv.venv,
+        system_site_packages=False,
+        verbose=0,
+        subcommand="check",
+        uv=True,
+    )
 
     cfg = Config(
         args=args,
@@ -163,3 +174,25 @@ def test_builder_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert cfg.discovered_bindep_reqs.exists() is True
     assert cfg.discovered_python_reqs.exists() is True
+
+
+def test_str_to_bool() -> None:
+    """Test the str_to_bool function.
+
+    This function tests the conversion of string values to boolean values.
+    """
+    assert str_to_bool("true") is True
+    assert str_to_bool("True") is True
+    assert str_to_bool("1") is True
+    assert str_to_bool("yes") is True
+    assert str_to_bool("y") is True
+    assert str_to_bool("on") is True
+
+    assert str_to_bool("false") is False
+    assert str_to_bool("False") is False
+    assert str_to_bool("0") is False
+    assert str_to_bool("no") is False
+    assert str_to_bool("n") is False
+    assert str_to_bool("off") is False
+
+    assert str_to_bool("anything else") is None

@@ -213,3 +213,34 @@ def test_requirements(
     assert "ansible.netcommon" not in captured.out
     assert "ansible.scm" not in captured.out
     assert "ansible.utils" in captured.out
+
+
+def test_system_site_packages(
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Install non-local collection.
+
+    Args:
+        capsys: Capture stdout and stderr
+        tmp_path: Temporary directory
+        monkeypatch: Pytest monkeypatch
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "ansible.utils",
+            f"--venv={tmp_path / 'venv'}",
+            "--system-site-packages",
+            "--no-ansi",
+            "-vvv",
+        ],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "with system site packages" in captured.out
+    assert "Installed collections include: ansible.utils" in captured.out

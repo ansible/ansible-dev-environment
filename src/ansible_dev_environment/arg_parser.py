@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import logging
 import os
 import sys
@@ -12,11 +13,23 @@ from argparse import HelpFormatter
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .utils import str_to_bool
+
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from typing import Any
+
+
+ENVVAR_MAPPING: dict[str, str] = {
+    "ansi": "NO_COLOR",
+    "isolation_mode": "ADE_ISOLATION_MODE",
+    "seed": "ADE_SEED",
+    "uv": "ADE_UV",
+    "venv": "VIRTUAL_ENV",
+    "verbose": "ADE_VERBOSE",
+}
 
 try:
     from ._version import version as __version__  # type: ignore[unused-ignore,import-not-found]
@@ -40,6 +53,14 @@ def common_args(parser: ArgumentParser) -> None:
         parser: The parser to add the arguments to
     """
     parser.add_argument(
+        "--ansi",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        dest="ansi",
+        help="Enable or disable the use of ANSI codes for terminal hyperlink generation and color.",
+    )
+
+    parser.add_argument(
         "--lf",
         "--log-file <file>",
         dest="log_file",
@@ -61,6 +82,13 @@ def common_args(parser: ArgumentParser) -> None:
         choices=["true", "false"],
         default="true",
         help="Append to log file.",
+    )
+    parser.add_argument(
+        "--uv",
+        dest="uv",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable or disable the use of uv as the python package manager if found.",
     )
     parser.add_argument(
         "-v",
@@ -101,12 +129,9 @@ def parse() -> argparse.Namespace:
 
     level1 = ArgumentParser(add_help=False)
 
-    venv_path = os.environ.get("VIRTUAL_ENV", None)
-    if not venv_path:
-        warnings.warn("No virtualenv found active, we will assume .venv", stacklevel=1)
     level1.add_argument(
         "--venv <directory>",
-        help="Target virtual environment.",
+        help="Target virtual environment. Created with 'ade install' if not found.",
         default=".venv",
         dest="venv",
     )
@@ -117,15 +142,6 @@ def parse() -> argparse.Namespace:
         help="Pre install collections from source, reads source-requirements.yml file.",
         default=False,
         action="store_true",
-    )
-
-    level1.add_argument(
-        "--na",
-        "--no-ansi",
-        action="store_true",
-        default=False,
-        dest="no_ansi",
-        help="Disable the use of ANSI codes for terminal hyperlink generation and color.",
     )
 
     level1.add_argument(
@@ -195,7 +211,6 @@ def parse() -> argparse.Namespace:
     )
 
     install.add_argument(
-        # "-adt",
         "--seed",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -229,13 +244,106 @@ def parse() -> argparse.Namespace:
         _group_titles(subparser)
 
     args = sys.argv[1:]
-    for i, v in enumerate(args):
-        for old in ("-adt", "--ansible-dev-tools"):
-            if v == old:
-                msg = f"Replace the deprecated {old} argument with --seed to avoid future execution failure."
-                logger.warning(msg)
-                args[i] = "--seed"
-    return parser.parse_args(args)
+    for param in ("--adt", "--ansible-dev-tools"):
+        with contextlib.suppress(ValueError):
+            args[args.index(param)] = "--seed"
+            err = f"The parameter '{param}' is deprecated, use 'ADE_SEED or '--seed' instead."
+            warnings.warn(err, DeprecationWarning, stacklevel=2)
+
+    if skip_uv := os.environ.get("SKIP_UV"):
+        os.environ["ADE_UV"] = skip_uv
+        err = "The environment variable 'SKIP_UV' is deprecated, use 'ADE_UV' or '--no-uv' instead."
+        warnings.warn(err, DeprecationWarning, stacklevel=2)
+
+    return apply_envvars(args=args, parser=parser)
+
+
+def _get_action(actions: list[argparse.Action], dest: str) -> argparse.Action | None:
+    """Get the action for a given destination.
+
+    Args:
+        actions: The list of actions
+        dest: The destination to get the action for
+
+    Returns:
+        The action for the given destination
+
+    """
+    for action in actions:
+        if action.dest == dest:
+            return action
+        if isinstance(action, argparse._SubParsersAction):  # noqa: SLF001
+            for subparser in action.choices.values():
+                sub_action = _get_action(subparser._actions, dest)  # noqa: SLF001
+                if sub_action is not None:
+                    return sub_action
+
+    return None
+
+
+def apply_envvars(args: list[str], parser: ArgumentParser) -> argparse.Namespace:
+    """Apply the environment variables to the arguments.
+
+    Special handling exists NO_COLOR since it's value shouldn't matter.
+    Also account for a space in some option strings when checking for presence in sys.argv.
+
+    Args:
+        args: The cli arguments
+        parser: The argument parser
+
+    Returns:
+        The resulting namespace
+
+    Raises:
+        NotImplementedError: If the action type is not implemented
+    """
+    cli_result = parser.parse_args(args)
+
+    for dest, envvar in ENVVAR_MAPPING.items():
+        if (action := _get_action(parser._actions, dest)) is None:  # noqa: SLF001
+            err = f"Action for {dest} not found in parser"
+            raise NotImplementedError(err)
+
+        present = any(
+            option
+            for option in action.option_strings
+            if any(arg for arg in args if arg.startswith(option.split()[0]))
+        )
+        envvar_value = os.environ.get(envvar)
+
+        if present or envvar_value is None:
+            continue
+
+        final_value: bool | int | str | None = None
+        named_type = "not set"
+
+        with contextlib.suppress(ValueError):
+            if envvar == "NO_COLOR" and envvar_value != "":
+                final_value = False
+            elif isinstance(action, (argparse.BooleanOptionalAction, argparse._StoreTrueAction)):  # noqa: SLF001
+                named_type = "boolean"
+                final_value = str_to_bool(envvar_value)
+            elif isinstance(action, argparse._CountAction) or action.type is int:  # noqa: SLF001
+                named_type = "int"
+                final_value = int(envvar_value)
+            elif action.type is str or action.type is None:
+                named_type = "str"
+                final_value = envvar_value
+            else:
+                err = f"Action type {action.type} not implemented for envvar {envvar}"
+                raise NotImplementedError(err)
+
+        err = f"ade: error: environment variable {envvar}: invalid value: '{envvar_value}' "
+        if final_value is None:
+            err += f"could not convert to {named_type}\n"
+            parser.exit(1, err)
+        if action.choices and final_value not in action.choices:
+            err += f"(choose from {', '.join(map(repr, action.choices))})\n"
+            parser.exit(1, err)
+
+        setattr(cli_result, dest, final_value)
+
+    return cli_result
 
 
 def _group_titles(parser: ArgumentParser) -> None:
@@ -266,6 +374,9 @@ class ArgumentParser(argparse.ArgumentParser):
         """
         if "choices" in kwargs:
             kwargs["help"] += f" (choices: {', '.join(kwargs['choices'])})"
+        if kwargs.get("dest") in ENVVAR_MAPPING:
+            envvar = ENVVAR_MAPPING[kwargs["dest"]]
+            kwargs["help"] += f" (env: {envvar})"
         if "default" in kwargs and kwargs["default"] != "==SUPPRESS==":
             kwargs["help"] += f" (default: {kwargs['default']})"
         kwargs["help"] = kwargs["help"][0].upper() + kwargs["help"][1:]

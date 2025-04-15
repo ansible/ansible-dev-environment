@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from ansible_dev_environment.arg_parser import parse
+from ansible_dev_environment.cli import Cli
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.utils import subprocess_run
 
@@ -22,40 +24,41 @@ if TYPE_CHECKING:
 
 
 def gen_args(
-    venv: str,
+    venv: str | None,
     system_site_packages: bool = False,  # noqa: FBT001, FBT002
+    subcommand: str = "check",
 ) -> argparse.Namespace:
     """Generate the arguments.
 
     Args:
         venv: The virtual environment.
         system_site_packages: Whether to include system site packages.
+        subcommand: The subcommand to run.
 
     Returns:
         The arguments.
     """
-    return argparse.Namespace(
+    args = argparse.Namespace(
         verbose=0,
-        venv=venv,
+        subcommand=subcommand,
         system_site_packages=system_site_packages,
+        uv=True,
     )
+    if venv is not None:
+        args.venv = venv
+    return args
 
 
 @pytest.mark.parametrize(
-    ("system_site_packages", "uv"),
+    ("system_site_packages"),
     (
-        pytest.param(True, False, id="ssp1-uv0"),
-        pytest.param(False, False, id="ssp0-uv0"),
-        pytest.param(True, True, id="ssp1-uv1"),
-        pytest.param(False, True, id="ssp0-uv1"),
+        pytest.param(True, id="ssp1"),
+        pytest.param(False, id="ssp0"),
     ),
 )
 def test_paths(
-    *,
-    tmpdir: Path,
-    system_site_packages: bool,
-    uv: bool,
-    monkeypatch: pytest.MonkeyPatch,
+    system_site_packages: bool,  # noqa: FBT001
+    session_venv: Config,
     output: Output,
 ) -> None:
     """Test the paths.
@@ -63,14 +66,11 @@ def test_paths(
     Several of the found directories should have a parent of the tmpdir / test_venv
 
     Args:
-        tmpdir: A temporary directory.
         system_site_packages: Whether to include system site packages.
-        uv: Whether to use the uv module.
-        monkeypatch: A pytest fixture for monkey patching.
+        session_venv: The session venv fixture.
         output: The output fixture.
     """
-    monkeypatch.setenv("SKIP_UV", str(int(not uv)))
-    venv = tmpdir / "test_venv"
+    venv = session_venv.venv
     args = gen_args(
         venv=str(venv),
         system_site_packages=system_site_packages,
@@ -78,13 +78,6 @@ def test_paths(
 
     config = Config(args=args, output=output, term_features=output.term_features)
     config.init()
-
-    if uv:
-        assert config.uv_available
-        assert "uv pip install --python" in config.venv_pip_install_cmd
-    else:
-        assert not config.uv_available
-        assert "-m pip install" in config.venv_pip_install_cmd
 
     assert config.venv == venv
     for attr in (
@@ -98,18 +91,18 @@ def test_paths(
 
 
 def test_galaxy_bin_venv(
-    tmpdir: Path,
     monkeypatch: pytest.MonkeyPatch,
+    session_venv: Config,
     output: Output,
 ) -> None:
     """Test the galaxy_bin property found in venv.
 
     Args:
-        tmpdir: A temporary directory.
         monkeypatch: A pytest fixture for monkey patching.
+        session_venv: The session venv fixture.
         output: The output fixture.
     """
-    venv = tmpdir / "test_venv"
+    venv = session_venv.venv
     args = gen_args(venv=str(venv))
 
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -134,18 +127,18 @@ def test_galaxy_bin_venv(
 
 
 def test_galaxy_bin_site(
-    tmpdir: Path,
     monkeypatch: pytest.MonkeyPatch,
+    session_venv: Config,
     output: Output,
 ) -> None:
     """Test the galaxy_bin property found in site.
 
     Args:
-        tmpdir: A temporary directory.
         monkeypatch: A pytest fixture for monkey patching.
+        session_venv: The session venv fixture.
         output: The output fixture.
     """
-    venv = tmpdir / "test_venv"
+    venv = session_venv.venv
     args = gen_args(venv=str(venv))
 
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -170,18 +163,18 @@ def test_galaxy_bin_site(
 
 
 def test_galaxy_bin_path(
-    tmpdir: Path,
     monkeypatch: pytest.MonkeyPatch,
+    session_venv: Config,
     output: Output,
 ) -> None:
     """Test the galaxy_bin property found in path.
 
     Args:
-        tmpdir: A temporary directory.
         monkeypatch: A pytest fixture for monkey patching.
+        session_venv: The session venv fixture.
         output: The output fixture.
     """
-    venv = tmpdir / "test_venv"
+    venv = session_venv.venv
     args = gen_args(venv=str(venv))
 
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -217,18 +210,18 @@ def test_galaxy_bin_path(
 
 
 def test_galaxy_bin_not_found(
-    tmpdir: Path,
     monkeypatch: pytest.MonkeyPatch,
+    session_venv: Config,
     output: Output,
 ) -> None:
     """Test the galaxy_bin property found in venv.
 
     Args:
-        tmpdir: A temporary directory.
         monkeypatch: A pytest fixture for monkey patching.
+        session_venv: The session venv fixture.
         output: The output fixture.
     """
-    venv = tmpdir / "test_venv"
+    venv = session_venv.venv
     args = gen_args(venv=str(venv))
 
     config = Config(args=args, output=output, term_features=output.term_features)
@@ -282,8 +275,9 @@ def test_venv_from_env_var(
     """
     venv = session_venv.venv
 
-    args = gen_args(venv="")
+    monkeypatch.setattr("sys.argv", ["ade", "install"])
     monkeypatch.setenv("VIRTUAL_ENV", str(venv))
+    args = parse()
 
     config = Config(args=args, output=output, term_features=output.term_features)
     config.init()
@@ -295,6 +289,7 @@ def test_venv_not_found(
     output: Output,
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Test the venv  not found.
 
@@ -302,8 +297,9 @@ def test_venv_not_found(
         output: The output fixture.
         capsys: A pytest fixture for capturing stdout and stderr.
         monkeypatch: A pytest fixture for patching.
+        tmp_path: A temporary directory.
     """
-    args = gen_args(venv="")
+    args = gen_args(venv=str(tmp_path / "test_venv"))
     config = Config(args=args, output=output, term_features=output.term_features)
     monkeypatch.delenv("VIRTUAL_ENV", raising=False)
 
@@ -311,7 +307,7 @@ def test_venv_not_found(
         config.init()
 
     assert exc.value.code == 1
-    assert "Failed to find a virtual environment." in capsys.readouterr().err
+    assert "Critical: Cannot find virtual environment:" in capsys.readouterr().err
 
 
 def test_venv_creation_failed(
@@ -328,7 +324,7 @@ def test_venv_creation_failed(
         monkeypatch: A pytest fixture for patching.
         capsys: A pytest fixture for capturing stdout and stderr.
     """
-    args = gen_args(venv=str(tmp_path / "test_venv"))
+    args = gen_args(venv=str(tmp_path / "test_venv"), subcommand="install")
 
     orig_subprocess_run = subprocess_run
 
@@ -376,9 +372,10 @@ def test_venv_env_var_wrong(
         monkeypatch: A pytest fixture for patching.
         tmp_path: A temporary directory
     """
-    args = gen_args(venv="")
-    config = Config(args=args, output=output, term_features=output.term_features)
+    monkeypatch.setattr("sys.argv", ["ade", "check"])
     monkeypatch.setenv("VIRTUAL_ENV", str(tmp_path / "test_venv"))
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
 
     with pytest.raises(SystemExit) as exc:
         config.init()
@@ -611,3 +608,64 @@ def test_sys_packages_path_missing_purelib(
 
     assert exc.value.code == 1
     assert "Failed to find purelib in sysconfig paths" in capsys.readouterr().err
+
+
+def test_uv_not_found(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test uv disabled and not available.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest fixture for capturing output.
+    """
+    monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install", "-vvv"])
+
+    orig_which = shutil.which
+
+    def _which(name: str) -> str | None:
+        if name != "uv":
+            return orig_which(name)
+        return None
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.config = Config(
+        args=cli.args,
+        output=cli.output,
+        term_features=cli.term_features,
+    )
+    cli.config.init()
+
+    assert cli.config.uv_available is False
+
+    output = capsys.readouterr()
+    assert "uv is not available" in output.out
+    assert cli.config.venv_pip_install_cmd.endswith("/bin/python -m pip install")
+
+
+def test_uv_disabled(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test uv disabled and not available.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest fixture for capturing output.
+    """
+    monkeypatch.setattr("sys.argv", ["ansible-dev-environment", "install", "--no-uv", "-vvv"])
+
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.config = Config(
+        args=cli.args,
+        output=cli.output,
+        term_features=cli.term_features,
+    )
+    cli.config.init()
+
+    assert cli.config.uv_available is False
+
+    output = capsys.readouterr()
+    assert "uv is disabled" in output.out
+    assert cli.config.venv_pip_install_cmd.endswith("/bin/python -m pip install")
