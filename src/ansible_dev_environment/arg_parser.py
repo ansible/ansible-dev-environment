@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 ENVVAR_MAPPING: dict[str, str] = {
     "ansi": "NO_COLOR",
+    "ansible_core_version": "ADE_ANSIBLE_CORE_VERSION",
     "isolation_mode": "ADE_ISOLATION_MODE",
     "seed": "ADE_SEED",
     "uv": "ADE_UV",
@@ -211,6 +212,14 @@ def parse() -> argparse.Namespace:
         parents=[level2],
         help="Install a collection.",
     )
+
+    install.add_argument(
+        "--acv",
+        "--ansible-core-version",
+        dest="ansible_core_version",
+        help="Ansible core version to use. (e.g. --acv 2.19.0)",
+    )
+
     install.add_argument(
         "-e",
         "--editable",

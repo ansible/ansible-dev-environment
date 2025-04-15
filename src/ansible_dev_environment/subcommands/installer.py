@@ -73,10 +73,7 @@ class Installer:
             err = "Multiple optional dependencies are not supported at this time."
             self._output.critical(err)
 
-        if self._config.args.seed:
-            self._install_dev_tools()
-        else:
-            self._install_core()
+        self._install_ade_deps()
 
         if self._config.args.requirement or self._config.args.cpi:
             self._install_galaxy_requirements()
@@ -114,17 +111,34 @@ class Installer:
             )
             self._output.note(msg)
 
+    def _install_ade_deps(self) -> None:
+        """Install our dependencies."""
+        core_version = getattr(self._config.args, "ansible_core_version", None)
+
+        if core_version:
+            self._install_core()
+        if self._config.args.seed:
+            self._install_dev_tools()
+        elif core_version is None:
+            self._install_core()
+
     def _install_core(self) -> None:
         """Install ansible-core if not installed already."""
-        msg = "Installing ansible-core."
-        self._output.info(msg)
-
         core = self._config.venv_bindir / "ansible"
         if core.exists():
+            msg = "ansible-core is already installed."
+            self._output.debug(msg)
             return
         msg = "Installing ansible-core."
         self._output.debug(msg)
         command = f"{self._config.venv_pip_install_cmd} ansible-core"
+
+        core_version = getattr(self._config.args, "ansible_core_version", None)
+        if core_version:
+            command += f"=={core_version}"
+            msg = f"Using user specified ansible-core version: {core_version}"
+            self._output.debug(msg)
+
         try:
             subprocess_run(
                 command=command,

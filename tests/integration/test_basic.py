@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 
 from pathlib import Path
@@ -244,3 +245,46 @@ def test_system_site_packages(
     captured = capsys.readouterr()
     assert "with system site packages" in captured.out
     assert "Installed collections include: ansible.utils" in captured.out
+
+
+def test_specified_core_version_pass(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Install a user-specified core version.
+
+    Args:
+        tmp_path: Temporary directory
+        monkeypatch: Pytest monkeypatch
+    """
+    term_features = TermFeatures(color=False, links=False)
+    output = Output(
+        log_file=f"/{tmp_path}/ansible-dev-environment.log",
+        log_level="INFO",
+        log_append="false",
+        term_features=term_features,
+        verbosity=0,
+    )
+    command = "pip index versions ansible-core"
+    result = subprocess_run(command=command, verbose=True, msg="", output=output)
+
+    version_pattern = re.compile(r"\d+\.\d+\.\d+")
+    versions = version_pattern.findall(result.stdout)
+    second_latest = versions[2]
+
+    venv_path = tmp_path / ".venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            f"--venv={venv_path}",
+            f"--ansible-core-version={second_latest}",
+        ],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    command = f"{venv_path}/bin/ansible --version"
+    result = subprocess_run(command=command, verbose=True, msg="", output=output)
+    assert second_latest in result.stdout
