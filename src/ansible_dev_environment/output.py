@@ -133,6 +133,14 @@ class Level(Enum):
         """
         return f"{' ' * (self._longest_name() - len(self.name))}{self.name.capitalize()}: "
 
+    def simple(self) -> str:
+        """Simple formatting for level name.
+
+        Returns:
+            The level name
+        """
+        return f"{self.name.capitalize()}: "
+
 
 @dataclass
 class Msg:
@@ -180,6 +188,10 @@ class Msg:
 
         lines = []
         message_lines = self.message.splitlines()
+
+        # --no-ansi, will set color to false, so assume minimal formatting
+        if not color:
+            return [self.prefix.simple() + message_lines[0], *message_lines[1:]]
 
         lines.extend(
             textwrap.fill(
