@@ -228,6 +228,13 @@ def parse() -> argparse.Namespace:
     )
 
     install.add_argument(
+        "-p",
+        "--python",
+        dest="python",
+        help="Python interpreter to use for the virtual environment. A version. name or path can be provided. If not provided, the python interpreter for the current process will be used.",
+    )
+
+    install.add_argument(
         "--seed",
         action=argparse.BooleanOptionalAction,
         default=True,
