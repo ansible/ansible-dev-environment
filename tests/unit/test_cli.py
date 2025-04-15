@@ -5,9 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import argcomplete
 import pytest
 
-from ansible_dev_environment.arg_parser import ArgumentParser, apply_envvars
+from ansible_dev_environment.arg_parser import ArgumentParser, apply_envvars, parse
 from ansible_dev_environment.cli import Cli, main
 
 
@@ -385,3 +386,53 @@ def test_env_wrong_choice(
         cli.parse_args()
     captured = capsys.readouterr()
     assert "choose from 'restrictive', 'cfg', 'none'" in captured.err
+
+
+def test_arg_complete(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test argument completion.
+
+    Args:
+        monkeypatch: Pytest fixture.
+    """
+    inited_parser = None
+    orig_apply_envvars = apply_envvars
+
+    def _apply_envvars(
+        args: list[str],
+        parser: ArgumentParser,
+    ) -> None:
+        """Apply environment variables to the argument parser.
+
+        Args:
+            args: List of arguments.
+            parser: Argument parser.
+        """
+        nonlocal inited_parser
+        inited_parser = parser
+        orig_apply_envvars(args, parser)
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.arg_parser.apply_envvars",
+        _apply_envvars,
+    )
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ade", "install"],
+    )
+    parse()
+
+    cli = "ade ins"
+    monkeypatch.setenv("_ARGCOMPLETE", "1")
+    monkeypatch.setenv("_ARGCOMPLETE_IFS", "\013")
+    monkeypatch.setenv("COMP_LINE", cli)
+    monkeypatch.setenv("COMP_POINT", str(len(cli)))
+    import io
+
+    str_io = io.StringIO()
+
+    argcomplete.autocomplete(inited_parser, exit_method=print, output_stream=str_io)  # type: ignore[arg-type]
+
+    output = str_io.getvalue()
+    assert "inspect" in output
+    assert "install" in output

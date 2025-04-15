@@ -80,6 +80,7 @@ repos:
         args:
           - --output-format=colorized
         additional_dependencies:
+          - argcomplete
           - pytest
           - pyyaml
           - subprocess_tee
@@ -91,6 +92,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
+          - argcomplete
           - pip
           - pytest
           - subprocess_tee
