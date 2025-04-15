@@ -16,6 +16,14 @@ from typing import TYPE_CHECKING
 from .utils import str_to_bool
 
 
+try:
+    import argcomplete
+
+    HAS_ARGCOMPLETE = True
+except ImportError:  # pragma: no cover
+    HAS_ARGCOMPLETE = False
+
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -254,6 +262,9 @@ def parse() -> argparse.Namespace:
         os.environ["ADE_UV"] = skip_uv
         err = "The environment variable 'SKIP_UV' is deprecated, use 'ADE_UV' or '--no-uv' instead."
         warnings.warn(err, DeprecationWarning, stacklevel=2)
+
+    if HAS_ARGCOMPLETE:
+        argcomplete.autocomplete(parser)
 
     return apply_envvars(args=args, parser=parser)
 

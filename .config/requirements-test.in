@@ -1,3 +1,4 @@
+argcomplete
 coverage[toml]
 mypy
 pip-tools
