@@ -142,8 +142,6 @@ def test_builder_found(
         monkeypatch: The pytest Monkeypatch fixture
         session_venv: The session venv
 
-    Raises:
-        AssertionError: if either file is not found
     """
 
     @property  # type: ignore[misc]
@@ -203,11 +201,12 @@ def test_str_to_bool() -> None:
     assert str_to_bool("anything else") is None
 
 
-def test_opt_deps_to_files(tmp_path: Path, capsys: pytest.LogCaptureFixture) -> None:
+def test_opt_deps_to_files(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the opt_deps_to_files function.
 
     Args:
         tmp_path: A temporary path
+        capsys: The pytest LogCaptureFixture
     """
     # Create a temporary file with some content
     f1 = tmp_path / "test-requirements.txt"
