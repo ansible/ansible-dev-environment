@@ -43,6 +43,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self._output: Output = output
         self.python_path: Path
         self.site_pkg_path: Path
+        self.specified_python: str | Path | None = None
         self.venv_interpreter: Path
         self.term_features: TermFeatures = term_features
 
@@ -164,34 +165,53 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self,
     ) -> None:
         """Set the interpreter."""
-        if self.uv_available:
-            venv_cmd = "uv venv --seed --python-preference=system"
+        self._locate_python()
+        if self.specified_python is None:
+            venv_cmd = (
+                "uv venv --seed --python-preference=system"
+                if self.uv_available
+                else f"{sys.executable} -m venv"
+            )
         else:
-            venv_cmd = f"{sys.executable} -m venv"
+            venv_cmd = (
+                f"uv venv --seed --python-preference=system --python {self.specified_python}"
+                if self.uv_available
+                else f"{self.specified_python} -m venv"
+            )
+
+        if self.venv.exists() and self.specified_python:
+            err = "User specified python cannot be used with an existing virtual environment."
+            self._output.critical(err)
+            return  # pragma: no cover # critical exits
+
+        if not self.venv.exists() and not self._create_venv:
+            err = f"Cannot find virtual environment: {self.venv}."
+            self._output.critical(err)
+            return  # pragma: no cover # critical exits
 
         if not self.venv.exists():
-            if self._create_venv:
-                msg = f"Creating virtual environment: {self.venv}"
-                command = f"{venv_cmd} {self.venv}"
-                if self.args.system_site_packages:
-                    command = f"{command} --system-site-packages"
-                    msg += " with system site packages"
-                self._output.debug(msg)
-                try:
-                    subprocess_run(
-                        command=command,
-                        verbose=self.args.verbose,
-                        msg=msg,
-                        output=self._output,
-                    )
-                    msg = f"Created virtual environment: {self.venv}"
-                    self._output.info(msg)
-                except subprocess.CalledProcessError as exc:
-                    err = f"Failed to create virtual environment: {exc}"
-                    self._output.critical(err)
-            else:
-                err = f"Cannot find virtual environment: {self.venv}."
+            msg = f"Creating virtual environment: {self.venv}"
+            command = f"{venv_cmd} {self.venv}"
+            if self.args.system_site_packages:
+                command = f"{command} --system-site-packages"
+                msg += " with system site packages"
+            self._output.debug(msg)
+            try:
+                subprocess_run(
+                    command=command,
+                    verbose=self.args.verbose,
+                    msg=msg,
+                    output=self._output,
+                )
+                msg = f"Created virtual environment: {self.venv}"
+                if self.specified_python:
+                    msg += f" using {self.specified_python}"
+                self._output.note(msg)
+            except subprocess.CalledProcessError as exc:
+                err = f"Failed to create virtual environment: {exc.stdout} {exc.stderr}"
                 self._output.critical(err)
+                return  # pragma: no cover # critical exits
+
         msg = f"Virtual environment: {self.venv}"
         self._output.debug(msg)
         venv_interpreter = self.venv / "bin" / "python"
@@ -239,3 +259,44 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self.site_pkg_path = Path(purelib)
         msg = f"Found site packages path: {self.site_pkg_path}"
         self._output.debug(msg)
+
+    def _locate_python(self) -> None:
+        """Locate the python interpreter.
+
+        1) If not user provided default to system
+        2) If it is a path and exists, use that
+        3) If it starts with python and uv, use that
+        4) If it starts with python and pip, use that
+        5) If it is a version and uv, use that
+        6) If it is a version and pip, and found, use that
+
+        """
+        python_arg = getattr(self.args, "python", None)
+        if not python_arg:
+            return
+
+        if Path(python_arg).exists():
+            self.specified_python = Path(python_arg).expanduser().resolve()
+        elif python_arg.lower().startswith("python"):
+            if self.uv_available:
+                self.specified_python = python_arg
+            elif path := shutil.which(python_arg):
+                self.specified_python = path
+            else:
+                msg = f"Cannot find specified python interpreter. ({python_arg})"
+                self._output.critical(msg)
+                return  # pragma: no cover # critical exits
+        else:
+            possible = f"python{python_arg}"
+            if self.uv_available:
+                self.specified_python = possible
+            elif path := shutil.which(possible):
+                self.specified_python = path
+            else:
+                msg = f"Cannot find specified python interpreter. ({possible})"
+                self._output.critical(msg)
+                return  # pragma: no cover # critical exits
+        self._output.debug(
+            f"Using specified python interpreter: {self.specified_python}",
+        )
+        return

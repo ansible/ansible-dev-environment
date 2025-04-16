@@ -34,6 +34,7 @@ ENVVAR_MAPPING: dict[str, str] = {
     "ansi": "NO_COLOR",
     "ansible_core_version": "ADE_ANSIBLE_CORE_VERSION",
     "isolation_mode": "ADE_ISOLATION_MODE",
+    "python": "ADE_PYTHON",
     "seed": "ADE_SEED",
     "uv": "ADE_UV",
     "venv": "VIRTUAL_ENV",
@@ -225,6 +226,13 @@ def parse() -> argparse.Namespace:
         "--editable",
         action="store_true",
         help="Install editable.",
+    )
+
+    install.add_argument(
+        "-p",
+        "--python",
+        dest="python",
+        help="Python interpreter to use for the virtual environment. A version. name or path can be provided. If not provided, the python interpreter for the current process will be used.",
     )
 
     install.add_argument(
