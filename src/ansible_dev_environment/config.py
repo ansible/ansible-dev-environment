@@ -277,7 +277,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
 
         if Path(python_arg).exists():
             self.specified_python = Path(python_arg).expanduser().resolve()
-        elif python_arg.lower().startswith("python3"):
+        elif python_arg.lower().startswith("python"):
             if self.uv_available:
                 self.specified_python = python_arg
             elif path := shutil.which(python_arg):

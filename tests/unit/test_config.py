@@ -707,3 +707,38 @@ def test_venv_exist_python_specified(
 
     output = capsys.readouterr()
     assert "cannot be used" in output.err
+
+
+@pytest.mark.parametrize("python", ("python1000", "1000", "not_python"))
+def test_pip_missing_python(
+    python: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test if uv is disabled and python cannot be found, exit.
+
+    Args:
+        python: Python version
+        monkeypatch: Pytest fixture.
+        capsys: Pytest fixture for capturing output.
+    """
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-dev-environment", "install", "--python", python, "--no-uv"],
+    )
+
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.config = Config(
+        args=cli.args,
+        output=cli.output,
+        term_features=cli.term_features,
+    )
+    with pytest.raises(SystemExit) as exc:
+        cli.config.init()
+    assert exc.value.code == 1
+
+    output = capsys.readouterr()
+    assert "Cannot find specified python interpreter." in output.err
+    assert python in output.err
