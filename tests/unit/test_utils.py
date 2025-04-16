@@ -13,7 +13,12 @@ from ansible_dev_environment.collection import (
 )
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
-from ansible_dev_environment.utils import TermFeatures, builder_introspect, str_to_bool
+from ansible_dev_environment.utils import (
+    TermFeatures,
+    builder_introspect,
+    opt_deps_to_files,
+    str_to_bool,
+)
 
 
 term_features = TermFeatures(color=False, links=False)
@@ -196,3 +201,36 @@ def test_str_to_bool() -> None:
     assert str_to_bool("off") is False
 
     assert str_to_bool("anything else") is None
+
+
+def test_opt_deps_to_files(tmp_path: Path, capsys: pytest.LogCaptureFixture) -> None:
+    """Test the opt_deps_to_files function.
+
+    Args:
+        tmp_path: A temporary path
+    """
+    # Create a temporary file with some content
+    f1 = tmp_path / "test-requirements.txt"
+    f1.touch()
+    f2 = tmp_path / "requirements-dev.txt"
+    f2.touch()
+
+    collection = Collection(
+        config=config,
+        cname="cname",
+        cnamespace="cnamespace",
+        local=True,
+        path=tmp_path,
+        specifier="",
+        original=str(tmp_path),
+        opt_deps="test,dev,foo",
+        csource=[],
+    )
+
+    result = opt_deps_to_files(collection, output)
+
+    captured = capsys.readouterr()
+
+    assert result[0] == f1
+    assert result[1] == f2
+    assert "Error: Failed to find optional dependency file for 'foo'." in captured.err
