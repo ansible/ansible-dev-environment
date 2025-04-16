@@ -296,11 +296,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
                 msg = f"Cannot find specified python interpreter. ({possible})"
                 self._output.critical(msg)
                 return  # pragma: no cover # critical exits
-        if self.specified_python is not None:
-            self._output.debug(
-                f"Using specified python interpreter: {self.specified_python}",
-            )
-            return
-        msg = f"Cannot find specified python interpreter. ({python_arg})"
-        self._output.critical(msg)
-        return  # pragma: no cover # critical exits
+        self._output.debug(
+            f"Using specified python interpreter: {self.specified_python}",
+        )
+        return
