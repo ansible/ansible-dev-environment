@@ -26,6 +26,8 @@ def test_venv(
 ) -> None:
     """Basic smoke test.
 
+    Test for a local collection install with optional dependencies
+
     Args:
         capsys: Capture stdout and stderr
         tmp_path: Temporary directory
@@ -56,17 +58,19 @@ def test_venv(
         [
             "ade",
             "install",
-            str(tmp_path / "cisco.nxos"),
+            str(tmp_path / "cisco.nxos[test]"),
             "--venv=venv",
             "--no-ansi",
+            "-vvv",
         ],
     )
     with pytest.raises(SystemExit):
         main()
-    string = "Installed collections include: ansible.netcommon, ansible.utils,"
-    captured = capsys.readouterr()
 
-    assert string in captured.out
+    captured = capsys.readouterr()
+    assert "Installed collections include: ansible.netcommon, ansible.utils," in captured.out
+    assert "Optional dependencies found" in captured.out
+    assert "'pytest-xdist  # from collection user'" in captured.out
 
     monkeypatch.setattr(
         "sys.argv",

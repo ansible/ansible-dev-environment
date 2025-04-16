@@ -16,6 +16,7 @@ from ansible_dev_environment.collection import (
 from ansible_dev_environment.utils import (
     builder_introspect,
     collections_from_requirements,
+    opt_deps_to_files,
     oxford_join,
     subprocess_run,
 )
@@ -77,6 +78,8 @@ class Installer:
 
         if self._config.args.requirement or self._config.args.cpi:
             self._install_galaxy_requirements()
+
+        opt_dep_paths = None
         if self._config.args.collection_specifier:
             collections = [
                 parse_collection_request(
@@ -98,7 +101,15 @@ class Installer:
                     self._output.critical(msg)
                 self._install_galaxy_collections(collections=distant_collections)
 
-        builder_introspect(config=self._config, output=self._output)
+            opt_dep_paths = [
+                path
+                for collection in collections
+                for path in opt_deps_to_files(collection, self._output)
+            ]
+            msg = f"Optional dependencies found: {oxford_join(opt_dep_paths)}"
+            self._output.info(msg)
+
+        builder_introspect(config=self._config, opt_dep_paths=opt_dep_paths, output=self._output)
         self._pip_install()
         Checker(config=self._config, output=self._output).system_deps()
 
