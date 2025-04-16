@@ -7,6 +7,7 @@ import copy
 import json
 import shutil
 import subprocess
+import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -669,3 +670,40 @@ def test_uv_disabled(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixt
     output = capsys.readouterr()
     assert "uv is disabled" in output.out
     assert cli.config.venv_pip_install_cmd.endswith("/bin/python -m pip install")
+
+
+def test_venv_exist_python_specified(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """Test that if the venv exists and python is specified, exit.
+
+    Args:
+        monkeypatch: Pytest fixture.
+        capsys: Pytest fixture for capturing output.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    version = sys.version.split(" ", maxsplit=1)[0]
+    venv_path = tmp_path / ".venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ansible-dev-environment", "install", "--python", version, "--venv", str(venv_path)],
+    )
+
+    venv_path.mkdir(parents=True, exist_ok=True)
+
+    cli = Cli()
+    cli.parse_args()
+    cli.init_output()
+    cli.config = Config(
+        args=cli.args,
+        output=cli.output,
+        term_features=cli.term_features,
+    )
+    with pytest.raises(SystemExit) as exc:
+        cli.config.init()
+    assert exc.value.code == 1
+
+    output = capsys.readouterr()
+    assert "cannot be used" in output.err
