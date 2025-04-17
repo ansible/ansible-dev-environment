@@ -18,11 +18,14 @@ import yaml
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
     from types import TracebackType
 
+    from .collection import Collection
     from .config import Config
     from .output import Output
+
 
 from typing import Any
 
@@ -156,7 +159,7 @@ def subprocess_run(  # pylint: disable=too-many-positional-arguments
         )
 
 
-def oxford_join(words: list[str]) -> str:
+def oxford_join(words: Sequence[str | Path]) -> str:
     """Join a list of words with commas and an oxford comma.
 
     Args:
@@ -164,34 +167,41 @@ def oxford_join(words: list[str]) -> str:
     Returns:
         A string of words joined with commas and an oxford comma
     """
-    words.sort()
-    if not words:
-        return ""
-    if len(words) == 1:
-        return words[0]
-    if len(words) == 2:  # noqa: PLR2004
-        return " and ".join(words)
-    return ", ".join(words[:-1]) + ", and " + words[-1]
+    _words = sorted([str(word) for word in words])
+    match _words:
+        case [word]:
+            return word
+        case [word_one, word_two]:
+            return f"{word_one} and {word_two}"
+        case [*first_words, last_word]:
+            return f"{', '.join(first_words)}, and {last_word}"
+        case _:
+            return ""
 
 
-def opt_deps_to_files(collection_path: Path, dep_str: str) -> list[Path]:
+def opt_deps_to_files(collection: Collection, output: Output) -> list[Path]:
     """Convert a string of optional dependencies to a list of files.
 
     Args:
-        collection_path: The path to the collection
-        dep_str: A string of optional dependencies
+        collection: The collection object
+        output: The output object
     Returns:
-        A list of files
+        A list of paths
     """
-    deps = dep_str.split(",")
+    if not collection.opt_deps:
+        msg = "No optional dependencies specified."
+        output.debug(msg)
+        return []
+
+    deps = collection.opt_deps.split(",")
     files = []
     for dep in deps:
         _dep = dep.strip()
-        variant1 = collection_path / f"{_dep}-requirements.txt"
+        variant1 = collection.path / f"{_dep}-requirements.txt"
         if variant1.exists():
             files.append(variant1)
             continue
-        variant2 = collection_path / f"requirements-{_dep}.txt"
+        variant2 = collection.path / f"requirements-{_dep}.txt"
         if variant2.exists():
             files.append(variant2)
             continue
@@ -199,7 +209,10 @@ def opt_deps_to_files(collection_path: Path, dep_str: str) -> list[Path]:
             f"Failed to find optional dependency file for '{_dep}'."
             f" Checked for '{variant1.name}' and '{variant2.name}'. Skipping."
         )
-        logger.error(msg)
+        output.error(msg)
+    count = len(files)
+    msg = f"Found {count} optional dependency file{'s' * (count > 1)}. {oxford_join(files)}"
+    output.debug(msg)
     return files
 
 
@@ -277,7 +290,11 @@ def collect_manifests(  # noqa: C901
     return sort_dict(collections)
 
 
-def builder_introspect(config: Config, output: Output) -> None:
+def builder_introspect(
+    config: Config,
+    output: Output,
+    opt_dep_paths: list[Path] | None = None,
+) -> None:
     """Introspect a collection.
 
     Use the sys executable to run builder, since it is a direct dependency
@@ -286,6 +303,7 @@ def builder_introspect(config: Config, output: Output) -> None:
     Args:
         config: The configuration object.
         output: The output object.
+        opt_dep_paths: A list of optional dependency paths.
     """
     command = (
         f"{sys.executable} -m ansible_builder introspect {config.site_pkg_path}"
@@ -293,22 +311,12 @@ def builder_introspect(config: Config, output: Output) -> None:
         f" --write-bindep {config.discovered_bindep_reqs}"
         " --sanitize"
     )
-    if (
-        hasattr(config.args, "collection_specifier")
-        and hasattr(config, "collection")
-        and config.collection.opt_deps
-        and config.collection.path
-    ):
-        dep_paths = opt_deps_to_files(
-            collection_path=config.collection.path,
-            dep_str=config.collection.opt_deps,
-        )
-        for dep_path in dep_paths:
-            command += f" --user-pip {dep_path}"
+    for opt_dep_path in opt_dep_paths or []:
+        command += f" --user-pip {opt_dep_path}"
     msg = f"Writing discovered python requirements to: {config.discovered_python_reqs}"
-    logger.debug(msg)
+    output.debug(msg)
     msg = f"Writing discovered system requirements to: {config.discovered_bindep_reqs}"
-    logger.debug(msg)
+    output.debug(msg)
     work = "Persisting requirements to file system"
     try:
         subprocess_run(
