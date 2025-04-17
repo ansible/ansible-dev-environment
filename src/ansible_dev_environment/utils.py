@@ -168,13 +168,15 @@ def oxford_join(words: Sequence[str | Path]) -> str:
         A string of words joined with commas and an oxford comma
     """
     _words = sorted([str(word) for word in words])
-    if not _words:
-        return ""
-    if len(_words) == 1:
-        return _words[0]
-    if len(_words) == 2:  # noqa: PLR2004
-        return " and ".join(_words)
-    return ", ".join(_words[:-1]) + ", and " + _words[-1]
+    match _words:
+        case [word]:
+            return word
+        case [word_one, word_two]:
+            return f"{word_one} and {word_two}"
+        case [*first_words, last_word]:
+            return f"{', '.join(first_words)}, and {last_word}"
+        case _:
+            return ""
 
 
 def opt_deps_to_files(collection: Collection, output: Output) -> list[Path]:
