@@ -248,7 +248,7 @@ def parse() -> argparse.Namespace:
         "--adtv",
         "--ansible-dev-tools-version",
         dest="ansible_dev_tools_version",
-        help="Ansible Dev Tools (ADT) version to use. (e.g. --adtv 25.4.0)"
+        help="Ansible Dev Tools (ADT) version to use. (e.g. --adtv 25.4.0)",
     )
 
     install.add_argument(
