@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 ENVVAR_MAPPING: dict[str, str] = {
     "ansi": "NO_COLOR",
     "ansible_core_version": "ADE_ANSIBLE_CORE_VERSION",
+    "ansible_dev_tools_version": "ADE_ANSIBLE_DEV_TOOLS_VERSION",
     "isolation_mode": "ADE_ISOLATION_MODE",
     "python": "ADE_PYTHON",
     "seed": "ADE_SEED",
