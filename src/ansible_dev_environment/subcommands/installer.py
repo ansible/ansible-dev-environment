@@ -180,6 +180,8 @@ class Installer:
             command += f"=={ansible_dev_tools_version}"
             msg = f"Using user specified ansible-dev-tools version: {ansible_dev_tools_version}"
             self._output.debug(msg)
+            msg = "Specifying an ansible-dev-tools version may result in installing a version that is no longer supported. Please use the latest release of ansible-dev-tools if you encounter issues or unexpected behaviour."
+            self._output.info(msg)
 
         try:
             subprocess_run(
