@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 ENVVAR_MAPPING: dict[str, str] = {
     "ansi": "NO_COLOR",
     "ansible_core_version": "ADE_ANSIBLE_CORE_VERSION",
+    "ansible_dev_tools_version": "ADE_ANSIBLE_DEV_TOOLS_VERSION",
     "isolation_mode": "ADE_ISOLATION_MODE",
     "python": "ADE_PYTHON",
     "seed": "ADE_SEED",
@@ -241,6 +242,13 @@ def parse() -> argparse.Namespace:
         default=True,
         dest="seed",
         help="Install seed packages inside the virtual environment (ansible-dev-tools).",
+    )
+
+    install.add_argument(
+        "--adtv",
+        "--ansible-dev-tools-version",
+        dest="ansible_dev_tools_version",
+        help="Ansible Dev Tools (ADT) version to use. (e.g. --adtv 25.4.0)",
     )
 
     install.add_argument(

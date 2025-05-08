@@ -32,3 +32,4 @@ unisolated
 usefixtures
 xdist
 xmltodict
+adtv
