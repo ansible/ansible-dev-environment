@@ -168,10 +168,21 @@ class Installer:
 
         adt = self._config.venv_bindir / "adt"
         if adt.exists():
+            msg = "ansible-dev-tools is already installed."
+            self._output.debug(msg)
             return
         msg = "Installing ansible-dev-tools."
         self._output.debug(msg)
         command = f"{self._config.venv_pip_install_cmd} ansible-dev-tools"
+
+        ansible_dev_tools_version = getattr(self._config.args, "ansible_dev_tools_version", None)
+        if ansible_dev_tools_version:
+            command += f"=={ansible_dev_tools_version}"
+            msg = f"Using user specified ansible-dev-tools version: {ansible_dev_tools_version}"
+            self._output.debug(msg)
+            msg = "Specifying an ansible-dev-tools version may result in installing a version that is no longer supported. Please use the latest release of ansible-dev-tools if you encounter issues or unexpected behavior."
+            self._output.info(msg)
+
         try:
             subprocess_run(
                 command=command,

@@ -292,3 +292,47 @@ def test_specified_core_version_pass(
     command = f"{venv_path}/bin/ansible --version"
     result = subprocess_run(command=command, verbose=True, msg="", output=output)
     assert second_latest in result.stdout
+
+
+def test_specified_dev_tools_version_pass(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Install a user-specified ansible-dev-tools version.
+
+    Args:
+        tmp_path: Temporary directory
+        monkeypatch: Pytest monkeypatch
+    """
+    term_features = TermFeatures(color=False, links=False)
+    output = Output(
+        log_file=f"/{tmp_path}/ansible-dev-environment.log",
+        log_level="INFO",
+        log_append="false",
+        term_features=term_features,
+        verbosity=0,
+    )
+    command = "pip index versions ansible-dev-tools"
+    result = subprocess_run(command=command, verbose=True, msg="", output=output)
+
+    version_pattern = re.compile(r"\d+\.\d+\.\d+")
+    versions = version_pattern.findall(result.stdout)
+    second_latest = versions[2]
+
+    venv_path = tmp_path / ".venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            f"--venv={venv_path}",
+            "--seed",
+            f"--ansible-dev-tools-version={second_latest}",
+        ],
+    )
+    with pytest.raises(SystemExit):
+        main()
+    command = f"{venv_path}/bin/pip list | grep ansible-dev-tools"
+    result = subprocess_run(command=command, verbose=True, msg="", output=output)
+    assert second_latest in result.stdout
