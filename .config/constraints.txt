@@ -45,7 +45,7 @@ iniconfig==2.1.0
 isort==6.0.1
 jinja2==3.1.6
 jsmin==3.0.1
-jsonschema==4.23.0
+jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
 linkchecker==10.5.0
 markdown==3.8
@@ -67,7 +67,7 @@ mkdocs-minify-plugin==0.8.0
 mkdocs-monorepo-plugin==1.1.0
 mkdocstrings==0.29.1
 mkdocstrings-python==1.16.11
-mypy==1.15.0
+mypy==1.16.0
 mypy-extensions==1.1.0
 nodeenv==1.9.1
 packaging==25.0
@@ -89,7 +89,7 @@ pyproject-api==1.9.1
 pyproject-hooks==1.2.0
 pytest==8.3.5
 pytest-instafail==0.5.0
-pytest-xdist==3.6.1
+pytest-xdist==3.7.0
 python-dateutil==2.9.0.post0
 python-slugify==8.0.4
 pyyaml==6.0.2
@@ -97,7 +97,7 @@ pyyaml-env-tag==1.1
 referencing==0.36.2
 requests==2.32.3
 rpds-py==0.25.1
-ruff==0.11.11
+ruff==0.11.12
 six==1.17.0
 soupsieve==2.7
 subprocess-tee==0.4.2
@@ -112,7 +112,7 @@ tox==4.26.0
 types-pyyaml==6.0.12.20250516
 typing-extensions==4.13.2
 urllib3==2.4.0
-uv==0.7.8
+uv==0.7.9
 virtualenv==20.31.2
 watchdog==6.0.0
 webencodings==0.5.1
