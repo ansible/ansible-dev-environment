@@ -46,11 +46,11 @@ try:
     from ._version import version as __version__  # type: ignore[unused-ignore,import-not-found]
 except ImportError:  # pragma: no cover
     try:
-        import pkg_resources
+        import importlib.metadata
 
-        __version__ = pkg_resources.get_distribution(
+        __version__ = importlib.metadata.version(
             "ansible_dev_environment",
-        ).version
+        )
     except Exception:  # pylint: disable=broad-except # noqa: BLE001
         # this is the fallback SemVer version picked by setuptools_scm when tag
         # information is not available.

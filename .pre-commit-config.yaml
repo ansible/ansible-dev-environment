@@ -97,7 +97,6 @@ repos:
           - pytest
           - subprocess_tee
           - types-pyyaml
-          - types-setuptools
           - uv
         # Override default pre-commit '--ignore-missing-imports'
         args: [--strict]
