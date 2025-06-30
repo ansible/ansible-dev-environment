@@ -20,7 +20,6 @@ discoverable by ansible as well as python and pytest.
 ## Communication
 
 - Join the Ansible forum:
-
   - [Get Help](https://forum.ansible.com/c/help/6): get help or help others.
     Please add appropriate tags if you start new discussions.
   - [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact
