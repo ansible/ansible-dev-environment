@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -427,7 +429,6 @@ def test_arg_complete(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("_ARGCOMPLETE_IFS", "\013")
     monkeypatch.setenv("COMP_LINE", cli)
     monkeypatch.setenv("COMP_POINT", str(len(cli)))
-    import io
 
     str_io = io.StringIO()
 
