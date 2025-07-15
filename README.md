@@ -1,82 +1,278 @@
 # ansible-dev-environment
 
-A pip-like install for ansible collections.
+A development environment management tool for Ansible collections that addresses the limitations of `ansible-galaxy` by managing Python dependencies and providing isolated development environments.
 
-## Features
+## Overview
 
-- Promotes an "ephemeral" development approach
-- Ensures the current development environment is isolated
-- Install all collection python requirements
-- Install all collection test requirements
-- Checks for missing system packages
-- Symlinks the current collection into the current python interpreter's
-  site-packages
-- Install all collection collection dependencies into the current python
-  interpreter's site-packages
+While `ansible-galaxy` efficiently manages collection installation and dependencies, it does not handle Python package dependencies that collections may require. `ansible-dev-environment` (ade) fills this gap by:
 
-By placing collections into the python site-packages directory they are
-discoverable by ansible as well as python and pytest.
+- Installing collection Python dependencies from `requirements.txt` and `test-requirements.txt`
+- Creating isolated virtual environments for development
+- Installing collections in editable mode with symlinks for active development
+- Managing development dependencies like `ansible-dev-tools`
+- Providing configurable workspace isolation
 
-## Communication
+Collections are installed into Python's site-packages directory, making them discoverable by both Ansible and Python tooling including pytest.
 
-- Join the Ansible forum:
-  - [Get Help](https://forum.ansible.com/c/help/6): get help or help others.
-    Please add appropriate tags if you start new discussions.
-  - [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact
-    with fellow enthusiasts.
-  - [News & Announcements](https://forum.ansible.com/c/news/5): track
-    project-wide announcements including social events.
-  - [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn):
-    used to announce releases and important changes.
+## Philosophy
 
-For more information about communication, see the
-[Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
+Modern Ansible collection development requires isolation to prevent conflicts between projects with different dependency requirements. Each collection project may require:
 
-## Usage
+- Different Python package versions (e.g., `requests==2.25.0` vs `requests==2.31.0`)
+- Different Ansible core versions (`ansible-core>=2.15` vs `ansible-core<2.17`)
+- Different collection dependencies that may have conflicting requirements
+- Different Python interpreter versions
 
-### Setting up a development environment
+`ade` addresses these challenges by creating project-specific virtual environments where both Python packages and Ansible collections are installed. This approach offers several advantages:
 
-```
-$ pip install ansible-dev-environment --user
-$ git clone <collection_repo>
-$ cd <collection_repo>
-$ ade install -e .\[test] --venv .venv
-INFO: Found collection name: network.interfaces from /home/bthornto/github/network.interfaces/galaxy.yml.
-INFO: Creating virtual environment: /home/bthornto/github/network.interfaces/venv
-INFO: Virtual environment: /home/bthornto/github/network.interfaces/venv
-INFO: Using specified interpreter: /home/bthornto/github/network.interfaces/venv/bin/python
-INFO: Requirements file /home/bthornto/github/network.interfaces/requirements.txt is empty, skipping
-INFO: Installing python requirements from /home/bthornto/github/network.interfaces/test-requirements.txt
-INFO: Installing ansible-core.
-INFO: Initializing build directory: /home/bthornto/github/network.interfaces/build
-INFO: Copying collection to build directory using git ls-files.
-INFO: Running ansible-galaxy to build collection.
-INFO: Running ansible-galaxy to install collection and it's dependencies.
-INFO: Removing installed /home/bthornto/github/network.interfaces/venv/lib64/python3.11/site-packages/ansible_collections/network/interfaces
-INFO: Symlinking /home/bthornto/github/network.interfaces/venv/lib64/python3.11/site-packages/ansible_collections/network/interfaces to /home/bthornto/github/network.interfaces
-WARNING: A virtual environment was specified but has not been activated.
-WARNING: Please activate the virtual environment:
-source venv/bin/activate
-```
+- **Complete isolation**: Each project has its own dependency space
+- **Reproducible environments**: Consistent development setup across team members
+- **Safe experimentation**: Virtual environments can be destroyed and recreated without affecting other projects
+- **Version control friendly**: Virtual environments are typically excluded from git repositories, keeping repos clean
+- **Python version flexibility**: Each project can specify its required Python version
 
-### Tearing down the development environment
+By installing collections into the virtual environment's site-packages (rather than global Ansible paths), collections become part of the disposable development environment, eliminating the "dependency hell" common in shared collection spaces.
 
-```
-$ ade uninstall ansible.scm
-INFO     Found collection name: ansible.scm from /home/bthornto/github/ansible.scm/galaxy.yml.
-INFO     Requirements file /home/bthornto/github/ansible.scm/requirements.txt is empty, skipping
-INFO     Uninstalling python requirements from /home/bthornto/github/ansible.scm/test-requirements.txt
-INFO     Removed ansible.utils: /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections/ansible/utils
-INFO     Removed ansible.utils*.info: /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections/ansible.utils-2.10.3.info
-INFO     Removed ansible.scm: /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections/ansible/scm
-INFO     Removed collection namespace root: /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections/ansible
-INFO     Removed collection root: /home/bthornto/github/ansible.scm/venv/lib64/python3.11/site-packages/ansible_collections
+### Collection Search Path Pollution
+
+A critical issue in Ansible collection development is workspace pollution caused by Ansible's collection search path behavior. Ansible searches for collections in this priority order:
+
+1. Paths in `ANSIBLE_COLLECTIONS_PATHS` environment variable
+2. `~/.ansible/collections` (user collections directory)
+3. `/usr/share/ansible/collections` (system collections directory)  
+4. Virtual environment site-packages (when properly configured)
+
+When collections exist in higher-priority locations, they **override** collections in your virtual environment, leading to:
+
+- **Silent version conflicts**: Your venv may contain `community.general 5.8.0`, but Ansible uses `community.general 4.2.0` from `~/.ansible/collections`
+- **Inconsistent behavior**: Code works on one developer's machine but fails on another due to different global collections
+- **Debugging nightmares**: Test failures that appear unrelated to your changes, caused by different collection versions being loaded
+- **Development confusion**: Modified collection code has no effect because Ansible loads an older version from a global location
+
+For example, if you're developing `community.crypto` and have an older version installed globally:
+
+```bash
+# Your development setup
+ls .venv/lib/python3.11/site-packages/ansible_collections/community/crypto/
+# Contains your latest changes
+
+# But Ansible finds this first
+ls ~/.ansible/collections/ansible_collections/community/crypto/  
+# Contains an older version that overrides your work
 ```
 
-## Help
+This is why `ade` provides isolation modes:
 
-`ade --help`
+- **`cfg` mode**: Creates `ansible.cfg` with `collections_path = .` to prioritize the current workspace
+- **`restrictive` mode**: Fails fast if global collections are detected, forcing cleanup
+- **`none` mode**: Allows pollution (not recommended for development)
 
-`ade install --help`
+Proper isolation ensures that `ansible-playbook`, `ansible-test`, and `pytest` all use the exact collection versions installed in your virtual environment, making development predictable and reproducible.
 
-`ade uninstall --help`
+## Installation
+
+Install using `uv` (recommended):
+
+```bash
+uv tool install ansible-dev-environment
+```
+
+Alternative installation methods:
+
+```bash
+pip install ansible-dev-environment
+# or
+pipx install ansible-dev-environment
+```
+
+## Quick Start
+
+Create an isolated development environment for a collection:
+
+```bash
+git clone https://github.com/namespace/collection-name
+cd collection-name
+ade install -e . --venv .venv
+```
+
+## Commands
+
+```
+$ ade --help
+usage: ade [-h] [--ansi | --no-ansi] [--lf LOG_FILE]
+           [--ll {notset,debug,info,warning,error,critical}] [--la {true,false}]
+           [--uv | --no-uv] [-v] [-V]
+            ...
+
+A pip-like ansible collection installer.
+
+Commands:
+  check        Check installed collections
+  inspect      Inspect installed collections  
+  list         List installed collections
+  tree         Generate a dependency tree
+  install      Install a collection
+  uninstall    Uninstall a collection
+```
+
+### Installation Options
+
+```
+$ ade install --help
+usage: ade install [-h] [--venv <directory>] [--cpi] [--ssp] [-r REQUIREMENT]
+                   [--acv ANSIBLE_CORE_VERSION] [-e] [-p PYTHON] [--seed | --no-seed]
+                   [--im {restrictive,cfg,none}] [--uv | --no-uv] [-v]
+                   [collection_specifier ...]
+
+Options:
+  --venv <directory>        Target virtual environment (default: .venv)
+  -e, --editable           Install in editable mode (development)
+  -r, --requirement <file> Install from requirements file
+  -p, --python             Python interpreter for virtual environment (version, name, or path)
+  --seed / --no-seed       Install ansible-dev-tools (default: true)
+  --im, --isolation-mode   Isolation mode (choices: restrictive, cfg, none)
+  --acv                    Ansible core version constraint
+  --uv / --no-uv           Use uv package manager if available (default: true)
+```
+
+### Install with Specific Python Version
+
+```bash
+# Use Python 3.11 specifically
+ade install -e . --venv .venv --python python3.11
+
+# Use Python by version number
+ade install -e . --venv .venv --python 3.12
+
+# Use specific Python path
+ade install -e . --venv .venv --python /usr/bin/python3.10
+```
+
+## Isolation Modes
+
+`ade` provides three isolation modes to prevent collection conflicts:
+
+- **`cfg`** (default): Creates/updates `ansible.cfg` in the current directory with `collections_path = .` to isolate the workspace
+- **`restrictive`**: Exits if collections are found in system locations (`~/.ansible/collections`, `/usr/share/ansible/collections`)  
+- **`none`**: No isolation (not recommended for development)
+
+## Usage Examples
+
+### Basic Collection Development
+
+Install a collection in editable mode:
+
+```bash
+ade install -e . --venv .venv
+```
+
+Example output:
+```
+Info: uv is available and will be used instead of venv/pip
+Info: Found collection name: example.demo from ./galaxy.yml
+Note: Created virtual environment: .venv
+Info: Installing ansible-dev-tools
+Info: Installing python requirements from ./requirements.txt
+Info: Installing python requirements from ./test-requirements.txt
+Info: Installing ansible-core
+Info: Installing collection dependencies
+Info: Installing local collection: example.demo
+```
+
+### Install from Requirements File
+
+```bash
+ade install -r requirements.yml --venv .venv
+```
+
+### Install Specific Ansible Core Version
+
+```bash
+ade install -e . --venv .venv --acv 2.18.0
+```
+
+### List Installed Collections
+
+```bash
+ade list --venv .venv
+```
+
+### Check Collection Dependencies
+
+```bash
+ade tree --venv .venv
+```
+
+## Environment Variables
+
+Configure behavior via environment variables:
+
+```bash
+export ADE_PYTHON=python3.12           # Python interpreter
+export ADE_UV=false                    # Disable uv usage
+export ADE_ISOLATION_MODE=cfg          # Set isolation mode
+export ADE_VERBOSE=2                   # Verbosity level
+export ADE_ANSIBLE_CORE_VERSION=2.18.0 # Ansible core version
+```
+
+## Virtual Environment Management
+
+`ade` can create virtual environments using either Python's built-in `venv` or `uv` (when available). When `uv` is detected, it's used automatically for faster environment creation and package installation.
+
+To activate the created environment:
+
+```bash
+source .venv/bin/activate  # Linux/macOS
+```
+
+## Configuration
+
+### ansible.cfg Integration
+
+With `cfg` isolation mode (default), `ade` creates or updates `ansible.cfg`:
+
+```ini
+[defaults]
+collections_path = .
+```
+
+This ensures Ansible only discovers collections from the current workspace.
+
+### Collection Requirements
+
+`ade` processes these requirement files when present:
+
+- `requirements.txt` - Runtime Python dependencies
+- `test-requirements.txt` - Development/testing dependencies
+- `requirements.yml` - Collection dependencies (processed by ansible-galaxy)
+
+## Troubleshooting
+
+### Environment Isolation Issues
+
+If using `restrictive` mode and seeing isolation errors:
+
+```bash
+# Remove system collections
+sudo rm -rf /usr/share/ansible/collections
+
+# Clear user collections  
+rm -rf ~/.ansible/collections
+
+# Unset collection path variables
+unset ANSIBLE_COLLECTIONS_PATHS ANSIBLE_COLLECTION_PATH
+```
+
+### Virtual Environment Issues
+
+Ensure the virtual environment is activated after installation:
+
+```bash
+source .venv/bin/activate
+```
+
+## Related Tools
+
+- `ansible-galaxy`: Collection management and installation
+- `ansible-dev-tools`: Development tooling suite for Ansible content creators
+- `uv`: Fast Python package installer and resolver
