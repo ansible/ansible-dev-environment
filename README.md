@@ -1,16 +1,19 @@
 # ansible-dev-environment
 
-A development environment management tool for Ansible collections that addresses the limitations of `ansible-galaxy` by managing Python dependencies and providing isolated development environments.
+A development environment management tool for Ansible collections that provides isolated workspaces for development. `ansible-dev-environment` (ade) manages virtual environments, collection installation and removal, and Python dependency resolution to ensure consistent, reproducible development environments.
 
 ## Overview
 
-While `ansible-galaxy` efficiently manages collection installation and dependencies, it does not handle Python package dependencies that collections may require. `ansible-dev-environment` (ade) fills this gap by:
+`ansible-dev-environment` (ade) provides comprehensive collection development environment management by:
 
-- Installing collection Python dependencies from `requirements.txt` and `test-requirements.txt`
 - Creating isolated virtual environments for development
+- Installing and removing collections with full dependency tracking
+- Resolving and installing collection Python dependencies from `requirements.txt` and `test-requirements.txt`
 - Installing collections in editable mode with symlinks for active development
 - Managing development dependencies like `ansible-dev-tools`
 - Providing configurable workspace isolation
+
+While `ansible-galaxy` efficiently manages collection installation and dependencies, it does not handle Python package dependencies that collections may require. `ade` complements this by ensuring all Python requirements are properly managed within isolated environments.
 
 Collections are installed into Python's site-packages directory, making them discoverable by both Ansible and Python tooling including pytest.
 
