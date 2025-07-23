@@ -260,7 +260,7 @@ def parse() -> argparse.Namespace:
             " cfg: Update or add an ansible.cfg file in the current working directory to isolate the workspace"
             " none: No isolation, not recommended."
         ),
-        default="restrictive",
+        default="cfg",
         choices=["restrictive", "cfg", "none"],
         type=str,
     )
