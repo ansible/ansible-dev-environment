@@ -11,7 +11,7 @@ environments.
 `ansible-dev-environment` (ade) provides comprehensive collection development
 environment management by:
 
-- Creating isolated virtual environments for development
+- Creating isolated virtual environments
 - Installing and removing collections with full dependency tracking
 - Resolving and installing collection Python dependencies from
   `requirements.txt` and `test-requirements.txt`
