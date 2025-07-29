@@ -1,6 +1,6 @@
 # ansible-dev-environment
 
-A development environment management tool for Ansible content development that
+A environment management tool for Ansible content development that
 provides isolated workspaces for development. `ansible-dev-environment` (ade)
 manages virtual environments, collection installation and removal, and Python
 dependency resolution to ensure consistent, reproducible development
