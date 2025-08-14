@@ -9,6 +9,13 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
+try:
+    from packaging import specifiers, version
+except ImportError:
+    specifiers = None  # type: ignore[assignment]
+    version = None  # type: ignore[assignment]
+
 from ansible_dev_environment.collection import (
     Collection,
     parse_collection_request,
@@ -16,6 +23,7 @@ from ansible_dev_environment.collection import (
 from ansible_dev_environment.utils import (
     builder_introspect,
     collections_from_requirements,
+    get_dependency_constraint,
     opt_deps_to_files,
     oxford_join,
     subprocess_run,
@@ -126,25 +134,33 @@ class Installer:
         """Install our dependencies."""
         core_version = getattr(self._config.args, "ansible_core_version", None)
 
-        if core_version:
-            self._install_core()
+        # Warn about potential incompatibility before installation
+        if core_version and self._config.args.seed:
+            self._warn_if_core_version_incompatible(core_version)
+
+        # Install dev tools first if requested
         if self._config.args.seed:
             self._install_dev_tools()
-        elif core_version is None:
+
+        # Then install specific core version (this will override whatever dev-tools installed)
+        if core_version or not self._config.args.seed:
             self._install_core()
 
     def _install_core(self) -> None:
         """Install ansible-core if not installed already."""
         core = self._config.venv_bindir / "ansible"
-        if core.exists():
+        core_version = getattr(self._config.args, "ansible_core_version", None)
+
+        # If no specific version requested and ansible is already installed, skip
+        if core.exists() and not core_version:
             msg = "ansible-core is already installed."
             self._output.debug(msg)
             return
+
         msg = "Installing ansible-core."
         self._output.debug(msg)
         command = f"{self._config.venv_pip_install_cmd} ansible-core"
 
-        core_version = getattr(self._config.args, "ansible_core_version", None)
         if core_version:
             command += f"=={core_version}"
             msg = f"Using user specified ansible-core version: {core_version}"
@@ -193,6 +209,45 @@ class Installer:
         except subprocess.CalledProcessError as exc:
             err = f"Failed to install ansible-dev-tools: {format_process(exc)}"
             self._output.critical(err)
+
+    def _warn_if_core_version_incompatible(self, requested_version: str) -> None:
+        """Warn if requested ansible-core version falls outside ansible-dev-tools requirements.
+
+        Args:
+            requested_version: The ansible-core version requested by the user.
+        """
+        # Only warn if seed is True (ansible-dev-tools will be installed)
+        if not self._config.args.seed:
+            return
+
+        constraint = get_dependency_constraint(
+            package_name="ansible-dev-tools",
+            dependency_name="ansible-core",
+            pip_command=self._config.venv_pip_cmd,
+        )
+
+        if not constraint:
+            return  # Couldn't determine constraint
+
+        # Check if packaging is available
+        if specifiers is None or version is None:
+            return  # Packaging not available, skip version comparison
+
+        try:
+            spec = specifiers.SpecifierSet(constraint)
+            requested = version.parse(requested_version)
+
+            if requested not in spec:
+                msg = (
+                    f"ansible-dev-tools requires ansible-core{constraint}, "
+                    f"the requested version {requested_version} falls outside this range. "
+                    f"There may be compatibility issues."
+                )
+                self._output.warning(msg)
+
+        except Exception:  # noqa: BLE001, S110
+            # If any error occurs during version comparison, skip warning gracefully
+            pass
 
     def _install_galaxy_collections(
         self,
