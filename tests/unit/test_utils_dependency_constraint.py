@@ -435,7 +435,7 @@ def test_timeout_with_slow_command() -> None:
     result = get_dependency_constraint(
         package_name="some-nonexistent-package-that-will-be-slow",
         dependency_name="some-dependency",
-        timeout=0.1,  # Very short timeout
+        timeout=1,  # Very short timeout
     )
 
     # Should return None due to timeout

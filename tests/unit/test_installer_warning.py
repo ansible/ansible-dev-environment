@@ -17,7 +17,7 @@ Fixtures:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -25,6 +25,7 @@ import pytest
 if TYPE_CHECKING:
     from pathlib import Path
 
+from ansible_dev_environment.config import Config
 from ansible_dev_environment.output import Output
 from ansible_dev_environment.subcommands.installer import Installer
 from ansible_dev_environment.utils import TermFeatures
@@ -98,7 +99,7 @@ def _installer(test_config: FakeConfig, test_output: Output) -> Installer:
     Returns:
         Installer instance configured for testing
     """
-    return Installer(config=test_config, output=test_output)
+    return Installer(config=cast(Config, test_config), output=test_output)
 
 
 def test_no_warning_when_seed_false(
@@ -584,7 +585,7 @@ def test_integration_with_real_config(
     config.args.seed = True
     config.args.ansible_core_version = "2.15.0"
 
-    installer = Installer(config=config, output=output)
+    installer = Installer(config=cast(Config, config), output=output)
 
     # Verify the dependency constraint function is called
     constraint_calls = []
