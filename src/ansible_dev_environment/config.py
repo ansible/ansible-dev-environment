@@ -74,15 +74,26 @@ class Config:  # pylint: disable=too-many-instance-attributes
         return self.cache_dir
 
     @property
-    def venv_pip_install_cmd(self) -> str:
+    def venv_pip_cmd(self) -> str:
         """Return the pip command for the virtual environment.
+
+        Returns:
+            The pip command for the virtual environment.
+        """
+        if self.uv_available:
+            return "uv pip"
+        return f"{self.venv}/bin/python -m pip"
+
+    @property
+    def venv_pip_install_cmd(self) -> str:
+        """Return the pip install command for the virtual environment.
 
         Returns:
             The pip install command for the virtual environment.
         """
         if self.uv_available:
-            return f"uv pip install --python {self.venv_interpreter}"
-        return f"{self.venv}/bin/python -m pip install"
+            return f"{self.venv_pip_cmd} install --python {self.venv_interpreter}"
+        return f"{self.venv_pip_cmd} install"
 
     @cached_property
     def uv_available(self) -> bool:
