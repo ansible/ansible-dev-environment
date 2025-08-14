@@ -21,14 +21,15 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
+from ansible_dev_environment.output import Output
+from ansible_dev_environment.subcommands.installer import Installer
+from ansible_dev_environment.utils import TermFeatures
+
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-from ansible_dev_environment.config import Config
-from ansible_dev_environment.output import Output
-from ansible_dev_environment.subcommands.installer import Installer
-from ansible_dev_environment.utils import TermFeatures
+    from ansible_dev_environment.config import Config
 
 
 class FakeArgs:
