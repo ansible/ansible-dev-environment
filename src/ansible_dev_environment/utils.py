@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 import json
 import logging
+import re
 import subprocess
 import sys
 import threading
@@ -548,4 +549,82 @@ def str_to_bool(value: str) -> bool | None:
         return True
     if value_lower in falsy_values:
         return False
+    return None
+
+
+def get_dependency_constraint(
+    package_name: str,
+    dependency_name: str,
+    pip_command: str = "pip",
+    timeout: int = 30,
+) -> str | None:
+    """Get the version constraint for a dependency of a package.
+
+    Uses pip's --dry-run functionality to inspect package dependencies without
+    installing anything. Parses the output to find version constraints.
+
+    Args:
+        package_name: The package to check dependencies for (e.g., "ansible-dev-tools")
+        dependency_name: The dependency to find constraints for (e.g., "ansible-core")
+        pip_command: The pip command to use (e.g., "pip", "uv pip")
+        timeout: Timeout in seconds for the pip command
+
+    Returns:
+        The version constraint string (e.g., ">=2.16.0") or None if not found.
+
+    Examples:
+        >>> get_dependency_constraint("ansible-dev-tools", "ansible-core")
+        ">=2.16.0"
+
+        >>> get_dependency_constraint("pytest", "pluggy")
+        ">=1.5.0"
+
+        >>> get_dependency_constraint("nonexistent-package", "anything")
+        None
+    """
+    try:
+        # Use --dry-run to avoid installation (removed --quiet to see dependency info)
+        command = f"{pip_command} install --dry-run {package_name}"
+
+        result = subprocess.run(  # noqa: S602
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            return None
+
+        # Multiple patterns to catch different constraint formats
+        patterns = [
+            # Standard format: "package>=1.2.3" (no space between name and constraint)
+            rf"{re.escape(dependency_name)}([><=!~]+[\d.]+(?:\.\*)?)",
+            # Standard format with space: "package >=1.2.3"
+            rf"{re.escape(dependency_name)}\s+([><=!~]+[\d.]+(?:\.\*)?)",
+            # With parentheses: "(package>=1.2.3)"
+            rf"\(\s*{re.escape(dependency_name)}([><=!~]+[\d.]+(?:\.\*)?)\s*\)",
+            # From requirements: "Requirement already satisfied: package>=1.2.3"
+            rf"Requirement.*{re.escape(dependency_name)}([><=!~]+[\d.]+(?:\.\*)?)",
+            # In dependency list: "package (>=1.2.3)"
+            rf"{re.escape(dependency_name)}\s*\(\s*([><=!~]+[\d.]+(?:\.\*)?)\s*\)",
+        ]
+
+        # Search through both stdout and stderr as pip may output to either
+        combined_output = result.stdout + result.stderr
+
+        for pattern in patterns:
+            match = re.search(pattern, combined_output, re.IGNORECASE)
+            if match:
+                return match.group(1)
+
+    except subprocess.TimeoutExpired:
+        # Timeout occurred, return None as documented
+        pass
+    except Exception:  # noqa: BLE001, S110
+        # Any other error (network, parsing, etc.), return None gracefully as documented
+        pass
+
     return None
