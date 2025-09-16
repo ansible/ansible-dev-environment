@@ -1,4 +1,9 @@
+Bindep
+REQS
+Reqs
+XDIST
 acfg
+adtv
 argnames
 argvalues
 bindep
@@ -26,10 +31,6 @@ purelib
 pylibssh
 reqs
 sessionstart
-setenv
 treemaker
 unisolated
 usefixtures
-xdist
-xmltodict
-adtv

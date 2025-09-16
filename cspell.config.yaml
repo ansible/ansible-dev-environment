@@ -5,19 +5,25 @@ dictionaryDefinitions:
 dictionaries:
   - bash
   - networking-terms
+  - en_US
   - python
+  - python-common
   - words
   - "!aws"
   - "!backwards-compatibility"
   - "!cryptocurrencies"
   - "!cpp"
+enabled: true
+useGitignore: true
 ignorePaths:
-  - .config/requirements*
-  - \.*
+  - "*.egg-info"
+  - .config/dictionary.txt
   - cspell.config.yaml
+  - junit.xml
   - mkdocs.yml
   - pyproject.toml
-  - tox.ini
+  - site
+  - uv.lock
 
 languageSettings:
   - languageId: python
