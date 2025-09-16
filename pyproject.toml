@@ -1,8 +1,39 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-  "setuptools >= 65.3.0", # required by pyproject+setuptools_scm integration and editable installs
-  "setuptools_scm[toml] >= 7.0.5" # required for "no-local-version" scheme
+  "setuptools >= 80", # required by pyproject+setuptools_scm integration and editable installs
+  "setuptools_scm[simple] >= 8.4" # required for "no-local-version" scheme
+]
+
+[dependency-groups]
+dev = [
+  "argcomplete>=3.6.2",
+  "coverage[toml]>=7.10.6",
+  "mypy>=1.18.1",
+  "pip-tools>=7.5.0",
+  "pre-commit>=4.3.0",
+  "pydoclint>=0.7.3",
+  "pylint>=3.3.8",
+  "pytest>=8.4.2",
+  "pytest-instafail>=0.5.0",
+  "pytest-xdist>=3.8.0",
+  "ruff>=0.13.0",
+  "toml-sort>=0.24.3",
+  "tox>=4.30.2",
+  "types-pyyaml>=6.0.12.20250915",
+  "uv>=0.8.17"
+]
+docs = [
+  "mkdocs-ansible>=24.3.0"
+]
+lint = [
+  "pre-commit>=4.3.0",
+  "pre-commit-uv>=4.1.5",
+  "setuptools>=51.1.1"
+]
+pkg = [
+  "build>=0.9",
+  "twine>=4.0.2"
 ]
 
 [project]
@@ -10,7 +41,6 @@ authors = [{"email" = "bthornto@redhat.com", "name" = "Bradley A. Thornton"}]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Developers',
-  'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
   'Operating System :: OS Independent',
   'Programming Language :: Python :: 3 :: Only',
   'Programming Language :: Python :: 3',
@@ -23,10 +53,16 @@ classifiers = [
   'Topic :: Software Development',
   'Topic :: Utilities'
 ]
+dependencies = [
+  "ansible-builder>=3.1.0",
+  "bindep>=2.13.0",
+  "pyyaml>=6.0.2",
+  "subprocess-tee>=0.4.2"
+]
 description = "A pip-like ansible collection installer."
-dynamic = ["dependencies", "optional-dependencies", "version"]
+dynamic = ["version"]
 keywords = ["ansible"]
-license = {text = "GPL-3.0-only"}
+license = "GPL-3.0-only"
 maintainers = [{"email" = "info@ansible.com", "name" = "Ansible by Red Hat"}]
 name = "ansible-dev-environment"
 readme = "README.md"
@@ -318,7 +354,7 @@ fail-on = [
 [tool.pytest.ini_options]
 addopts = "-ra --showlocals --durations=10"
 cache_dir = "./.cache/.pytest"
-junit_family = "legacy" # see https://docs.codecov.com/docs/test-analytics
+junit_family = "xunit2" # see https://docs.codecov.com/docs/test-analytics
 testpaths = "tests"
 tmp_path_retention_policy = "failed"
 verbosity_assertions = 2
@@ -357,26 +393,189 @@ convention = "google"
 [tool.ruff.lint.pylint]
 max-args = 6 # 5 is the default
 
-[tool.setuptools.dynamic]
-dependencies = {file = [".config/requirements.in"]}
-optional-dependencies.docs = {file = [".config/requirements-docs.in"]}
-optional-dependencies.test = {file = [".config/requirements-test.in"]}
+# [tool.setuptools_scm]
+# local_scheme = "no-local-version"
+# write_to = "src/ansible_dev_environment/_version.py"
 
-[tool.setuptools_scm]
-# To prevent accidental pick of mobile version tags such 'v6'
-git_describe_command = [
-  "git",
-  "describe",
-  "--dirty",
-  "--long",
-  "--tags",
-  "--match",
-  "v*.*"
-]
-local_scheme = "no-local-version"
-write_to = "src/ansible_dev_environment/_version.py"
+# [tool.setuptools_scm.scm.git]
+# # To prevent accidental pick of mobile version tags such 'v6'
+# describe_command = [
+#   "git",
+#   "describe",
+#   "--dirty",
+#   "--long",
+#   "--tags",
+#   "--match",
+#   "v*.*"
+# ]
 
 [tool.tomlsort]
 in_place = true
 sort_inline_tables = true
 sort_table_keys = true
+
+[tool.tox]
+env_list = [
+  "py",
+  "deps",
+  "docs",
+  "lint",
+  "devel",
+  "pkg"
+]
+requires = ["setuptools>=65.3", "tox>=4.30.2", "tox-extra>=2.1", "tox-uv>=1.28"]
+skip_missing_interpreters = true
+
+[tool.tox.env.deps]
+commands = [
+  [
+    "pre-commit",
+    "run",
+    "--all-files",
+    "--show-diff-on-failure",
+    "--hook-stage",
+    "manual",
+    "deps"
+  ],
+  ["pre-commit", "autoupdate"],
+  ["tox", "-e", "lint"],
+  ["git", "diff", "--exit-code"]
+]
+commands_post = []
+commands_pre = []
+description = "Bump all test dependencies"
+env_dir = "{work_dir}/lint"
+skip_install = true
+
+[tool.tox.env.devel]
+dependency_groups = ["dev"]
+deps = [
+  "ansible-core@ git+https://github.com/ansible/ansible.git"
+]
+description = "Run the tests with newest dependencies (no lock and allowing prereleases)"
+runner = "uv-venv-runner"
+uv_sync_flags = ["--upgrade", "--prerelease=allow"]
+uv_sync_locked = false
+
+[tool.tox.env.docs]
+commands = [
+  [
+    "mkdocs",
+    {default = ["build", "--strict", "--site-dir=_readthedocs/html/"], extend = true, replace = "posargs"}
+  ]
+]
+commands_post = []
+commands_pre = []
+dependency_groups = ["docs"]
+description = "Builds docs"
+skip_install = false
+set_env.NO_COLOR = "1"
+set_env.TERM = "dump"
+
+[tool.tox.env.lint]
+commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure"]]
+commands_pre = []
+dependency_groups = ["lint"]
+description = "Run all linters"
+skip_install = true
+
+[tool.tox.env.lower]
+dependency_groups = ["dev"]
+description = "Install using lowest constraints possible."
+runner = "uv-venv-runner"
+uv_resolution = "lowest"
+
+[tool.tox.env.pkg]
+commands = [
+  ["rm", "-rf", "{tox_root}/dist/"],
+  [
+    "python",
+    "-m",
+    "build",
+    "--outdir",
+    "{tox_root}/dist/",
+    "{tox_root}"
+  ],
+  ["sh", "-c", "python -m twine check --strict {tox_root}/dist/*"]
+]
+commands_pre = []
+dependency_groups = ["pkg"]
+description = """
+Build package, verify metadata, install package and assert behavior when ansible is missing.
+"""
+skip_install = true
+set_env.PYTHONWARNINGS = "error"
+
+[tool.tox.env_run_base]
+allowlist_externals = [
+  "./tools/report-coverage",
+  "git",
+  "rm",
+  "sh"
+]
+commands = [
+  [
+    "python",
+    "-m",
+    "coverage",
+    "run",
+    "-m",
+    "pytest",
+    {default = [
+      "-n",
+      "auto",
+      "-ra",
+      "--showlocals",
+      "--doctest-modules",
+      "--durations=10",
+      "--junitxml=./junit.xml"
+    ], extend = true, replace = "posargs"}
+  ],
+  ["{tox_root}/tools/report-coverage"]
+]
+commands_pre = [
+  ["sh", "-c", "rm -f {envdir}/.coverage.* 2>/dev/null || true"]
+]
+dependency_groups = ["dev"]
+description = """Run the tests: py{py_dot_ver}"""
+package = "editable"
+pass_env = [
+  "ANSIBLE_*",
+  "CI",
+  "CURL_CA_BUNDLE",
+  "CONTAINER_*",
+  "DOCKER_*",
+  "FORCE_COLOR",
+  "GITHUB_*",
+  "HOME",
+  "LANG",
+  "LC_*",
+  "NO_COLOR",
+  "PRE_COMMIT_HOME",
+  "PYTEST_*",
+  "PYTHON*",
+  "PYTHONBREAKPOINT",
+  "PYTHONIOENCODING",
+  "PYTHONPYCACHEPREFIX",
+  "PY_COLORS",
+  "REQUESTS_CA_BUNDLE",
+  "RTD_TOKEN",
+  "SETUPTOOLS_SCM_DEBUG",
+  "SSH_AUTH_SOCK",
+  "SSL_CERT_FILE",
+  "TERM",
+  "USER",
+  "UV_*"
+]
+runner = "uv-venv-lock-runner"
+
+[tool.tox.env_run_base.set_env]
+COVERAGE_COMBINED = "{envdir}/.coverage"
+COVERAGE_FILE = "{env:COVERAGE_FILE:{env_dir}/.coverage.{env_name}}"
+COVERAGE_PROCESS_START = "{tox_root}/pyproject.toml"
+FORCE_COLOR = "1"
+PRE_COMMIT_COLOR = "always"
+TERM = "xterm-256color"
+
+[tool.uv]
+package = true

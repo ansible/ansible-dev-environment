@@ -12,12 +12,10 @@ dictionaries:
   - "!cryptocurrencies"
   - "!cpp"
 ignorePaths:
-  - .config/requirements*
   - \.*
   - cspell.config.yaml
   - mkdocs.yml
   - pyproject.toml
-  - tox.ini
 
 languageSettings:
   - languageId: python

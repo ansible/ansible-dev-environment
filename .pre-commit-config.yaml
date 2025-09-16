@@ -4,6 +4,18 @@ ci:
   # https://github.com/pre-commit-ci/issues/issues/83
   autoupdate_schedule: quarterly
 repos:
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.17
+    hooks:
+      - id: uv-sync
+      - id: uv-lock
+        name: "deps: upgrade via uv sync --upgrade"
+        alias: deps
+        args: ["--upgrade"]
+        stages: [manual]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -40,23 +52,18 @@ repos:
           - prettier-plugin-sort-json
 
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.2
+    rev: v0.24.3
     hooks:
       - id: toml-sort-fix
         alias: toml
 
-  - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: 1.6.0
-    hooks:
-      - id: tox-ini-fmt
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.11
+    rev: v0.13.0
     hooks:
-      - id: ruff
-        entry: sh -c 'ruff check --fix --force-exclude && ruff format --force-exclude'
-        types_or: [python, pyi]
-
+      - id: ruff-format
+        alias: ruff
+      - id: ruff-check
+        alias: ruff
   - repo: https://github.com/streetsidesoftware/cspell-cli
     rev: v9.2.0
     hooks:
@@ -64,7 +71,7 @@ repos:
         name: Spell check with cspell
 
   - repo: https://github.com/jsh9/pydoclint
-    rev: "0.6.11"
+    rev: "0.7.3"
     hooks:
       - id: pydoclint
         # This allows automatic reduction of the baseline file when needed.
@@ -86,7 +93,7 @@ repos:
           - tox
 
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v1.17.1
+    rev: v1.18.1
     hooks:
       - id: mypy
         additional_dependencies:
@@ -98,20 +105,3 @@ repos:
           - uv
         # Override default pre-commit '--ignore-missing-imports'
         args: [--strict]
-
-  - repo: https://github.com/jazzband/pip-tools
-    rev: v7.5.0
-    hooks:
-      - id: pip-compile
-        name: deps
-        alias: deps
-        stages: [manual]
-        entry: >-
-          pip-compile .config/requirements.in
-          --upgrade
-          --all-extras
-          --no-annotate
-          --strip-extras
-          --output-file=.config/constraints.txt pyproject.toml
-        files: ^.config\/.*requirements.*$
-        language_version: "3.10" # minimal we support officially
