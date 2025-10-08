@@ -549,8 +549,9 @@ commands = [
     "-m",
     "pytest",
     {default = [
-      "-n",
-      "auto",
+      "-v",
+      # "-n",
+      # "auto",
       "-ra",
       "--showlocals",
       "--doctest-modules",
