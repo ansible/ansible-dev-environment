@@ -19,15 +19,26 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+permissions:
+  checks: read
+  contents: write
+  id-token: write
+  packages: write
+  pull-requests: write
+
 jobs:
   tox:
-    uses: ansible/team-devtools/.github/workflows/tox.yml@d894908cc9005130104c9807b460453c7c2bb398 # pinned due to issue with setup-uv
+    uses: ansible/team-devtools/.github/workflows/tox.yml@main
     with:
       max_python: "3.13"
       jobs_producing_coverage: 8
+      skip_explode: "1"
       other_names: |
         docs
         lint
         pkg
         py313-devel
         py-mise:tox -e py:mise=true
+        py311-macos:tox -e py311
+        py313-macos:tox -e py313
+    secrets: inherit
