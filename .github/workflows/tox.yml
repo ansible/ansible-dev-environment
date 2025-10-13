@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   tox:
-    uses: ansible/team-devtools/.github/workflows/tox.yml@d894908cc9005130104c9807b460453c7c2bb398 # pinned due to issue with setup-uv
+    uses: ansible/team-devtools/.github/workflows/tox.yml@4da276884a6cb137f0463d05877577d2e1c3ae75 # pinned due to issue with setup-uv
     with:
       max_python: "3.13"
       jobs_producing_coverage: 8
