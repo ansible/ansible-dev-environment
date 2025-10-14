@@ -1,4 +1,5 @@
-name: SonarCloud Analysis
+---
+name: SonarCloud
 on:
   workflow_run:
     workflows:
@@ -26,3 +27,114 @@ jobs:
           show-progress: false
           repository: ${{ github.event.workflow_run.head_repository.full_name }}
           ref: ${{ github.event.workflow_run.head_sha }}
+
+      # Download coverage artifacts from the completed workflow run
+      - name: Download artifacts
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: logs.zip
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      # For PRs: Get PR information reliably via GitHub API
+      - name: Get PR info from GitHub API
+        if: github.event.workflow_run.event == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPO_NAME: ${{ github.event.repository.full_name }}
+        run: |
+          # Try to get PR number from workflow_run event first
+          PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+
+          # If not available, try to extract from coverage.xml as fallback
+          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
+            echo "PR number not found in workflow_run event, trying coverage.xml fallback..."
+            PR_NUMBER=$(find . -name "coverage.xml" -exec grep -m 1 '<!-- PR' {} \; | awk '{print $3}' 2>/dev/null || echo "")
+          fi
+
+          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "null" ]]; then
+            echo "::error::Unable to determine PR number"
+            exit 1
+          fi
+
+          echo "Found PR number: $PR_NUMBER"
+
+          # Get PR details from GitHub API using gh
+          PR_DATA=$(gh api "repos/$REPO_NAME/pulls/$PR_NUMBER")
+
+          PR_BASE=$(echo "$PR_DATA" | jq -r '.base.ref')
+          PR_HEAD=$(echo "$PR_DATA" | jq -r '.head.ref')
+
+          # Export all variables for later steps
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "PR_BASE=$PR_BASE" >> $GITHUB_ENV
+          echo "PR_HEAD=$PR_HEAD" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+
+      - name: Prepare SonarCloud args
+        if: hashFiles('**/coverage.xml') != ''
+        shell: bash
+        run: |
+          # Use REPO_NAME and COMMIT_SHA from env if available, otherwise get from context
+          REPO_NAME="${REPO_NAME:-${{ github.event.repository.full_name }}}"
+          COMMIT_SHA="${COMMIT_SHA:-${{ github.event.workflow_run.head_sha }}}"
+
+          # Split repo name into owner and repo
+          IFS="/" read -r REPO_OWNER REPO_NAME_ONLY <<< "$REPO_NAME"
+
+          SONAR_ARGS="-Dsonar.projectKey=${REPO_OWNER}_${REPO_NAME_ONLY} -Dsonar.organization=${REPO_OWNER}"
+          SONAR_ARGS="${SONAR_ARGS} -Dsonar.scm.revision=$COMMIT_SHA"
+
+          # Add PR-specific args if this is a pull request
+          if [[ "${{ github.event.workflow_run.event }}" == "pull_request" && -n "$PR_NUMBER" ]]; then
+            SONAR_ARGS="${SONAR_ARGS} -Dsonar.pullrequest.key=$PR_NUMBER"
+            SONAR_ARGS="${SONAR_ARGS} -Dsonar.pullrequest.branch=$PR_HEAD"
+            SONAR_ARGS="${SONAR_ARGS} -Dsonar.pullrequest.base=$PR_BASE"
+          fi
+
+          echo "SONAR_ARGS=$SONAR_ARGS" >> $GITHUB_ENV
+
+      - name: Print SonarCloud Analysis Summary
+        env:
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
+          CI_EVENT: ${{ github.event.workflow_run.event }}
+        run: |
+          # Use REPO_NAME from env if available, otherwise get from context
+          REPO_NAME="${REPO_NAME:-${{ github.event.repository.full_name }}}"
+
+          echo "🔍 SonarCloud Analysis Summary"
+          echo "=============================="
+          echo "├── CI Event: $CI_EVENT (via workflow_run)"
+          echo "├── Repo: $REPO_NAME"
+          echo "├── Branch: $BRANCH_NAME"
+          echo "├── Commit: ${COMMIT_SHA:-${{ github.event.workflow_run.head_sha }}}"
+
+          if [[ -n "$PR_NUMBER" ]]; then
+            echo "├── PR Number: #$PR_NUMBER"
+            echo "├── PR Head: $PR_HEAD"
+            echo "├── PR Base: $PR_BASE"
+          fi
+
+          # Check for coverage files (they may be in subdirectories)
+          COVERAGE_FILES=$(find . -name "coverage.xml" -type f 2>/dev/null | wc -l)
+          if [ "$COVERAGE_FILES" -gt 0 ]; then
+            echo "├── Coverage Data: Available ($COVERAGE_FILES file(s) found)"
+            find . -name "coverage.xml" -type f | sed 's/^/│   /'
+          else
+            echo "├── Coverage Data: Not available - exiting"
+            echo "│   Searched in: $(pwd)"
+            echo "│   Directory contents:"
+            ls -la | head -20 | sed 's/^/│   /'
+            exit 1
+          fi
+
+          echo "└── Running SonarCloud analysis..."
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.CICD_ORG_SONAR_TOKEN_CICD_BOT }}
+        with:
+          args: ${{ env.SONAR_ARGS }}
