@@ -5,7 +5,7 @@ name: SonarCloud
 on:
   workflow_run:
     workflows:
-      - tox # ⬅️ Change this to match your workflow name
+      - tox
     types:
       - completed
 
