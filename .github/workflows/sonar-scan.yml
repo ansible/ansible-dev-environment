@@ -1,6 +1,4 @@
 ---
-# Example SonarCloud Wrapper for Repositories
-
 name: SonarCloud
 on:
   workflow_run:
@@ -8,6 +6,8 @@ on:
       - tox
     types:
       - completed
+
+permissions: read-all
 
 jobs:
   sonarcloud:
