@@ -1,4 +1,5 @@
-name: SonarCloud Analysis
+---
+name: SonarCloud
 on:
   workflow_run:
     workflows:
@@ -6,23 +7,19 @@ on:
     types:
       - completed
 
-permissions:
-  contents: read
-  pull-requests: read
+permissions: read-all
 
 jobs:
-  sonar-analysis:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
+  sonarcloud:
     if: |
       github.event.workflow_run.conclusion == 'success' &&
       (github.event.workflow_run.event == 'pull_request' ||
        (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          show-progress: false
-          repository: ${{ github.event.workflow_run.head_repository.full_name }}
-          ref: ${{ github.event.workflow_run.head_sha }}
+    uses: ansible/team-devtools/.github/workflows/sonar-scan.yml@fix/sonarcloud-workflow
+    with:
+      run-id: ${{ github.event.workflow_run.id }}
+      workflow-event: ${{ github.event.workflow_run.event }}
+      head-sha: ${{ github.event.workflow_run.head_sha }}
+      head-branch: ${{ github.event.workflow_run.head_branch }}
+      head-repository: ${{ github.event.workflow_run.head_repository.full_name }}
+    secrets: inherit
