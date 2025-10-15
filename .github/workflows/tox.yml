@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   tox:
-    uses: ansible/team-devtools/.github/workflows/tox.yml@main
+    uses: ansible/team-devtools/.github/workflows/tox.yml@fix/sonarcloud-workflow
     with:
       max_python: "3.13"
       jobs_producing_coverage: 8
