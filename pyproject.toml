@@ -56,7 +56,7 @@ classifiers = [
 dependencies = [
   "ansible-builder>=3.1.0",
   "bindep>=2.13.0",
-  "pyyaml>=6.0.2",
+  "pyyaml>=6.0.1",
   "subprocess-tee>=0.4.2"
 ]
 description = "A pip-like ansible collection installer."

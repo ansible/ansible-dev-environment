@@ -68,7 +68,7 @@ pkg = [
 requires-dist = [
     { name = "ansible-builder", specifier = ">=3.1.0" },
     { name = "bindep", specifier = ">=2.13.0" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "pyyaml", specifier = ">=6.0.1" },
     { name = "subprocess-tee", specifier = ">=0.4.2" },
 ]
 
