@@ -36,19 +36,15 @@ class TestIsGitUrl:
             ("git+https://github.com/user/repo.git", True),
             ("git+https://gitlab.com/user/repo.git", True),
             ("git+https://example.com/user/repo.git", True),
-            
             # Git+SSH URLs
             ("git+ssh://git@github.com/user/repo.git", True),
             ("git+ssh://git@gitlab.com/user/repo.git", True),
-            
             # HTTPS .git URLs
             ("https://github.com/user/repo.git", True),
             ("https://gitlab.com/user/repo.git", True),
-            
             # SSH Git URLs
             ("git@github.com:user/repo.git", True),
             ("git@gitlab.com:user/repo.git", True),
-            
             # Non-Git URLs
             ("https://github.com/user/repo", False),
             ("https://example.com/path", False),
@@ -60,7 +56,7 @@ class TestIsGitUrl:
     )
     def test_detects_git_urls_correctly(self, url: str, *, expected: bool) -> None:
         """Test that is_git_url correctly identifies Git URLs.
-        
+
         Args:
             url: The URL to test
             expected: Whether the URL should be detected as a Git URL
@@ -75,22 +71,26 @@ class TestParseGitUrlCollectionName:
         ("git_url", "expected_namespace", "expected_name"),
         [
             # GitHub URLs
-            ("git+https://github.com/redhat-cop/ansible.mcp_builder.git", "redhat_cop", "mcp_builder"),
+            (
+                "git+https://github.com/redhat-cop/ansible.mcp_builder.git",
+                "redhat_cop",
+                "mcp_builder",
+            ),
             ("https://github.com/ansible/community.general.git", "ansible", "community.general"),
             ("git@github.com:user/ansible-collection-test.git", "user", "collection_test"),
-            
             # GitLab URLs
-            ("git+https://gitlab.com/group/ansible_collection_name.git", "group", "collection_name"),
+            (
+                "git+https://gitlab.com/group/ansible_collection_name.git",
+                "group",
+                "collection_name",
+            ),
             ("https://gitlab.com/user/my-collection.git", "user", "my_collection"),
-            
             # Generic Git URLs
             ("https://git.example.com/org/ansible.test.git", "org", "test"),
             ("git+ssh://git@git.company.com/team/collection.git", "team", "collection"),
-            
             # Edge cases
             ("https://github.com/user/ansible-test.git", "user", "test"),
             ("git+https://github.com/org/ansible.prefix.name.git", "org", "prefix.name"),
-            
             # Malformed URLs (fallback behavior)
             ("invalid-url", "", ""),
             ("https://example.com", "unknown", "example.com"),  # Fallback extracts from path
@@ -103,7 +103,7 @@ class TestParseGitUrlCollectionName:
         expected_name: str,
     ) -> None:
         """Test that collection names are correctly parsed from Git URLs.
-        
+
         Args:
             git_url: The Git URL to parse
             expected_namespace: Expected namespace
@@ -123,7 +123,7 @@ class TestParseCollectionRequestGitUrl:
         output: Output,
     ) -> None:
         """Test parsing a Git URL without optional dependencies.
-        
+
         Args:
             tmp_path: Temporary directory fixture
             output: Output fixture
@@ -134,13 +134,13 @@ class TestParseCollectionRequestGitUrl:
             output=output,
         )
         git_url = "git+https://github.com/redhat-cop/ansible.mcp_builder.git"
-        
+
         collection = parse_collection_request(
             string=git_url,
             config=config,
             output=output,
         )
-        
+
         assert collection.original == git_url
         assert not collection.local
         assert collection.cnamespace == "redhat_cop"
@@ -156,7 +156,7 @@ class TestParseCollectionRequestGitUrl:
         output: Output,
     ) -> None:
         """Test parsing a Git URL with optional dependencies.
-        
+
         Args:
             tmp_path: Temporary directory fixture
             output: Output fixture
@@ -167,13 +167,13 @@ class TestParseCollectionRequestGitUrl:
             output=output,
         )
         git_url_with_deps = "git+https://github.com/user/collection.git[dev,test]"
-        
+
         collection = parse_collection_request(
             string=git_url_with_deps,
             config=config,
             output=output,
         )
-        
+
         assert collection.original == git_url_with_deps
         assert not collection.local
         assert collection.cnamespace == "user"
@@ -199,7 +199,7 @@ class TestParseCollectionRequestGitUrl:
         output: Output,
     ) -> None:
         """Test that various Git URL formats are handled correctly.
-        
+
         Args:
             git_url: The Git URL to test
             tmp_path: Temporary directory fixture
@@ -215,12 +215,12 @@ class TestParseCollectionRequestGitUrl:
             config=config,
             output=output,
         )
-        
+
         assert collection.original == git_url
         assert not collection.local
         assert collection.csource == [git_url]
         assert collection.cnamespace != ""  # Should parse some namespace
-        assert collection.cname != ""       # Should parse some name
+        assert collection.cname != ""  # Should parse some name
 
     def test_git_url_takes_precedence_over_local_path(
         self,
@@ -228,10 +228,10 @@ class TestParseCollectionRequestGitUrl:
         output: Output,
     ) -> None:
         """Test that Git URL detection takes precedence over local path checking.
-        
+
         Even if a Git URL happens to match a local path name, it should be
         treated as a Git URL, not a local collection.
-        
+
         Args:
             tmp_path: Temporary directory fixture
             output: Output fixture
@@ -244,15 +244,15 @@ class TestParseCollectionRequestGitUrl:
         # Create a local directory that looks like a Git URL
         git_url_dir = tmp_path / "git+https:"
         git_url_dir.mkdir(parents=True)
-        
+
         git_url = "git+https://github.com/user/collection.git"
-        
+
         collection = parse_collection_request(
             string=git_url,
             config=config,
             output=output,
         )
-        
+
         # Should be treated as Git URL, not local path
         assert not collection.local
         assert collection.csource == [git_url]
@@ -263,10 +263,10 @@ class TestParseCollectionRequestGitUrl:
         output: Output,
     ) -> None:
         """Test that Git URLs work alongside other collection types.
-        
+
         This simulates the installer flow where multiple collection types
         might be specified together.
-        
+
         Args:
             tmp_path: Temporary directory fixture
             output: Output fixture
@@ -285,14 +285,14 @@ namespace: test
 name: local
 version: 1.0.0
 """)
-        
+
         # Test different collection specifier types
         specifiers = [
             "community.general",  # Galaxy collection
             str(local_collection),  # Local collection
             "git+https://github.com/user/git_collection.git",  # Git URL
         ]
-        
+
         collections = []
         for spec in specifiers:
             collection = parse_collection_request(
@@ -301,19 +301,19 @@ version: 1.0.0
                 output=output,
             )
             collections.append(collection)
-        
+
         # Verify each collection type is handled correctly
         galaxy_collection = collections[0]
         assert not galaxy_collection.local
         assert galaxy_collection.cnamespace == "community"
         assert galaxy_collection.cname == "general"
         assert galaxy_collection.csource == []
-        
+
         local_collection_obj = collections[1]
         assert local_collection_obj.local
         assert local_collection_obj.cnamespace == "test"
         assert local_collection_obj.cname == "local"
-        
+
         git_collection = collections[2]
         assert not git_collection.local
         assert git_collection.cnamespace == "user"
