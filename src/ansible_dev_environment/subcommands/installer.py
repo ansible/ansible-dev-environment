@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -283,6 +284,7 @@ class Installer:
             " --force"
         )
         env = {
+            **os.environ,
             "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
         }
         msg = "Running ansible-galaxy to install non-local collection and it's dependencies."
@@ -551,6 +553,7 @@ class Installer:
             " --force"
         )
         env = {
+            **os.environ,
             "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
         }
         msg = "Running ansible-galaxy to install a local collection and it's dependencies."
