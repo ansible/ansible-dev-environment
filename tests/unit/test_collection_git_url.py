@@ -31,7 +31,7 @@ class TestIsGitUrl:
 
     @pytest.mark.parametrize(
         ("url", "expected"),
-        [
+        (
             # Git+HTTPS URLs
             ("git+https://github.com/user/repo.git", True),
             ("git+https://gitlab.com/user/repo.git", True),
@@ -52,7 +52,7 @@ class TestIsGitUrl:
             ("./local/path", False),
             ("/absolute/path", False),
             ("", False),
-        ],
+        ),
     )
     def test_detects_git_urls_correctly(self, url: str, *, expected: bool) -> None:
         """Test that is_git_url correctly identifies Git URLs.
@@ -69,7 +69,7 @@ class TestParseGitUrlCollectionName:
 
     @pytest.mark.parametrize(
         ("git_url", "expected_namespace", "expected_name"),
-        [
+        (
             # GitHub URLs
             (
                 "git+https://github.com/redhat-cop/ansible.mcp_builder.git",
@@ -94,7 +94,7 @@ class TestParseGitUrlCollectionName:
             # Malformed URLs (fallback behavior)
             ("invalid-url", "", ""),
             ("https://example.com", "unknown", "example.com"),  # Fallback extracts from path
-        ],
+        ),
     )
     def test_parses_collection_names_correctly(
         self,
@@ -119,13 +119,11 @@ class TestParseCollectionRequestGitUrl:
 
     def test_parses_git_url_without_dependencies(
         self,
-        tmp_path: Path,
         output: Output,
     ) -> None:
         """Test parsing a Git URL without optional dependencies.
 
         Args:
-            tmp_path: Temporary directory fixture
             output: Output fixture
         """
         config = Config(
@@ -152,13 +150,11 @@ class TestParseCollectionRequestGitUrl:
 
     def test_parses_git_url_with_dependencies(
         self,
-        tmp_path: Path,
         output: Output,
     ) -> None:
         """Test parsing a Git URL with optional dependencies.
 
         Args:
-            tmp_path: Temporary directory fixture
             output: Output fixture
         """
         config = Config(
@@ -185,24 +181,22 @@ class TestParseCollectionRequestGitUrl:
 
     @pytest.mark.parametrize(
         "git_url",
-        [
+        (
             "git+https://github.com/ansible/community.general.git",
             "https://gitlab.com/user/collection.git",
             "git@github.com:org/ansible-test.git",
             "git+ssh://git@git.example.com/team/collection.git",
-        ],
+        ),
     )
     def test_handles_various_git_url_formats(
         self,
         git_url: str,
-        tmp_path: Path,
         output: Output,
     ) -> None:
         """Test that various Git URL formats are handled correctly.
 
         Args:
             git_url: The Git URL to test
-            tmp_path: Temporary directory fixture
             output: Output fixture
         """
         config = Config(

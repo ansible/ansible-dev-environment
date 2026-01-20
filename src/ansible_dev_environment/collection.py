@@ -126,7 +126,7 @@ def parse_git_url_collection_name(git_url: str) -> tuple[str, str]:
     repo_match = re.search(r"/([^/]+?)(?:\.git)?(?:\[.*\])?$", git_url)
     if repo_match:
         name = repo_match.group(1).replace("-", "_")
-        if name.startswith("ansible_") or name.startswith("ansible."):
+        if name.startswith(("ansible_", "ansible.")):
             name = name[8:]
         return "unknown", name
 
