@@ -73,6 +73,66 @@ class Collection:  # pylint: disable=too-many-instance-attributes
         return self.config.site_pkg_collections_path / self.cnamespace / self.cname
 
 
+def is_git_url(string: str) -> bool:
+    """Check if string is a Git URL.
+
+    Args:
+        string: The string to check
+
+    Returns:
+        True if the string appears to be a Git URL, False otherwise
+    """
+    git_patterns = [
+        r"^git\+https?://",  # git+https://github.com/user/repo.git
+        r"^git\+ssh://",  # git+ssh://git@github.com/user/repo.git
+        r"^https?://.*\.git$",  # https://github.com/user/repo.git
+        r"^git@.*:.*\.git$",  # git@github.com:user/repo.git
+    ]
+    return any(re.match(pattern, string) for pattern in git_patterns)
+
+
+def parse_git_url_collection_name(git_url: str) -> tuple[str, str]:
+    """Extract collection namespace and name from Git URL.
+
+    For now, we'll use a simple heuristic based on the repository name.
+    In the future, this could be enhanced to clone and read galaxy.yml.
+
+    Args:
+        git_url: The Git URL to parse
+
+    Returns:
+        Tuple of (namespace, name) - may be empty strings if cannot be determined
+    """
+    # Extract repo name from various Git URL formats
+    patterns = [
+        r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?(?:\[.*\])?$",  # GitHub
+        r"gitlab\.com[:/]([^/]+)/([^/]+?)(?:\.git)?(?:\[.*\])?$",  # GitLab
+        r"[:/]([^/]+)/([^/]+?)(?:\.git)?(?:\[.*\])?$",  # Generic
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, git_url)
+        if match:
+            namespace = match.group(1).replace("-", "_")  # Convert hyphens to underscores
+            name = match.group(2).replace("-", "_")
+            # Remove common prefixes that might not be part of collection name
+            if name.startswith("ansible_"):
+                name = name[8:]  # Remove 'ansible_' prefix
+            elif name.startswith("ansible."):
+                name = name[8:]  # Remove 'ansible.' prefix
+            return namespace, name
+
+    # Fallback: use 'unknown' namespace and extract just the repo name
+    repo_match = re.search(r"/([^/]+?)(?:\.git)?(?:\[.*\])?$", git_url)
+    if repo_match:
+        name = repo_match.group(1).replace("-", "_")
+        if name.startswith(("ansible_", "ansible.")):
+            name = name[8:]
+        return "unknown", name
+
+    return "", ""
+
+
 def parse_collection_request(  # noqa: PLR0915
     string: str,
     config: Config,
@@ -90,11 +150,38 @@ def parse_collection_request(  # noqa: PLR0915
     Returns:
         A collection object
     """
-    # spec with dep, local
+    # spec with dep, local or git
     if "[" in string and "]" in string:
         msg = f"Found optional dependencies in collection request: {string}"
         output.debug(msg)
-        path = Path(string.split("[")[0]).expanduser().resolve()
+        base_spec = string.split("[")[0]
+        opt_deps = string.split("[")[1].split("]")[0]
+        msg = f"Setting optional dependencies: {opt_deps}"
+        output.debug(msg)
+
+        # Check if it's a Git URL with optional dependencies
+        if is_git_url(base_spec):
+            msg = f"Found Git URL collection request with dependencies: {string}"
+            output.debug(msg)
+            cnamespace, cname = parse_git_url_collection_name(base_spec)
+            msg = f"Parsed Git URL - namespace: {cnamespace}, name: {cname}"
+            output.debug(msg)
+            local = False
+            msg = "Setting request as non-local (Git URL)"
+            output.debug(msg)
+            return Collection(
+                config=config,
+                path=Path(),
+                opt_deps=opt_deps,
+                local=local,
+                cnamespace=cnamespace,
+                cname=cname,
+                csource=[base_spec],  # Store the Git URL
+                specifier="",
+                original=string,
+            )
+        # Local path with dependencies
+        path = Path(base_spec).expanduser().resolve()
         if not path.exists():
             msg = "Provide an existing path to a collection when specifying optional dependencies."
             output.hint(msg)
@@ -103,9 +190,6 @@ def parse_collection_request(  # noqa: PLR0915
         msg = f"Found local collection request with dependencies: {string}"
         output.debug(msg)
         msg = f"Setting collection path: {path}"
-        output.debug(msg)
-        opt_deps = string.split("[")[1].split("]")[0]
-        msg = f"Setting optional dependencies: {opt_deps}"
         output.debug(msg)
         local = True
         msg = "Setting request as local"
@@ -123,6 +207,28 @@ def parse_collection_request(  # noqa: PLR0915
         )
         get_galaxy(collection=collection, output=output)
         return collection
+    # Check if it's a Git URL without dependencies
+    if is_git_url(string):
+        msg = f"Found Git URL collection request without dependencies: {string}"
+        output.debug(msg)
+        cnamespace, cname = parse_git_url_collection_name(string)
+        msg = f"Parsed Git URL - namespace: {cnamespace}, name: {cname}"
+        output.debug(msg)
+        local = False
+        msg = "Setting request as non-local (Git URL)"
+        output.debug(msg)
+        return Collection(
+            config=config,
+            path=Path(),
+            opt_deps="",
+            local=local,
+            cnamespace=cnamespace,
+            cname=cname,
+            csource=[string],  # Store the Git URL
+            specifier="",
+            original=string,
+        )
+
     # spec without dep, local
     path = Path(string).expanduser().resolve()
     if path.exists():
