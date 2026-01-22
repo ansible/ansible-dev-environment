@@ -612,7 +612,10 @@ def test_reinstall_editable(
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    assert collection_path.exists()
+    assert collection_path.is_dir()
+    assert (collection_path / "galaxy.yml").is_symlink()
 
     monkeypatch.setattr(
         "sys.argv",
@@ -630,7 +633,72 @@ def test_reinstall_editable(
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    assert not (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+    assert collection_path.exists()
+    assert collection_path.is_dir()
+    assert not (collection_path / "galaxy.yml").is_symlink()
+
+
+def test_reinstall_galaxy_over_legacy_symlink(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that reinstalling from galaxy cleans up old-style symlink collections.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    venv_path = tmp_path / "venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    assert collection_path.is_dir()
+
+    shutil.rmtree(collection_path)
+    collection_path.symlink_to(installable_local_collection)
+    assert collection_path.is_symlink()
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "ansible.posix",
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    assert collection_path.exists()
+    assert collection_path.is_dir()
+    assert not collection_path.is_symlink()
 
 
 def test_install_fails(
@@ -797,14 +865,32 @@ def test_reinstall_local_collection(  # pylint: disable=too-many-positional-argu
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink() is first
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    if first:
+        assert collection_path.exists()
+        assert collection_path.is_dir()
+        assert (collection_path / "galaxy.yml").is_symlink()
+    else:
+        assert collection_path.exists()
+        assert collection_path.is_dir()
+        assert not (collection_path / "galaxy.yml").is_symlink()
+
     monkeypatch.setattr("sys.argv", cli_args + (["--editable"] if second else []))
     args = parse()
     config = Config(args=args, output=output, term_features=output.term_features)
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink() is second
+
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    if second:
+        assert collection_path.exists()
+        assert collection_path.is_dir()
+        assert (collection_path / "galaxy.yml").is_symlink()
+    else:
+        assert collection_path.exists()
+        assert collection_path.is_dir()
+        assert not (collection_path / "galaxy.yml").is_symlink()
 
 
 def test_reinstall_local_collection_after_galaxy(
@@ -851,7 +937,10 @@ def test_reinstall_local_collection_after_galaxy(
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    assert collection_path.exists()
+    assert collection_path.is_dir()
+    assert (collection_path / "galaxy.yml").is_symlink()
 
 
 def test_reinstall_requirements_file(
@@ -910,7 +999,10 @@ def test_reinstall_requirements_file_after_editable(
     config.init()
     installer = Installer(config=config, output=config._output)
     installer.run()
-    assert (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    assert collection_path.exists()
+    assert collection_path.is_dir()
+    assert (collection_path / "galaxy.yml").is_symlink()
     galaxy = {
         "collections": [{"name": "ansible.posix"}],
     }
@@ -937,6 +1029,78 @@ def test_reinstall_requirements_file_after_editable(
     installer = Installer(config=config, output=config._output)
     installer.run()
     assert not (config.site_pkg_collections_path / "ansible" / "posix").is_symlink()
+
+
+def test_reinstall_requirements_over_legacy_symlink(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that installing from requirements cleans up old-style symlink collections.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        output: The output fixture.
+        monkeypatch: The monkeypatch fixture.
+    """
+    venv_path = tmp_path / "venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    assert collection_path.is_dir()
+
+    shutil.rmtree(collection_path)
+    collection_path.symlink_to(installable_local_collection)
+    assert collection_path.is_symlink()
+
+    galaxy = {
+        "collections": [{"name": "ansible.posix"}],
+    }
+    galaxy_file = tmp_path / "requirements.yml"
+    yaml.dump(galaxy, galaxy_file.open("w"))
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--requirement",
+            str(galaxy_file),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    cli = Cli()
+    cli.parse_args()
+    args = cli.args
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    assert collection_path.exists()
+    assert collection_path.is_dir()
+    assert not collection_path.is_symlink()
 
 
 def test_install_requirements_file_failed(
