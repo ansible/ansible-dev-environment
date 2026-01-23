@@ -651,7 +651,7 @@ class Installer:
 
         # Fallback to intelligent filtering
         msg = "No git repository found, using heuristic filtering"
-        self._output.warning(msg)
+        self._output.debug(msg)
         return self._get_filtered_root_items(collection)
 
     def _get_git_tracked_root_items(self, collection: Collection) -> set[str]:
