@@ -155,7 +155,7 @@ def parse_collection_request(  # noqa: PLR0915
         msg = f"Found optional dependencies in collection request: {string}"
         output.debug(msg)
         base_spec = string.split("[", maxsplit=1)[0]
-        opt_deps = string.split("[")[1].split("]")[0]
+        opt_deps = string.split("[")[1].split("]", maxsplit=1)[0]
         msg = f"Setting optional dependencies: {opt_deps}"
         output.debug(msg)
 
