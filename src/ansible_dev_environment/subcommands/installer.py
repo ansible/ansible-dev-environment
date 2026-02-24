@@ -34,6 +34,29 @@ if TYPE_CHECKING:
     from ansible_dev_environment.config import Config
     from ansible_dev_environment.output import Output
 
+ANSIBLE_CORE_REPO_URL = "https://github.com/ansible/ansible/archive"
+
+
+def _resolve_core_package(core_version: str) -> str:
+    """Resolve an ansible-core version specifier to a pip-installable package.
+
+    Accepts a PyPI version (e.g. ``2.19.0``), a GitHub branch name
+    (e.g. ``devel``, ``milestone``, ``stable-2.16``), or a direct URL.
+
+    Args:
+        core_version: The version, branch name, or URL.
+
+    Returns:
+        A pip-installable package specifier.
+    """
+    if core_version.startswith(("http://", "https://")):
+        return core_version
+
+    if re.match(r"^\d+(\.\d+)+$", core_version):
+        return f"ansible-core=={core_version}"
+
+    return f"{ANSIBLE_CORE_REPO_URL}/{core_version}.tar.gz"
+
 
 def format_process(exc: subprocess.CalledProcessError) -> str:
     """Format the subprocess exception.
@@ -155,14 +178,14 @@ class Installer:
             self._output.debug(msg)
             return
 
-        msg = "Installing ansible-core."
-        self._output.debug(msg)
-        command = f"{self._config.venv_pip_install_cmd} ansible-core"
-
         if core_version:
-            command += f"=={core_version}"
-            msg = f"Using user specified ansible-core version: {core_version}"
-            self._output.debug(msg)
+            package = _resolve_core_package(core_version)
+            msg = f"Installing ansible-core from: {package}"
+        else:
+            package = "ansible-core"
+            msg = "Installing ansible-core."
+        self._output.debug(msg)
+        command = f"{self._config.venv_pip_install_cmd} {package}"
 
         try:
             subprocess_run(
