@@ -60,7 +60,7 @@ def _resolve_core_package(core_version: str) -> str:
             pass
         else:
             return f"ansible-core=={core_version}"
-    elif re.match(r"^\d", core_version):
+    elif re.match(r"^\d+\.\d+", core_version):
         return f"ansible-core=={core_version}"
 
     return f"{ANSIBLE_CORE_REPO_URL}/{core_version}.tar.gz"

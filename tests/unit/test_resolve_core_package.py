@@ -65,6 +65,10 @@ def test_resolve_core_package(core_version: str, expected: str) -> None:
 def test_resolve_core_package_without_packaging(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify fallback when the packaging library is unavailable.
 
+    Without the packaging library the fallback uses a regex that matches
+    strings starting with ``<digits>.<digits>``.  Strings that do not match
+    that pattern are treated as branch names.
+
     Args:
         monkeypatch: Pytest monkeypatch fixture.
     """
@@ -72,3 +76,5 @@ def test_resolve_core_package_without_packaging(monkeypatch: pytest.MonkeyPatch)
     assert _resolve_core_package("2.19.0") == "ansible-core==2.19.0"
     assert _resolve_core_package("2.19.0rc1") == "ansible-core==2.19.0rc1"
     assert _resolve_core_package("devel") == f"{ANSIBLE_CORE_REPO_URL}/devel.tar.gz"
+    assert _resolve_core_package("2devel") == f"{ANSIBLE_CORE_REPO_URL}/2devel.tar.gz"
+    assert _resolve_core_package("1abc") == f"{ANSIBLE_CORE_REPO_URL}/1abc.tar.gz"
