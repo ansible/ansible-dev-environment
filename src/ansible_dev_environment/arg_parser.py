@@ -219,7 +219,7 @@ def parse() -> argparse.Namespace:
         "--acv",
         "--ansible-core-version",
         dest="ansible_core_version",
-        help="Ansible core version to use. (e.g. --acv 2.19.0)",
+        help="Ansible core version, branch, or URL to use. (e.g. --acv 2.19.0, --acv stable-2.16, --acv devel)",
     )
 
     install.add_argument(

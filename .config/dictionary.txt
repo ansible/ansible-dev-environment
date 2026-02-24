@@ -26,6 +26,7 @@ netcommon
 platinclude
 platlib
 platstdlib
+postrelease
 purelib
 pylibssh
 reqs
