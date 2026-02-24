@@ -16,6 +16,9 @@ from ansible_dev_environment.subcommands.installer import (
         ("2.16.0", "ansible-core==2.16.0"),
         ("2.19.3", "ansible-core==2.19.3"),
         ("2.16.14", "ansible-core==2.16.14"),
+        ("2.19.0rc1", "ansible-core==2.19.0rc1"),
+        ("2.19.0b2", "ansible-core==2.19.0b2"),
+        ("2.19.0.post1", "ansible-core==2.19.0.post1"),
         ("devel", f"{ANSIBLE_CORE_REPO_URL}/devel.tar.gz"),
         ("milestone", f"{ANSIBLE_CORE_REPO_URL}/milestone.tar.gz"),
         ("stable-2.16", f"{ANSIBLE_CORE_REPO_URL}/stable-2.16.tar.gz"),
@@ -37,6 +40,9 @@ from ansible_dev_environment.subcommands.installer import (
         "pypi-three-part",
         "pypi-three-part-recent",
         "pypi-three-part-patch",
+        "pypi-prerelease-rc",
+        "pypi-prerelease-beta",
+        "pypi-postrelease",
         "branch-devel",
         "branch-milestone",
         "branch-stable-2.16",
@@ -54,3 +60,15 @@ def test_resolve_core_package(core_version: str, expected: str) -> None:
         expected: The expected pip-installable package specifier.
     """
     assert _resolve_core_package(core_version) == expected
+
+
+def test_resolve_core_package_without_packaging(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify fallback when the packaging library is unavailable.
+
+    Args:
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    monkeypatch.setattr("ansible_dev_environment.subcommands.installer.version", None)
+    assert _resolve_core_package("2.19.0") == "ansible-core==2.19.0"
+    assert _resolve_core_package("2.19.0rc1") == "ansible-core==2.19.0rc1"
+    assert _resolve_core_package("devel") == f"{ANSIBLE_CORE_REPO_URL}/devel.tar.gz"
