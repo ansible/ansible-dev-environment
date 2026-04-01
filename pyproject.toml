@@ -401,6 +401,20 @@ convention = "google"
 [tool.ruff.lint.pylint]
 max-args = 6 # 5 is the default
 
+[tool.setuptools_scm]
+git_describe_command = [
+  "git",
+  "describe",
+  "--dirty",
+  "--long",
+  "--tags",
+  "--match",
+  "v*.*"
+]
+local_scheme = "no-local-version"
+tag_regex = "^(?P<prefix>v)?(?P<version>\\d+[^\\+]*)(?P<suffix>.*)?$"
+version_file = "src/ansible_dev_environment/_version.py"
+
 [tool.tomlsort]
 in_place = true
 sort_inline_tables = true
@@ -603,20 +617,6 @@ COVERAGE_PROCESS_START = "{tox_root}/pyproject.toml"
 FORCE_COLOR = "1"
 PRE_COMMIT_COLOR = "always"
 TERM = "xterm-256color"
-
-[tool.setuptools_scm]
-git_describe_command = [
-  "git",
-  "describe",
-  "--dirty",
-  "--long",
-  "--tags",
-  "--match",
-  "v*.*",
-]
-local_scheme = "no-local-version"
-tag_regex = "^(?P<prefix>v)?(?P<version>\\d+[^\\+]*)(?P<suffix>.*)?$"
-version_file = "src/ansible_dev_environment/_version.py"
 
 [tool.uv]
 package = true
