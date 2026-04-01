@@ -604,5 +604,19 @@ FORCE_COLOR = "1"
 PRE_COMMIT_COLOR = "always"
 TERM = "xterm-256color"
 
+[tool.setuptools_scm]
+git_describe_command = [
+  "git",
+  "describe",
+  "--dirty",
+  "--long",
+  "--tags",
+  "--match",
+  "v*.*",
+]
+local_scheme = "no-local-version"
+tag_regex = "^(?P<prefix>v)?(?P<version>\\d+[^\\+]*)(?P<suffix>.*)?$"
+version_file = "src/ansible_dev_environment/_version.py"
+
 [tool.uv]
 package = true
