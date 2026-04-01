@@ -19,11 +19,11 @@
   "python.testing.pytestArgs": ["tests"],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "triggerTaskOnSave.tasks": {
-    "pydoclint": ["*.py"]
-  },
   "sonarlint.connectedMode.project": {
     "connectionId": "ansible",
     "projectKey": "ansible_ansible-dev-environment"
+  },
+  "triggerTaskOnSave.tasks": {
+    "pydoclint": ["*.py"]
   }
 }
