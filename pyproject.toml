@@ -436,6 +436,7 @@ commands = [
 ]
 commands_post = []
 commands_pre = []
+dependency_groups = ["lint"]
 description = "Bump all test dependencies"
 env_dir = "{work_dir}/lint"
 skip_install = true
