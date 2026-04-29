@@ -11,6 +11,8 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import yaml
+
 
 try:
     from packaging import specifiers, version
@@ -19,6 +21,7 @@ except ImportError:
     version = None  # type: ignore[assignment]
 
 from ansible_dev_environment.collection import Collection, parse_collection_request
+from ansible_dev_environment.constants import GALAXY_YAML
 from ansible_dev_environment.utils import (
     builder_introspect,
     collections_from_requirements,
@@ -131,6 +134,7 @@ class Installer:
                 self._install_local_collection(collection=local_collection)
                 if self._config.args.editable:
                     self._swap_editable_collection(collection=local_collection)
+                    self._ensure_build_ignore(collection=local_collection)
             distant_collections = [collection for collection in collections if not collection.local]
             if distant_collections:
                 if self._config.args.editable:
@@ -604,8 +608,8 @@ class Installer:
         # preserve the MANIFEST.json file for editable installs
         if not self._config.args.editable:
             shutil.copy(
-                collection.build_dir / "galaxy.yml",
-                collection.site_pkg_path / "galaxy.yml",
+                collection.build_dir / GALAXY_YAML,
+                collection.site_pkg_path / GALAXY_YAML,
             )
         else:
             shutil.copy(
@@ -658,6 +662,60 @@ class Installer:
             "Note: If you add new root-level directories or files to your collection, "
             "you will need to re-run 'ade install -e .' to include them in the editable install."
         )
+        self._output.note(msg)
+
+    def _ensure_build_ignore(self, collection: Collection) -> None:
+        """Ensure galaxy.yml build_ignore includes dev artifacts created by editable installs.
+
+        Args:
+            collection: The collection object.
+        """
+        galaxy_file = collection.path / GALAXY_YAML
+        if not galaxy_file.exists():
+            return
+
+        content = galaxy_file.read_text(encoding="utf-8")
+
+        with galaxy_file.open(encoding="utf-8") as fh:
+            try:
+                galaxy_data = yaml.safe_load(fh)
+            except yaml.YAMLError:
+                msg = f"Failed to parse {galaxy_file}, skipping build_ignore update."
+                self._output.warning(msg)
+                return
+
+        if galaxy_data is None:
+            return
+
+        existing = set(galaxy_data.get("build_ignore") or [])
+        entries_to_add = [e for e in (".venv", "collections", ".tox") if e not in existing]
+
+        if not entries_to_add:
+            return
+
+        lines = content.splitlines(keepends=True)
+        insert_idx = None
+        indent = "  "
+
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("- ") and insert_idx is not None:
+                indent = line[: len(line) - len(stripped)]
+                insert_idx = i + 1
+            elif stripped.startswith("build_ignore:"):
+                insert_idx = i + 1
+
+        if insert_idx is None:
+            lines.append("\nbuild_ignore:\n")
+            insert_idx = len(lines)
+            indent = "  "
+
+        new_lines = [f"{indent}- {entry}\n" for entry in entries_to_add]
+        lines[insert_idx:insert_idx] = new_lines
+
+        galaxy_file.write_text("".join(lines), encoding="utf-8")
+
+        msg = f"Added {', '.join(entries_to_add)} to build_ignore in galaxy.yml."
         self._output.note(msg)
 
     def _get_root_items_to_symlink(self, collection: Collection) -> set[str]:

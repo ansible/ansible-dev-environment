@@ -22,6 +22,7 @@ delenv
 excinfo
 fileh
 fqcn
+keepends
 netcommon
 platinclude
 platlib
