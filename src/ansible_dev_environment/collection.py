@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import yaml
 
+from .constants import GALAXY_YAML
+
 
 if TYPE_CHECKING:
     from .config import Config
@@ -314,7 +316,7 @@ def get_galaxy(collection: Collection, output: Output) -> None:
     Raises:
         SystemExit: If the collection name is not found
     """
-    file_name = collection.path / "galaxy.yml"
+    file_name = collection.path / GALAXY_YAML
     if not file_name.exists():
         err = f"Failed to find {file_name} in {collection.path}"
         output.critical(err)

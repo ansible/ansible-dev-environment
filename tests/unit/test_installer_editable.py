@@ -7,7 +7,10 @@ import subprocess
 
 from typing import TYPE_CHECKING
 
+import yaml
+
 from ansible_dev_environment.arg_parser import parse
+from ansible_dev_environment.collection import Collection
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.subcommands.installer import Installer
 
@@ -17,7 +20,6 @@ if TYPE_CHECKING:
 
     import pytest
 
-    from ansible_dev_environment.collection import Collection
     from ansible_dev_environment.output import Output
 
 
@@ -379,3 +381,288 @@ def test_editable_skips_nonexistent_source_items(
     assert (collection_site_pkg / "galaxy.yml").exists()
     assert (collection_site_pkg / "galaxy.yml").is_symlink()
     assert not (collection_site_pkg / "plugins").exists()
+
+
+def test_editable_adds_build_ignore_entries(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that editable install adds .venv, collections, .tox to build_ignore.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    galaxy_file = installable_local_collection / "galaxy.yml"
+    galaxy_data = yaml.safe_load(galaxy_file.read_text())
+    galaxy_data["build_ignore"] = [".gitignore"]
+    yaml.dump(galaxy_data, galaxy_file.open("w"))
+
+    venv_path = tmp_path / "venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    updated = yaml.safe_load(galaxy_file.read_text())
+    build_ignore = updated.get("build_ignore", [])
+    assert ".venv" in build_ignore
+    assert "collections" in build_ignore
+    assert ".tox" in build_ignore
+    assert ".gitignore" in build_ignore
+
+
+def test_editable_build_ignore_idempotent(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that running editable install twice does not duplicate build_ignore entries.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    galaxy_file = installable_local_collection / "galaxy.yml"
+    galaxy_data = yaml.safe_load(galaxy_file.read_text())
+    galaxy_data["build_ignore"] = [".gitignore", ".venv", "collections", ".tox"]
+    yaml.dump(galaxy_data, galaxy_file.open("w"))
+
+    original_content = galaxy_file.read_text()
+
+    venv_path = tmp_path / "venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    assert galaxy_file.read_text() == original_content
+
+
+def test_editable_build_ignore_no_existing_section(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that build_ignore section is created when it does not exist.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    galaxy_file = installable_local_collection / "galaxy.yml"
+    galaxy_data = yaml.safe_load(galaxy_file.read_text())
+    galaxy_data.pop("build_ignore", None)
+    yaml.dump(galaxy_data, galaxy_file.open("w"))
+
+    venv_path = tmp_path / "venv"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    updated = yaml.safe_load(galaxy_file.read_text())
+    build_ignore = updated.get("build_ignore", [])
+    assert ".venv" in build_ignore
+    assert "collections" in build_ignore
+    assert ".tox" in build_ignore
+
+
+def _make_installer(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> Installer:
+    """Create an Installer instance after a successful run.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+
+    Returns:
+        A configured Installer instance.
+    """
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+    return installer
+
+
+def _make_mock_collection(
+    config: Config,
+    installable_local_collection: Path,
+) -> Collection:
+    """Create a mock Collection pointing at the test collection path.
+
+    Args:
+        config: The configuration object.
+        installable_local_collection: The collection path.
+
+    Returns:
+        A Collection object.
+    """
+    return Collection(
+        config=config,
+        path=installable_local_collection,
+        opt_deps="",
+        local=True,
+        cnamespace="ansible",
+        cname="posix",
+        csource=[],
+        specifier="",
+        original=".",
+    )
+
+
+def test_editable_build_ignore_skips_missing_galaxy(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _ensure_build_ignore skips when galaxy.yml does not exist.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    installer = _make_installer(
+        tmp_path,
+        installable_local_collection,
+        monkeypatch,
+        output,
+    )
+    galaxy_file = installable_local_collection / "galaxy.yml"
+    galaxy_file.unlink()
+
+    mock_collection = _make_mock_collection(installer._config, installable_local_collection)
+    installer._ensure_build_ignore(collection=mock_collection)
+    assert not galaxy_file.exists()
+
+
+def test_editable_build_ignore_skips_invalid_yaml(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _ensure_build_ignore skips when galaxy.yml has invalid YAML.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    installer = _make_installer(
+        tmp_path,
+        installable_local_collection,
+        monkeypatch,
+        output,
+    )
+    galaxy_file = installable_local_collection / "galaxy.yml"
+    galaxy_file.write_text(": [\ninvalid yaml\n")
+
+    mock_collection = _make_mock_collection(installer._config, installable_local_collection)
+    installer._ensure_build_ignore(collection=mock_collection)
+    assert galaxy_file.read_text() == ": [\ninvalid yaml\n"
+
+
+def test_editable_build_ignore_skips_empty_yaml(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _ensure_build_ignore skips when galaxy.yml is empty.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    installer = _make_installer(
+        tmp_path,
+        installable_local_collection,
+        monkeypatch,
+        output,
+    )
+    galaxy_file = installable_local_collection / "galaxy.yml"
+    galaxy_file.write_text("")
+
+    mock_collection = _make_mock_collection(installer._config, installable_local_collection)
+    installer._ensure_build_ignore(collection=mock_collection)
+    assert galaxy_file.read_text() == ""
