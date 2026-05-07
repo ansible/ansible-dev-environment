@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING
 import subprocess_tee
 import yaml
 
+from ansible_dev_environment.constants import GALAXY_YAML
+
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -395,8 +397,8 @@ def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
                 file = some_info_dirs[0] / "GALAXY.yml"
                 editable_location = ""
 
-            elif (name_dir / "galaxy.yml").exists():
-                file = name_dir / "galaxy.yml"
+            elif (name_dir / GALAXY_YAML).exists():
+                file = name_dir / GALAXY_YAML
                 editable_location = str(name_dir.resolve()) if name_dir.is_symlink() else ""
 
             if file:

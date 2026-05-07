@@ -67,8 +67,11 @@ class Lister:
             collection_path = (
                 self._config.site_pkg_collections_path / collection_namespace / collection_name
             )
+            collection_galaxy_path = collection_path / "galaxy.yml"
             if collection_path.is_symlink():
                 editable_location = str(collection_path.resolve())
+            elif collection_galaxy_path.is_symlink():
+                editable_location = str(collection_galaxy_path.resolve().parent)
             else:
                 editable_location = ""
 
