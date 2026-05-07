@@ -231,3 +231,70 @@ def test_editable(
     captured = capsys.readouterr()
     assert "ansible.posix" in captured.out
     assert str(tmp_path / "ansible.posix") in captured.out
+
+
+def test_editable_galaxy_yml_symlink(
+    tmp_path: Path,
+    output: Output,
+    galaxy_cache: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test the lister detects editable installs via galaxy.yml symlink.
+
+    When a collection directory is not itself a symlink but contains a
+    symlinked galaxy.yml, the lister should resolve the symlink to find
+    the editable project location.
+
+    Args:
+        tmp_path: The tmp_path fixture.
+        output: The output fixture.
+        galaxy_cache: The galaxy_cache fixture.
+        capsys: The capsys fixture.
+        monkeypatch: The monkeypatch fixture.
+
+    """
+    src_dir = tmp_path / "ansible.posix"
+    tar_file_path = next(galaxy_cache.glob("ansible-posix*"))
+    with tarfile.open(tar_file_path, "r") as tar:
+        try:
+            tar.extractall(src_dir, filter="data")
+        except TypeError:
+            tar.extractall(src_dir)  # noqa: S202
+    galaxy_contents = {
+        "authors": "author",
+        "name": "posix",
+        "namespace": "ansible",
+        "readme": "readme",
+        "version": "1.0.0",
+    }
+    yaml.dump(galaxy_contents, (src_dir / "galaxy.yml").open("w"))
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(src_dir),
+            "--lf",
+            str(tmp_path / "ade.log"),
+            "--venv",
+            str(tmp_path / "venv"),
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    installer = Installer(config=config, output=config._output)
+    installer.run()
+
+    collection_path = config.site_pkg_collections_path / "ansible" / "posix"
+    assert not collection_path.is_symlink(), "collection dir should not be a symlink"
+    assert (collection_path / "galaxy.yml").is_symlink(), "galaxy.yml should be a symlink"
+
+    lister = Lister(config=config, output=config._output)
+    lister.run()
+    captured = capsys.readouterr()
+    assert "ansible.posix" in captured.out
+    assert str(src_dir) in captured.out
