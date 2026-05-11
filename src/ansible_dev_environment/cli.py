@@ -141,7 +141,7 @@ class Cli:
             else:
                 self.acfg_cwd.set_or_update_collections_path()
                 msg = f"{self.acfg_cwd.path} updated with '{CP}' to isolate this workspace."
-                self.output.warning(msg)
+                self.output.note(msg)
             self.acfg_trusted = self.acfg_cwd.path
             return True
 
@@ -154,7 +154,7 @@ class Cli:
                 msg = (
                     f"{self.acfg_home.path} updated with '{CP}' to isolate this and all workspaces."
                 )
-                self.output.warning(msg)
+                self.output.note(msg)
             self.acfg_trusted = self.acfg_home.path
             return True
 
