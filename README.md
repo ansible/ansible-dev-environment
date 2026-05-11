@@ -161,7 +161,7 @@ usage: ade install [-h] [--venv <directory>] [--cpi] [--ssp] [-r REQUIREMENT]
                    [collection_specifier ...]
 
 Options:
-  --venv <directory>        Target virtual environment (default: .venv)
+  --venv <directory>       Target virtual environment (default: .venv)
   -e, --editable           Install in editable mode (development)
   -r, --requirement <file> Install from requirements file
   -p, --python             Python interpreter for virtual environment (version, name, or path)
@@ -212,11 +212,21 @@ Info: Found collection name: example.demo from ./galaxy.yml
 Note: Created virtual environment: .venv
 Info: Installing ansible-dev-tools
 Info: Installing python requirements from ./requirements.txt
-Info: Installing python requirements from ./test-requirements.txt
 Info: Installing ansible-core
 Info: Installing collection dependencies
 Info: Installing local collection: example.demo
 ```
+
+### Using multiple virtual environments
+
+When `-e, --editable` is used you can create multiple virtual environments.
+
+```bash
+ade install -e ".[test]" --venv .test-venv
+```
+
+This will create a new virtual environment in `.test-venv` and install the
+dependencies listed in `test-requirements.txt` or `requirements-test.txt`.
 
 ### Install from Requirements File
 
@@ -284,7 +294,7 @@ This ensures Ansible only discovers collections from the current workspace.
 `ade` processes these requirement files when present:
 
 - `requirements.txt` - Runtime Python dependencies
-- `test-requirements.txt` - Development/testing dependencies
+- `test-requirements.txt` - Development/testing dependencies when using `-e ".[test]"`
 - `requirements.yml` - Collection dependencies (processed by ansible-galaxy)
 
 ## Troubleshooting
