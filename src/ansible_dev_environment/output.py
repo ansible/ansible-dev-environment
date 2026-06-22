@@ -224,7 +224,7 @@ class Msg:
 class Output:
     """Output functionality."""
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(
         self,
         log_file: str,
         log_level: str,
