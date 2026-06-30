@@ -604,5 +604,6 @@ PRE_COMMIT_COLOR = "always"
 TERM = "xterm-256color"
 
 [tool.uv]
+constraint-dependencies = ["cairosvg>=2.9.0"]
 default-groups = "all"
 package = true
