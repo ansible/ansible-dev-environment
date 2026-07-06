@@ -408,6 +408,7 @@ max-args = 6  # 5 is the default
 
 [tool.setuptools_scm]
 version_file = "src/ansible_dev_environment/_version.py"
+write_to_source = true
 
 [tool.tomlsort]
 in_place = true
