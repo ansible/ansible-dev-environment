@@ -9,6 +9,13 @@ on:
       - "stable/**"
   workflow_dispatch:
 
+# Explicit permissions required: CodeQL actions/missing-workflow-permissions.
+# Caller must grant at least what team-devtools push.yml needs (contents write
+# for release-drafter draft updates; pull-requests read for changelog input).
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   ack:
     uses: ansible/team-devtools/.github/workflows/push.yml@main
