@@ -10,6 +10,14 @@ on:
   pull_request_target:
     types: [opened, labeled, unlabeled, synchronize]
 
+# Explicit permissions required: CodeQL actions/missing-workflow-permissions.
+# Caller must grant at least what team-devtools ack.yml needs (checks, PR
+# approve/merge, and contents write for release-drafter autolabeler).
+permissions:
+  checks: write
+  contents: write
+  pull-requests: write
+
 jobs:
   ack:
     uses: ansible/team-devtools/.github/workflows/ack.yml@main
