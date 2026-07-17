@@ -1,9 +1,12 @@
+Bindep
+REQS
+Reqs
+XDIST
 acfg
 adtv
 argnames
 argvalues
 bindep
-Bindep
 bindir
 bthornto
 caplog
@@ -28,12 +31,9 @@ postrelease
 purelib
 pylibssh
 reqs
-Reqs
-REQS
 sessionstart
 testcol
 testns
 treemaker
 unisolated
 usefixtures
-XDIST
