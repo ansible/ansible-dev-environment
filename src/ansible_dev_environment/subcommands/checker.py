@@ -59,10 +59,11 @@ class Checker:
         if not isinstance(details, dict):
             self._output.error(error_msg)
             return False
-        if not isinstance(details["collection_info"], dict):
+        ci = details.get("collection_info")
+        if not isinstance(ci, dict):
             self._output.error(error_msg)
             return False
-        if not isinstance(details["collection_info"]["dependencies"], dict):
+        if not isinstance(ci.get("dependencies"), dict):
             self._output.error(error_msg)
             return False
         return True

@@ -432,9 +432,9 @@ def _process_collection_info(
         file = name_dir / GALAXY_YAML
         editable_location = str(name_dir.resolve()) if name_dir.is_symlink() else ""
 
-    if file:
+    if file and file.exists():
         with file.open() as info_file:
-            info = yaml.safe_load(info_file)
+            info = yaml.safe_load(info_file) or {}
             return (fqcn, {
                 "version": info.get("version", "unknown"),
                 "editable_location": editable_location,

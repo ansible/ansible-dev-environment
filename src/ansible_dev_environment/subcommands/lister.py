@@ -70,9 +70,9 @@ class Lister:
         if not isinstance(ci, dict):
             self._output.error(err)
             return
-        collection_name = ci["name"]
-        collection_namespace = ci["namespace"]
-        collection_version = ci["version"]
+        collection_name = ci.get("name")
+        collection_namespace = ci.get("namespace")
+        collection_version = ci.get("version")
         if not isinstance(collection_name, str):
             self._output.error(err)
             return
@@ -110,6 +110,6 @@ class Lister:
 
         print(  # noqa: T201
             fqcn_linked + " " * (column1_width - len(fqcn)),
-            f"{ci['version']: <{column2_width}}",
+            f"{collection_version: <{column2_width}}",
             f"{editable_location: <{column3_width}}",
         )

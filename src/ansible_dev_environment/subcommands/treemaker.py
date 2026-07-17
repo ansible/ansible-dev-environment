@@ -137,10 +137,7 @@ class TreeMaker:
         green: list[str] = []
         if self._config.args.verbose >= 1:
             green.append("python requirements")
-            for line in python_deps:
-                if "#" not in line:
-                    green.append(line.strip())
-                green.append(line.split("#", 1)[0].strip())
+            green.extend(line.split("#", 1)[0].strip() for line in python_deps)
         return green
 
     def _prune_tree(self, tree_dict: TreeWithoutReqs) -> TreeWithoutReqs:
