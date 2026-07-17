@@ -74,7 +74,7 @@ class Checker:
         dep: str,
         version: str,
         spec: SpecifierSet,
-        dependency: dict,
+        dependency: dict[str, Any],
     ) -> bool:
         """Check version of an installed dependency.
 
@@ -122,7 +122,7 @@ class Checker:
         collection_name: str,
         dep: str,
         version: str,
-        collections: dict,
+        collections: dict[str, Any],
     ) -> bool:
         """Check a single dependency.
 
@@ -169,7 +169,8 @@ class Checker:
             msg = f"Checking dependencies for {collection_name}."
             self._output.debug(msg)
 
-            deps = details["collection_info"]["dependencies"]
+            ci: dict[str, Any] = details["collection_info"]  # type: ignore[assignment]
+            deps: dict[str, str] = ci["dependencies"]  # type: ignore[assignment]
 
             if not deps:
                 msg = f"Collection {collection_name} has no dependencies."
