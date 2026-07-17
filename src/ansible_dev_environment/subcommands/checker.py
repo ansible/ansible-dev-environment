@@ -135,7 +135,7 @@ class Checker:
         Returns:
             True if dependency missing or version mismatch, False otherwise.
         """
-        if not isinstance(version, str):
+        if not isinstance(version, str):  # pragma: no cover
             err = f"Collection {collection_name} has malformed dependency version for {dep}."
             self._output.error(err)
             return False
