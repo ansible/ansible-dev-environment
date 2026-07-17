@@ -124,7 +124,11 @@ class Tree:  # pylint: disable=R0902
         """
         for i, (key, value) in enumerate(obj.items()):
             is_last = i == len(obj) - 1
-            key_repr = f"{Ansi.ITALIC}{key}{Ansi.RESET}" if (was_list and self.term_features.color) else key
+            key_repr = (
+                f"{Ansi.ITALIC}{key}{Ansi.RESET}"
+                if (was_list and self.term_features.color)
+                else key
+            )
             if is_root:
                 decorator = ""
             elif is_last:
