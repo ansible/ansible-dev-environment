@@ -123,7 +123,7 @@ def parse_git_url_collection_name(git_url: str) -> tuple[str, str]:
             return namespace, name
 
     # Fallback: use 'unknown' namespace and extract just the repo name
-    repo_match = re.search(r"/([^/]+?)(?:\.git)?(?:\[[^\]]*\])?$", git_url)
+    repo_match = re.search(r"/([^/\[]+?)(?:\.git)?(?:\[[^\]]*])?$", git_url)
     if repo_match:
         name = repo_match.group(1).replace("-", "_")
         if name.startswith(("ansible_", "ansible.")):
