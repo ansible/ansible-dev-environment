@@ -107,7 +107,7 @@ class Tree:  # pylint: disable=R0902
         """
         return isinstance(obj, str | int | float | bool) or obj is None
 
-    def _print_dict(  # pylint: disable=too-many-positional-arguments
+    def _print_dict(
         self,
         obj: dict[str, JSONVal],
         is_root: bool,  # noqa: FBT001
@@ -147,7 +147,7 @@ class Tree:  # pylint: disable=R0902
                 was_list=False,
             )
 
-    def _print_list(  # pylint: disable=too-many-positional-arguments
+    def _print_list(
         self,
         obj: list[JSONVal],
         is_last: bool,  # noqa: FBT001
@@ -182,7 +182,7 @@ class Tree:  # pylint: disable=R0902
                     was_list=False,
                 )
 
-    def _print_tree(  # pylint: disable=too-many-positional-arguments
+    def _print_tree(
         self,
         obj: JSONVal,
         is_last: bool,  # noqa: FBT001

@@ -170,7 +170,7 @@ class Checker:
             self._output.debug(msg)
 
             ci: dict[str, Any] = details["collection_info"]  # type: ignore[assignment]
-            deps: dict[str, str] = ci["dependencies"]  # type: ignore[assignment]
+            deps: dict[str, str] = ci["dependencies"]
 
             if not deps:
                 msg = f"Collection {collection_name} has no dependencies."

@@ -76,7 +76,7 @@ class TreeMaker:
 
     def _process_collections(
         self,
-        collections: dict[str, JSONVal],
+        collections: dict[str, dict[str, JSONVal]],
         tree_dict: TreeWithoutReqs,
         python_deps: list[str],
         links: dict[str, str],
@@ -91,14 +91,16 @@ class TreeMaker:
         """
         for collection_name, collection in collections.items():
             err = f"Collection {collection_name} has malformed metadata."
-            if not isinstance(collection["collection_info"], dict):
+            ci = collection.get("collection_info")
+            if not isinstance(ci, dict):
                 self._output.error(err)
                 continue
-            if not isinstance(collection["collection_info"]["dependencies"], dict):
+            deps = ci.get("dependencies")
+            if not isinstance(deps, dict):
                 self._output.error(err)
                 continue
 
-            for dep in collection["collection_info"]["dependencies"]:
+            for dep in deps:
                 if not isinstance(dep, str):
                     err = f"Collection {collection_name} has malformed dependency."
                     self._output.error(err)
@@ -106,10 +108,10 @@ class TreeMaker:
                 target = tree_dict[collection_name]
                 target[dep] = tree_dict[dep]
 
-            docs = collection["collection_info"].get("documentation")
-            homepage = collection["collection_info"].get("homepage")
-            repository = collection["collection_info"].get("repository")
-            issues = collection["collection_info"].get("issues")
+            docs = ci.get("documentation")
+            homepage = ci.get("homepage")
+            repository = ci.get("repository")
+            issues = ci.get("issues")
             fallback = "https://ansible.com"
             link = repository or homepage or docs or issues or fallback
             if not isinstance(link, str):
