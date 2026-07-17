@@ -92,11 +92,12 @@ class Checker:
         if not isinstance(dependency, dict):
             self._output.error(error)
             return False
-        if not isinstance(dependency["collection_info"], dict):
+        dep_ci = dependency.get("collection_info")
+        if not isinstance(dep_ci, dict):
             self._output.error(error)
             return False
 
-        dep_version = dependency["collection_info"]["version"]
+        dep_version = dep_ci.get("version")
         if not isinstance(dep_version, str):
             self._output.error(error)
             return False
@@ -135,9 +136,7 @@ class Checker:
             True if dependency missing or version mismatch, False otherwise.
         """
         if not isinstance(version, str):
-            err = (
-                f"Collection {collection_name} has malformed dependency version for {dep}."
-            )
+            err = f"Collection {collection_name} has malformed dependency version for {dep}."
             self._output.error(err)
             return False
         try:
@@ -148,13 +147,8 @@ class Checker:
             self._output.debug(msg)
         if dep in collections:
             dependency = collections[dep]
-            return self._check_installed_dependency(
-                collection_name, dep, version, spec, dependency
-            )
-        err = (
-            f"Collection {collection_name} requires"
-            f" {dep} {version} but it is not installed."
-        )
+            return self._check_installed_dependency(collection_name, dep, version, spec, dependency)
+        err = f"Collection {collection_name} requires {dep} {version} but it is not installed."
         self._output.error(err)
         msg = f"Try running `ade install {dep}`"
         self._output.hint(msg)

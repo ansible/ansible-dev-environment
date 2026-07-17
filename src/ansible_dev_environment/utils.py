@@ -241,8 +241,12 @@ def _process_requirements_files(
         name_dir: The collection name directory to process.
         c_info: The collection info dictionary to update.
     """
-    python_requirements = c_info["requirements"]["python"]
-    system_requirements = c_info["requirements"]["system"]
+    reqs = c_info["requirements"]
+    assert isinstance(reqs, dict)  # noqa: S101
+    python_requirements = reqs["python"]
+    assert isinstance(python_requirements, dict)  # noqa: S101
+    system_requirements = reqs["system"]
+    assert isinstance(system_requirements, list)  # noqa: S101
 
     for file in name_dir.iterdir():
         if not file.is_file():
@@ -276,9 +280,7 @@ def _process_collection_dir(
     """
     manifest = name_dir / "MANIFEST.json"
     if not manifest.exists():
-        manifest = (
-            venv_cache_dir / f"{namespace_dir.name}.{name_dir.name}" / "MANIFEST.json"
-        )
+        manifest = venv_cache_dir / f"{namespace_dir.name}.{name_dir.name}" / "MANIFEST.json"
     if not manifest.exists():
         msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
         logger.debug(msg)
@@ -417,11 +419,7 @@ def _process_collection_info(
     """
     fqcn = f"{namespace_dir.name}.{name_dir.name}"
 
-    some_info_dirs = [
-        info_dir
-        for info_dir in all_info_dirs
-        if fqcn in info_dir.name
-    ]
+    some_info_dirs = [info_dir for info_dir in all_info_dirs if fqcn in info_dir.name]
     file = None
     editable_location = ""
     if some_info_dirs:
@@ -435,17 +433,23 @@ def _process_collection_info(
     if file and file.exists():
         with file.open() as info_file:
             info = yaml.safe_load(info_file) or {}
-            return (fqcn, {
-                "version": info.get("version", "unknown"),
-                "editable_location": editable_location,
-                "dependencies": info.get("dependencies", []),
-            })
+            return (
+                fqcn,
+                {
+                    "version": info.get("version", "unknown"),
+                    "editable_location": editable_location,
+                    "dependencies": info.get("dependencies", []),
+                },
+            )
 
-    return (fqcn, {
-        "version": "unknown",
-        "editable_location": "",
-        "dependencies": [],
-    })
+    return (
+        fqcn,
+        {
+            "version": "unknown",
+            "editable_location": "",
+            "dependencies": [],
+        },
+    )
 
 
 def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
