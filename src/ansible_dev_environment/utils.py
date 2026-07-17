@@ -243,10 +243,8 @@ def _process_requirements_files(
     """
     reqs = c_info["requirements"]
     assert isinstance(reqs, dict)  # noqa: S101
-    python_requirements = reqs["python"]
-    assert isinstance(python_requirements, dict)  # noqa: S101
-    system_requirements = reqs["system"]
-    assert isinstance(system_requirements, list)  # noqa: S101
+    python_requirements: dict[str, list[str]] = reqs["python"]  # type: ignore[assignment]
+    system_requirements: list[str] = reqs["system"]  # type: ignore[assignment]
 
     for file in name_dir.iterdir():
         if not file.is_file():

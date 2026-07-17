@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ansible_dev_environment.utils import collect_manifests, term_link
 
@@ -51,7 +51,7 @@ class Lister:
     def _format_collection(
         self,
         fqcn: str,
-        collection: dict,
+        collection: dict[str, Any],
         column1_width: int,
         column2_width: int,
         column3_width: int,

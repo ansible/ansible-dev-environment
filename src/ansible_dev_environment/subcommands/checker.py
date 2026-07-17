@@ -6,7 +6,7 @@ import json
 import subprocess
 import sys
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
@@ -46,7 +46,7 @@ class Checker:
         self.system_deps()
         self._python_deps()
 
-    def _validate_collection_info(self, details: dict, error_msg: str) -> bool:
+    def _validate_collection_info(self, details: dict[str, Any], error_msg: str) -> bool:
         """Validate collection metadata structure.
 
         Args:
