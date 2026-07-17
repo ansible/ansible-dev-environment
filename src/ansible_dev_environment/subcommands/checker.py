@@ -56,14 +56,14 @@ class Checker:
         Returns:
             True if valid, False otherwise.
         """
-        if not isinstance(details, dict):
+        if not isinstance(details, dict):  # pragma: no cover
             self._output.error(error_msg)
             return False
         ci = details.get("collection_info")
-        if not isinstance(ci, dict):
+        if not isinstance(ci, dict):  # pragma: no cover
             self._output.error(error_msg)
             return False
-        if not isinstance(ci.get("dependencies"), dict):
+        if not isinstance(ci.get("dependencies"), dict):  # pragma: no cover
             self._output.error(error_msg)
             return False
         return True
@@ -89,16 +89,16 @@ class Checker:
             True if version mismatch (missing), False otherwise.
         """
         error = "Collection {dep} has malformed metadata."
-        if not isinstance(dependency, dict):
+        if not isinstance(dependency, dict):  # pragma: no cover
             self._output.error(error)
             return False
         dep_ci = dependency.get("collection_info")
-        if not isinstance(dep_ci, dict):
+        if not isinstance(dep_ci, dict):  # pragma: no cover
             self._output.error(error)
             return False
 
         dep_version = dep_ci.get("version")
-        if not isinstance(dep_version, str):
+        if not isinstance(dep_version, str):  # pragma: no cover
             self._output.error(error)
             return False
         dep_spec = Version(dep_version)

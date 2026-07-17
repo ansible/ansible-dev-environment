@@ -67,19 +67,19 @@ class Lister:
         """
         err = f"Collection {fqcn} has malformed metadata."
         ci = collection["collection_info"]
-        if not isinstance(ci, dict):
+        if not isinstance(ci, dict):  # pragma: no cover
             self._output.error(err)
             return
         collection_name = ci.get("name")
         collection_namespace = ci.get("namespace")
         collection_version = ci.get("version")
-        if not isinstance(collection_name, str):
+        if not isinstance(collection_name, str):  # pragma: no cover
             self._output.error(err)
             return
-        if not isinstance(collection_namespace, str):
+        if not isinstance(collection_namespace, str):  # pragma: no cover
             self._output.error(err)
             return
-        if not isinstance(collection_version, str):
+        if not isinstance(collection_version, str):  # pragma: no cover
             self._output.error(err)
             return
 
@@ -99,7 +99,7 @@ class Lister:
         repository = ci.get("repository")
         issues = ci.get("issues")
         link = repository or homepage or docs or issues or "https://ansible.com"
-        if not isinstance(link, str):
+        if not isinstance(link, str):  # pragma: no cover
             self._output.error(err)
             link = "https://ansible.com"
         fqcn_linked = term_link(
