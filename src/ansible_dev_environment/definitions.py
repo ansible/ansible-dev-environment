@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 COLLECTIONS_PATH = "collections_path = ."
+DEFAULTS_SECTION = "[defaults]"
 
 
 @dataclass
@@ -47,15 +48,15 @@ class AnsibleCfg:
         """
         contents = self.path.read_text().splitlines()
 
-        if "[defaults]" not in contents:
-            contents.insert(0, "[defaults]")
+        if DEFAULTS_SECTION not in contents:
+            contents.insert(0, DEFAULTS_SECTION)
 
         idx = [i for i, line in enumerate(contents) if line.startswith("collections_path")]
 
         if idx:
             contents[idx[0]] = COLLECTIONS_PATH
         else:
-            insert_at = contents.index("[defaults]") + 1
+            insert_at = contents.index(DEFAULTS_SECTION) + 1
             contents.insert(insert_at, COLLECTIONS_PATH)
 
         with self.path.open(mode="w") as file:
@@ -63,6 +64,6 @@ class AnsibleCfg:
 
     def author_new(self) -> None:
         """Author the file and update it."""
-        contents = ["[defaults]", COLLECTIONS_PATH]
+        contents = [DEFAULTS_SECTION, COLLECTIONS_PATH]
         with self.path.open(mode="w") as file:
             file.write("\n".join(contents) + "\n")
