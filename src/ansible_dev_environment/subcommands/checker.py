@@ -88,7 +88,7 @@ class Checker:
         Returns:
             True if version mismatch (missing), False otherwise.
         """
-        error = "Collection {dep} has malformed metadata."
+        error = f"Collection {dep} has malformed metadata."
         if not isinstance(dependency, dict):  # pragma: no cover
             self._output.error(error)
             return False
@@ -162,7 +162,7 @@ class Checker:
         )
         missing = False
         for collection_name, details in collections.items():
-            error = "Collection {collection_name} has malformed metadata."
+            error = f"Collection {collection_name} has malformed metadata."
             if not self._validate_collection_info(details, error):
                 continue
 

@@ -153,15 +153,15 @@ class Installer:
         ]
         local_collections = [collection for collection in collections if collection.local]
         distant_collections = [collection for collection in collections if not collection.local]
-        if distant_collections and self._config.args.editable:
-            msg = "Editable installs are only supported for local collections."
-            self._output.critical(msg)
         for local_collection in local_collections:
             self._install_local_collection(collection=local_collection)
             if self._config.args.editable:
                 self._swap_editable_collection(collection=local_collection)
                 self._ensure_build_ignore(collection=local_collection)
         if distant_collections:
+            if self._config.args.editable:
+                msg = "Editable installs are only supported for local collections."
+                self._output.critical(msg)
             self._install_galaxy_collections(collections=distant_collections)
 
         opt_dep_paths = [
