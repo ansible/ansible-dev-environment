@@ -93,7 +93,7 @@ class Installer:
         RE_GALAXY_INSTALLED: The regular expression to match galaxy installed collections
     """
 
-    RE_GALAXY_INSTALLED = re.compile(r"(\w+\.\w+):[^\n]*?installed")
+    RE_GALAXY_INSTALLED = re.compile(r"(\w+\.\w+):[^\n]*installed")
 
     def __init__(self, config: Config, output: Output) -> None:
         """Initialize the installer.
