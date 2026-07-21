@@ -32,7 +32,7 @@ class TreeMaker:
         self._config = config
         self._output = output
 
-    def run(self) -> None:  # noqa: C901, PLR0912, PLR0915
+    def run(self) -> None:
         """Run the command."""
         builder_introspect(self._config, self._output)
 
@@ -46,48 +46,8 @@ class TreeMaker:
         tree_dict: TreeWithoutReqs = {c: {} for c in collections}
 
         links: dict[str, str] = {}
-        for collection_name, collection in collections.items():
-            err = f"Collection {collection_name} has malformed metadata."
-            if not isinstance(collection["collection_info"], dict):
-                self._output.error(err)
-                continue
-            if not isinstance(collection["collection_info"]["dependencies"], dict):
-                self._output.error(err)
-                continue
-
-            for dep in collection["collection_info"]["dependencies"]:
-                if not isinstance(dep, str):
-                    err = f"Collection {collection_name} has malformed dependency."
-                    self._output.error(err)
-                    continue
-                target = tree_dict[collection_name]
-                target[dep] = tree_dict[dep]
-
-            docs = collection["collection_info"].get("documentation")
-            homepage = collection["collection_info"].get("homepage")
-            repository = collection["collection_info"].get("repository")
-            issues = collection["collection_info"].get("issues")
-            fallback = "https://ansible.com"
-            link = repository or homepage or docs or issues or fallback
-            if not isinstance(link, str):
-                err = f"Collection {collection_name} has malformed repository metadata."
-                self._output.error(err)
-                link = fallback
-            links[collection_name] = link
-
-            if self._config.args.verbose >= 1:
-                add_python_reqs(
-                    tree_dict=cast("TreeWithReqs", tree_dict),
-                    collection_name=collection_name,
-                    python_deps=python_deps,
-                )
-        green: list[str] = []
-        if self._config.args.verbose >= 1:
-            green.append("python requirements")
-            for line in python_deps:
-                if "#" not in line:
-                    green.append(line.strip())
-                green.append(line.split("#", 1)[0].strip())
+        self._process_collections(collections, tree_dict, python_deps, links)
+        green = self._build_green_list(python_deps)
 
         more_verbose = 2
         if self._config.args.verbose >= more_verbose:
@@ -97,14 +57,7 @@ class TreeMaker:
             rendered = tree.render()
             print(rendered)  # noqa: T201
         else:
-            pruned_tree_dict: TreeWithoutReqs = {}
-            for collection_name in tree_dict:
-                found = False
-                for value in tree_dict.values():
-                    if collection_name in value:
-                        found = True
-                if not found:
-                    pruned_tree_dict[collection_name] = tree_dict[collection_name]
+            pruned_tree_dict = self._prune_tree(tree_dict)
 
             tree = Tree(
                 obj=cast("JSONVal", pruned_tree_dict),
@@ -120,6 +73,93 @@ class TreeMaker:
             self._output.info(msg)
             hint = "Run `pip show <pkg>` to see indirect dependencies."
             self._output.hint(hint)
+
+    def _process_collections(
+        self,
+        collections: dict[str, dict[str, JSONVal]],
+        tree_dict: TreeWithoutReqs,
+        python_deps: list[str],
+        links: dict[str, str],
+    ) -> None:
+        """Process collections to build tree dict and extract links.
+
+        Args:
+            collections: The collections to process.
+            tree_dict: The tree dict to populate with dependencies.
+            python_deps: The Python dependencies list.
+            links: The links dict to populate with collection links.
+        """
+        for collection_name, collection in collections.items():
+            err = f"Collection {collection_name} has malformed metadata."
+            ci = collection.get("collection_info")
+            if not isinstance(ci, dict):
+                self._output.error(err)
+                continue
+            deps = ci.get("dependencies")
+            if not isinstance(deps, dict):
+                self._output.error(err)
+                continue
+
+            for dep in deps:
+                if not isinstance(dep, str):
+                    err = f"Collection {collection_name} has malformed dependency."
+                    self._output.error(err)
+                    continue
+                target = tree_dict[collection_name]
+                target[dep] = tree_dict[dep]
+
+            docs = ci.get("documentation")
+            homepage = ci.get("homepage")
+            repository = ci.get("repository")
+            issues = ci.get("issues")
+            fallback = "https://ansible.com"
+            link = repository or homepage or docs or issues or fallback
+            if not isinstance(link, str):
+                err = f"Collection {collection_name} has malformed repository metadata."
+                self._output.error(err)
+                link = fallback
+            links[collection_name] = link
+
+            if self._config.args.verbose >= 1:
+                add_python_reqs(
+                    tree_dict=cast("TreeWithReqs", tree_dict),
+                    collection_name=collection_name,
+                    python_deps=python_deps,
+                )
+
+    def _build_green_list(self, python_deps: list[str]) -> list[str]:
+        """Build the green list from python dependencies.
+
+        Args:
+            python_deps: The Python dependencies list.
+
+        Returns:
+            The green list.
+        """
+        green: list[str] = []
+        if self._config.args.verbose >= 1:
+            green.append("python requirements")
+            green.extend(line.split("#", 1)[0].strip() for line in python_deps)
+        return green
+
+    def _prune_tree(self, tree_dict: TreeWithoutReqs) -> TreeWithoutReqs:
+        """Prune the tree dict to only root collections.
+
+        Args:
+            tree_dict: The tree dict to prune.
+
+        Returns:
+            The pruned tree dict.
+        """
+        pruned_tree_dict: TreeWithoutReqs = {}
+        for collection_name in tree_dict:
+            found = False
+            for value in tree_dict.values():
+                if collection_name in value:
+                    found = True
+            if not found:
+                pruned_tree_dict[collection_name] = tree_dict[collection_name]
+        return pruned_tree_dict
 
 
 def add_python_reqs(

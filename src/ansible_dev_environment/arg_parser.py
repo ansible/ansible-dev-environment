@@ -317,6 +317,46 @@ def _get_action(actions: list[argparse.Action], dest: str) -> argparse.Action | 
     return None
 
 
+def _resolve_envvar_value(
+    envvar: str,
+    envvar_value: str,
+    action: argparse.Action,
+) -> tuple[bool | int | str | None, str]:
+    """Resolve the environment variable value to the appropriate Python type.
+
+    Args:
+        envvar: The environment variable name
+        envvar_value: The environment variable value
+        action: The argparse action for this variable
+
+    Returns:
+        A tuple of (final_value, named_type) where final_value can be bool, int, str, or None
+
+    Raises:
+        NotImplementedError: If the action type is not implemented
+    """
+    final_value: bool | int | str | None = None
+    named_type = "not set"
+
+    with contextlib.suppress(ValueError):
+        if envvar == "NO_COLOR" and envvar_value != "":
+            final_value = False
+        elif isinstance(action, (argparse.BooleanOptionalAction, argparse._StoreTrueAction)):  # noqa: SLF001
+            named_type = "boolean"
+            final_value = str_to_bool(envvar_value)
+        elif isinstance(action, argparse._CountAction) or action.type is int:  # noqa: SLF001
+            named_type = "int"
+            final_value = int(envvar_value)
+        elif action.type is str or action.type is None:
+            named_type = "str"
+            final_value = envvar_value
+        else:
+            err = f"Action type {action.type} not implemented for envvar {envvar}"
+            raise NotImplementedError(err)
+
+    return final_value, named_type
+
+
 def apply_envvars(args: list[str], parser: ArgumentParser) -> argparse.Namespace:
     """Apply the environment variables to the arguments.
 
@@ -350,24 +390,7 @@ def apply_envvars(args: list[str], parser: ArgumentParser) -> argparse.Namespace
         if present or envvar_value is None:
             continue
 
-        final_value: bool | int | str | None = None
-        named_type = "not set"
-
-        with contextlib.suppress(ValueError):
-            if envvar == "NO_COLOR" and envvar_value != "":
-                final_value = False
-            elif isinstance(action, (argparse.BooleanOptionalAction, argparse._StoreTrueAction)):  # noqa: SLF001
-                named_type = "boolean"
-                final_value = str_to_bool(envvar_value)
-            elif isinstance(action, argparse._CountAction) or action.type is int:  # noqa: SLF001
-                named_type = "int"
-                final_value = int(envvar_value)
-            elif action.type is str or action.type is None:
-                named_type = "str"
-                final_value = envvar_value
-            else:
-                err = f"Action type {action.type} not implemented for envvar {envvar}"
-                raise NotImplementedError(err)
+        final_value, named_type = _resolve_envvar_value(envvar, envvar_value, action)
 
         err = f"ade: error: environment variable {envvar}: invalid value: '{envvar_value}' "
         if final_value is None:

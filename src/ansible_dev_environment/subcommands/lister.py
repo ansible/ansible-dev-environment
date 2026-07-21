@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ansible_dev_environment.utils import collect_manifests, term_link
 
@@ -46,51 +46,70 @@ class Lister:
         )
 
         for fqcn, collection in collections.items():
-            err = f"Collection {fqcn} has malformed metadata."
-            ci = collection["collection_info"]
-            if not isinstance(ci, dict):
-                self._output.error(err)
-                continue
-            collection_name = ci["name"]
-            collection_namespace = ci["namespace"]
-            collection_version = ci["version"]
-            if not isinstance(collection_name, str):
-                self._output.error(err)
-                continue
-            if not isinstance(collection_namespace, str):
-                self._output.error(err)
-                continue
-            if not isinstance(collection_version, str):
-                self._output.error(err)
-                continue
+            self._format_collection(fqcn, collection, column1_width, column2_width, column3_width)
 
-            collection_path = (
-                self._config.site_pkg_collections_path / collection_namespace / collection_name
-            )
-            collection_galaxy_path = collection_path / "galaxy.yml"
-            if collection_path.is_symlink():
-                editable_location = str(collection_path.resolve())
-            elif collection_galaxy_path.is_symlink():
-                editable_location = str(collection_galaxy_path.resolve().parent)
-            else:
-                editable_location = ""
+    def _format_collection(
+        self,
+        fqcn: str,
+        collection: dict[str, Any],
+        column1_width: int,
+        column2_width: int,
+        column3_width: int,
+    ) -> None:
+        """Format and print a single collection row.
 
-            docs = ci.get("documentation")
-            homepage = ci.get("homepage")
-            repository = ci.get("repository")
-            issues = ci.get("issues")
-            link = repository or homepage or docs or issues or "https://ansible.com"
-            if not isinstance(link, str):
-                self._output.error(err)
-                link = "https://ansible.com"
-            fqcn_linked = term_link(
-                uri=link,
-                label=fqcn,
-                term_features=self._config.term_features,
-            )
+        Args:
+            fqcn: Fully qualified collection name.
+            collection: Collection metadata dictionary.
+            column1_width: Width of the first column.
+            column2_width: Width of the second column.
+            column3_width: Width of the third column.
+        """
+        err = f"Collection {fqcn} has malformed metadata."
+        ci = collection["collection_info"]
+        if not isinstance(ci, dict):  # pragma: no cover
+            self._output.error(err)
+            return
+        collection_name = ci.get("name")
+        collection_namespace = ci.get("namespace")
+        collection_version = ci.get("version")
+        if not isinstance(collection_name, str):  # pragma: no cover
+            self._output.error(err)
+            return
+        if not isinstance(collection_namespace, str):  # pragma: no cover
+            self._output.error(err)
+            return
+        if not isinstance(collection_version, str):  # pragma: no cover
+            self._output.error(err)
+            return
 
-            print(  # noqa: T201
-                fqcn_linked + " " * (column1_width - len(fqcn)),
-                f"{ci['version']: <{column2_width}}",
-                f"{editable_location: <{column3_width}}",
-            )
+        collection_path = (
+            self._config.site_pkg_collections_path / collection_namespace / collection_name
+        )
+        collection_galaxy_path = collection_path / "galaxy.yml"
+        if collection_path.is_symlink():
+            editable_location = str(collection_path.resolve())
+        elif collection_galaxy_path.is_symlink():
+            editable_location = str(collection_galaxy_path.resolve().parent)
+        else:
+            editable_location = ""
+
+        docs = ci.get("documentation")
+        homepage = ci.get("homepage")
+        repository = ci.get("repository")
+        issues = ci.get("issues")
+        link = repository or homepage or docs or issues or "https://ansible.com"
+        if not isinstance(link, str):  # pragma: no cover
+            self._output.error(err)
+            link = "https://ansible.com"
+        fqcn_linked = term_link(
+            uri=link,
+            label=fqcn,
+            term_features=self._config.term_features,
+        )
+
+        print(  # noqa: T201
+            fqcn_linked + " " * (column1_width - len(fqcn)),
+            f"{collection_version: <{column2_width}}",
+            f"{editable_location: <{column3_width}}",
+        )

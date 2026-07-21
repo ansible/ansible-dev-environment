@@ -172,6 +172,34 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self._output.critical(msg)
         raise SystemExit(1)  # pragma: no cover # critical exits
 
+    def _create_new_venv(self, venv_cmd: str) -> None:
+        """Create a new virtual environment.
+
+        Args:
+            venv_cmd: The base venv command to use.
+        """
+        msg = f"Creating virtual environment: {self.venv}"
+        command = f"{venv_cmd} {self.venv}"
+        if self.args.system_site_packages:
+            command = f"{command} --system-site-packages"
+            msg += " with system site packages"
+        self._output.debug(msg)
+        try:
+            subprocess_run(
+                command=command,
+                verbose=self.args.verbose,
+                msg=msg,
+                output=self._output,
+            )
+            msg = f"Created virtual environment: {self.venv}"
+            if self.specified_python:
+                msg += f" using {self.specified_python}"
+            self._output.note(msg)
+        except subprocess.CalledProcessError as exc:
+            err = f"Failed to create virtual environment: {exc.stdout} {exc.stderr}"
+            self._output.critical(err)
+            return  # pragma: no cover # critical exits
+
     def _set_interpreter(
         self,
     ) -> None:
@@ -201,27 +229,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
             return  # pragma: no cover # critical exits
 
         if not self.venv.exists():
-            msg = f"Creating virtual environment: {self.venv}"
-            command = f"{venv_cmd} {self.venv}"
-            if self.args.system_site_packages:
-                command = f"{command} --system-site-packages"
-                msg += " with system site packages"
-            self._output.debug(msg)
-            try:
-                subprocess_run(
-                    command=command,
-                    verbose=self.args.verbose,
-                    msg=msg,
-                    output=self._output,
-                )
-                msg = f"Created virtual environment: {self.venv}"
-                if self.specified_python:
-                    msg += f" using {self.specified_python}"
-                self._output.note(msg)
-            except subprocess.CalledProcessError as exc:
-                err = f"Failed to create virtual environment: {exc.stdout} {exc.stderr}"
-                self._output.critical(err)
-                return  # pragma: no cover # critical exits
+            self._create_new_venv(venv_cmd)
 
         msg = f"Virtual environment: {self.venv}"
         self._output.debug(msg)
@@ -310,4 +318,3 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self._output.debug(
             f"Using specified python interpreter: {self.specified_python}",
         )
-        return

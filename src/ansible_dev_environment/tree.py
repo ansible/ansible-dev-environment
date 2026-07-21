@@ -107,7 +107,86 @@ class Tree:  # pylint: disable=R0902
         """
         return isinstance(obj, str | int | float | bool) or obj is None
 
-    def _print_tree(  # noqa: C901, PLR0912
+    def _print_dict(
+        self,
+        obj: dict[str, JSONVal],
+        is_root: bool,  # noqa: FBT001
+        was_list: bool,  # noqa: FBT001
+        prefix: str,
+    ) -> None:
+        """Print a dictionary node.
+
+        Args:
+            obj: The dictionary to print
+            is_root: Whether the object is the root of the tree
+            was_list: Whether the object was a list
+            prefix: The prefix to use
+        """
+        for i, (key, value) in enumerate(obj.items()):
+            is_last = i == len(obj) - 1
+            key_repr = (
+                f"{Ansi.ITALIC}{key}{Ansi.RESET}"
+                if (was_list and self.term_features.color)
+                else key
+            )
+            if is_root:
+                decorator = ""
+            elif is_last:
+                decorator = self.ELBOW
+            else:
+                decorator = self.TEE
+            self.append(f"{prefix}{decorator}{self.in_color(key_repr)}")
+
+            if is_root:
+                prefix_rev = prefix
+            elif is_last:
+                prefix_rev = prefix + self.SPACE_PREFIX
+            else:
+                prefix_rev = prefix + self.PIPE_PREFIX
+            self._print_tree(
+                obj=value,
+                prefix=prefix_rev,
+                is_last=self.is_scalar(value),
+                is_root=False,
+                was_list=False,
+            )
+
+    def _print_list(
+        self,
+        obj: list[JSONVal],
+        is_last: bool,  # noqa: FBT001
+        prefix: str,
+    ) -> None:
+        """Print a list node.
+
+        Args:
+            obj: The list to print
+            is_last: Whether the object is the last in the parent
+            prefix: The prefix to use
+        """
+        is_complex = any(isinstance(item, dict | list) for item in obj)
+        is_long = len(obj) > 1
+        if is_complex and is_long:
+            repr_obj = {str(i): item for i, item in enumerate(obj)}
+            self._print_tree(
+                obj=repr_obj,
+                prefix=prefix,
+                is_last=is_last,
+                is_root=False,
+                was_list=True,
+            )
+        else:
+            for i, item in enumerate(obj):
+                is_last = i == len(obj) - 1
+                self._print_tree(
+                    obj=item,
+                    prefix=prefix,
+                    is_last=is_last,
+                    is_root=False,
+                    was_list=False,
+                )
+
+    def _print_tree(
         self,
         obj: JSONVal,
         is_last: bool,  # noqa: FBT001
@@ -128,54 +207,9 @@ class Tree:  # pylint: disable=R0902
             TypeError: If the object is not a dict, list, or scalar
         """
         if isinstance(obj, dict):
-            for i, (key, value) in enumerate(obj.items()):
-                is_last = i == len(obj) - 1
-                key_repr = f"{Ansi.ITALIC}{key}{Ansi.RESET}" if was_list else key
-                if is_root:
-                    decorator = ""
-                elif is_last:
-                    decorator = self.ELBOW
-                else:
-                    decorator = self.TEE
-                self.append(f"{prefix}{decorator}{self.in_color(key_repr)}")
-
-                if is_root:
-                    prefix_rev = prefix
-                elif is_last:
-                    prefix_rev = prefix + self.SPACE_PREFIX
-                else:
-                    prefix_rev = prefix + self.PIPE_PREFIX
-                self._print_tree(
-                    obj=value,
-                    prefix=prefix_rev,
-                    is_last=self.is_scalar(value),
-                    is_root=False,
-                    was_list=False,
-                )
-
+            self._print_dict(obj, is_root, was_list, prefix)
         elif isinstance(obj, list):
-            is_complex = any(isinstance(item, dict | list) for item in obj)
-            is_long = len(obj) > 1
-            if is_complex and is_long:
-                repr_obj = {str(i): item for i, item in enumerate(obj)}
-                self._print_tree(
-                    obj=repr_obj,
-                    prefix=prefix,
-                    is_last=is_last,
-                    is_root=False,
-                    was_list=True,
-                )
-            else:
-                for i, item in enumerate(obj):
-                    is_last = i == len(obj) - 1
-                    self._print_tree(
-                        obj=item,
-                        prefix=prefix,
-                        is_last=is_last,
-                        is_root=False,
-                        was_list=False,
-                    )
-
+            self._print_list(obj, is_last, prefix)
         elif self.is_scalar(obj):
             self.append(
                 f"{prefix}{self.ELBOW if is_last else self.TEE}{self.in_color(obj)}",

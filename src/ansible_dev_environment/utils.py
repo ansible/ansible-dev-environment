@@ -231,7 +231,76 @@ def sort_dict(item: dict[str, Any]) -> dict[str, Any]:
     return {k: sort_dict(v) if isinstance(v, dict) else v for k, v in sorted(item.items())}
 
 
-def collect_manifests(  # noqa: C901
+def _process_requirements_files(
+    name_dir: Path,
+    c_info: dict[str, JSONVal],
+) -> None:
+    """Process requirements files in a collection directory.
+
+    Args:
+        name_dir: The collection name directory to process.
+        c_info: The collection info dictionary to update.
+    """
+    reqs = c_info["requirements"]
+    assert isinstance(reqs, dict)  # noqa: S101
+    python_requirements: dict[str, list[str]] = reqs["python"]  # type: ignore[assignment]
+    system_requirements: list[str] = reqs["system"]  # type: ignore[assignment]
+
+    for file in name_dir.iterdir():
+        if not file.is_file():
+            continue
+        if not file.name.endswith(".txt"):
+            continue
+        if "requirements" in file.name:
+            with file.open() as requirements_file:
+                requirements = requirements_file.read().splitlines()
+                python_requirements[file.stem] = requirements
+        if file.stem == "bindep":
+            with file.open() as requirements_file:
+                requirements = requirements_file.read().splitlines()
+                system_requirements.extend(requirements)
+
+
+def _process_collection_dir(
+    namespace_dir: Path,
+    name_dir: Path,
+    venv_cache_dir: Path,
+) -> tuple[str, dict[str, JSONVal]] | None:
+    """Process a single collection directory and extract manifest data.
+
+    Args:
+        namespace_dir: The namespace directory.
+        name_dir: The collection name directory to process.
+        venv_cache_dir: The directory to look for manifests in.
+
+    Returns:
+        A tuple of (collection_name, manifest_data) or None if manifest not found.
+    """
+    manifest = name_dir / "MANIFEST.json"
+    if not manifest.exists():
+        manifest = venv_cache_dir / f"{namespace_dir.name}.{name_dir.name}" / "MANIFEST.json"
+    if not manifest.exists():
+        msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
+        logger.debug(msg)
+        return None
+
+    with manifest.open() as manifest_file:
+        manifest_json = json.load(manifest_file)
+
+    cname = f"{namespace_dir.name}.{name_dir.name}"
+
+    c_info = manifest_json.get("collection_info", {})
+    if not c_info:
+        manifest_json["collection_info"] = {}
+        c_info = manifest_json["collection_info"]
+    c_info["requirements"] = {"python": {}, "system": []}
+
+    _process_requirements_files(name_dir, c_info)
+
+    return (cname, manifest_json)
+
+
+def collect_manifests(
     target: Path,
     venv_cache_dir: Path,
 ) -> dict[str, dict[str, JSONVal]]:
@@ -252,43 +321,11 @@ def collect_manifests(  # noqa: C901
         for name_dir in namespace_dir.iterdir():
             if not name_dir.is_dir():
                 continue
-            manifest = name_dir / "MANIFEST.json"
-            if not manifest.exists():
-                manifest = (
-                    venv_cache_dir / f"{namespace_dir.name}.{name_dir.name}" / "MANIFEST.json"
-                )
-            if not manifest.exists():
-                msg = f"Manifest not found for {namespace_dir.name}.{name_dir.name}"
-                logger.debug(msg)
-                continue
-            with manifest.open() as manifest_file:
-                manifest_json = json.load(manifest_file)
 
-            cname = f"{namespace_dir.name}.{name_dir.name}"
-
-            collections[cname] = manifest_json
-            c_info = collections[cname].get("collection_info", {})
-            if not c_info:
-                collections[cname]["collection_info"] = {}
-                c_info = collections[cname]["collection_info"]
-            c_info["requirements"] = {"python": {}, "system": []}
-
-            python_requirements = c_info["requirements"]["python"]
-            system_requirements = c_info["requirements"]["system"]
-
-            for file in name_dir.iterdir():
-                if not file.is_file():
-                    continue
-                if not file.name.endswith(".txt"):
-                    continue
-                if "requirements" in file.name:
-                    with file.open() as requirements_file:
-                        requirements = requirements_file.read().splitlines()
-                        python_requirements[file.stem] = requirements
-                if file.stem == "bindep":
-                    with file.open() as requirements_file:
-                        requirements = requirements_file.read().splitlines()
-                        system_requirements.extend(requirements)
+            result = _process_collection_dir(namespace_dir, name_dir, venv_cache_dir)
+            if result is not None:
+                cname, manifest_json = result
+                collections[cname] = manifest_json
 
     return sort_dict(collections)
 
@@ -363,6 +400,56 @@ def collections_from_requirements(file: Path) -> list[dict[str, str]]:
     return collections
 
 
+def _process_collection_info(
+    namespace_dir: Path,
+    name_dir: Path,
+    all_info_dirs: list[Path],
+) -> tuple[str, dict[str, Any]]:
+    """Process a single collection directory and extract metadata.
+
+    Args:
+        namespace_dir: The namespace directory.
+        name_dir: The collection name directory to process.
+        all_info_dirs: List of all .info directories.
+
+    Returns:
+        A tuple of (fqcn, info_dict) with collection metadata.
+    """
+    fqcn = f"{namespace_dir.name}.{name_dir.name}"
+
+    some_info_dirs = [info_dir for info_dir in all_info_dirs if fqcn in info_dir.name]
+    file = None
+    editable_location = ""
+    if some_info_dirs:
+        file = some_info_dirs[0] / "GALAXY.yml"
+        editable_location = ""
+
+    elif (name_dir / GALAXY_YAML).exists():
+        file = name_dir / GALAXY_YAML
+        editable_location = str(name_dir.resolve()) if name_dir.is_symlink() else ""
+
+    if file and file.exists():
+        with file.open() as info_file:
+            info = yaml.safe_load(info_file) or {}
+            return (
+                fqcn,
+                {
+                    "version": info.get("version", "unknown"),
+                    "editable_location": editable_location,
+                    "dependencies": info.get("dependencies", []),
+                },
+            )
+
+    return (
+        fqcn,
+        {
+            "version": "unknown",
+            "editable_location": "",
+            "dependencies": [],
+        },
+    )
+
+
 def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
     """Collect metadata about installed collections.
 
@@ -386,35 +473,10 @@ def collections_meta(config: Config) -> dict[str, dict[str, Any]]:
         for name_dir in namespace_dir.iterdir():
             if not name_dir.is_dir():
                 continue
-            some_info_dirs = [
-                info_dir
-                for info_dir in all_info_dirs
-                if f"{namespace_dir.name}.{name_dir.name}" in info_dir.name
-            ]
-            file = None
-            editable_location = ""
-            if some_info_dirs:
-                file = some_info_dirs[0] / "GALAXY.yml"
-                editable_location = ""
 
-            elif (name_dir / GALAXY_YAML).exists():
-                file = name_dir / GALAXY_YAML
-                editable_location = str(name_dir.resolve()) if name_dir.is_symlink() else ""
+            fqcn, info_dict = _process_collection_info(namespace_dir, name_dir, all_info_dirs)
+            collections[fqcn] = info_dict
 
-            if file:
-                with file.open() as info_file:
-                    info = yaml.safe_load(info_file)
-                    collections[f"{namespace_dir.name}.{name_dir.name}"] = {
-                        "version": info.get("version", "unknown"),
-                        "editable_location": editable_location,
-                        "dependencies": info.get("dependencies", []),
-                    }
-            else:
-                collections[f"{namespace_dir.name}.{name_dir.name}"] = {
-                    "version": "unknown",
-                    "editable_location": "",
-                    "dependencies": [],
-                }
     return collections
 
 

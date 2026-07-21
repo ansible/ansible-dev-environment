@@ -93,7 +93,7 @@ class Installer:
         RE_GALAXY_INSTALLED: The regular expression to match galaxy installed collections
     """
 
-    RE_GALAXY_INSTALLED = re.compile(r"(\w+\.\w+):.*installed")
+    RE_GALAXY_INSTALLED = re.compile(r"(\w+\.\w+):[^\n]*?installed")
 
     def __init__(self, config: Config, output: Output) -> None:
         """Initialize the installer.
@@ -119,36 +119,7 @@ class Installer:
         if self._config.args.requirement or self._config.args.cpi:
             self._install_galaxy_requirements()
 
-        opt_dep_paths = None
-        if self._config.args.collection_specifier:
-            collections = [
-                parse_collection_request(
-                    string=entry,
-                    config=self._config,
-                    output=self._output,
-                )
-                for entry in self._config.args.collection_specifier
-            ]
-            local_collections = [collection for collection in collections if collection.local]
-            for local_collection in local_collections:
-                self._install_local_collection(collection=local_collection)
-                if self._config.args.editable:
-                    self._swap_editable_collection(collection=local_collection)
-                    self._ensure_build_ignore(collection=local_collection)
-            distant_collections = [collection for collection in collections if not collection.local]
-            if distant_collections:
-                if self._config.args.editable:
-                    msg = "Editable installs are only supported for local collections."
-                    self._output.critical(msg)
-                self._install_galaxy_collections(collections=distant_collections)
-
-            opt_dep_paths = [
-                path
-                for collection in collections
-                for path in opt_deps_to_files(collection, self._output)
-            ]
-            msg = f"Optional dependencies found: {oxford_join(opt_dep_paths)}"
-            self._output.info(msg)
+        opt_dep_paths = self._process_collection_specifiers()
 
         builder_introspect(config=self._config, opt_dep_paths=opt_dep_paths, output=self._output)
         self._pip_install()
@@ -162,6 +133,46 @@ class Installer:
                 f"\nsource {self._config.args.venv}/bin/activate"
             )
             self._output.note(msg)
+
+    def _process_collection_specifiers(self) -> list[Path] | None:
+        """Process collection specifiers and return optional dependency paths.
+
+        Returns:
+            List of optional dependency paths, or None if no collection_specifier.
+        """
+        if not self._config.args.collection_specifier:
+            return None
+
+        collections = [
+            parse_collection_request(
+                string=entry,
+                config=self._config,
+                output=self._output,
+            )
+            for entry in self._config.args.collection_specifier
+        ]
+        local_collections = [collection for collection in collections if collection.local]
+        distant_collections = [collection for collection in collections if not collection.local]
+        for local_collection in local_collections:
+            self._install_local_collection(collection=local_collection)
+            if self._config.args.editable:
+                self._swap_editable_collection(collection=local_collection)
+                self._ensure_build_ignore(collection=local_collection)
+        if distant_collections:
+            if self._config.args.editable:
+                msg = "Editable installs are only supported for local collections."
+                self._output.critical(msg)
+            self._install_galaxy_collections(collections=distant_collections)
+
+        opt_dep_paths = [
+            path
+            for collection in collections
+            for path in opt_deps_to_files(collection, self._output)
+        ]
+        msg = f"Optional dependencies found: {oxford_join(opt_dep_paths)}"
+        self._output.info(msg)
+
+        return opt_dep_paths
 
     def _install_ade_deps(self) -> None:
         """Install our dependencies."""

@@ -32,6 +32,8 @@ purelib
 pylibssh
 reqs
 sessionstart
+testcol
+testns
 treemaker
 unisolated
 usefixtures

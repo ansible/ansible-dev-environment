@@ -83,11 +83,12 @@ def test_console_output(level: str, capsys: pytest.CaptureFixture[str], tmp_path
     )
     message = f"{level} message"
     msg = Msg(message=message, prefix=getattr(Level, level.upper()))
+    method = getattr(output, level)
     if level == "critical":
         with pytest.raises(SystemExit):
-            getattr(output, level)(message)
+            method(message)
     else:
-        getattr(output, level)(message)
+        method(message)
     captured = capsys.readouterr()
     standard_x = captured.err if level in ("critical", "error") else captured.out
     assert standard_x.startswith(msg.color)

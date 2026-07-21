@@ -6,7 +6,7 @@ import json
 import subprocess
 import sys
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
@@ -46,7 +46,115 @@ class Checker:
         self.system_deps()
         self._python_deps()
 
-    def _collection_deps(self) -> None:  # noqa: C901, PLR0912, PLR0915
+    def _validate_collection_info(self, details: dict[str, Any], error_msg: str) -> bool:
+        """Validate collection metadata structure.
+
+        Args:
+            details: Collection details dictionary.
+            error_msg: Error message to display if validation fails.
+
+        Returns:
+            True if valid, False otherwise.
+        """
+        if not isinstance(details, dict):  # pragma: no cover
+            self._output.error(error_msg)
+            return False
+        ci = details.get("collection_info")
+        if not isinstance(ci, dict):  # pragma: no cover
+            self._output.error(error_msg)
+            return False
+        if not isinstance(ci.get("dependencies"), dict):  # pragma: no cover
+            self._output.error(error_msg)
+            return False
+        return True
+
+    def _check_installed_dependency(
+        self,
+        collection_name: str,
+        dep: str,
+        version: str,
+        spec: SpecifierSet,
+        dependency: dict[str, Any],
+    ) -> bool:
+        """Check version of an installed dependency.
+
+        Args:
+            collection_name: Name of the collection requiring the dependency.
+            dep: Name of the dependency.
+            version: Required version specifier.
+            spec: Parsed SpecifierSet for version.
+            dependency: Dependency collection details.
+
+        Returns:
+            True if version mismatch (missing), False otherwise.
+        """
+        error = f"Collection {dep} has malformed metadata."
+        if not isinstance(dependency, dict):  # pragma: no cover
+            self._output.error(error)
+            return False
+        dep_ci = dependency.get("collection_info")
+        if not isinstance(dep_ci, dict):  # pragma: no cover
+            self._output.error(error)
+            return False
+
+        dep_version = dep_ci.get("version")
+        if not isinstance(dep_version, str):  # pragma: no cover
+            self._output.error(error)
+            return False
+        dep_spec = Version(dep_version)
+        if not spec.contains(dep_spec):
+            err = (
+                f"Collection {collection_name} requires {dep} {version}"
+                f" but {dep} {dep_version} is installed."
+            )
+            self._output.error(err)
+            return True
+
+        msg = (
+            f"Collection {collection_name} requires {dep} {version}"
+            f" and {dep} {dep_version} is installed."
+        )
+        self._output.debug(msg)
+        return False
+
+    def _check_dependency(
+        self,
+        collection_name: str,
+        dep: str,
+        version: str,
+        collections: dict[str, Any],
+    ) -> bool:
+        """Check a single dependency.
+
+        Args:
+            collection_name: Name of the collection requiring the dependency.
+            dep: Name of the dependency.
+            version: Required version specifier.
+            collections: Dictionary of all collections.
+
+        Returns:
+            True if dependency missing or version mismatch, False otherwise.
+        """
+        if not isinstance(version, str):  # pragma: no cover
+            err = f"Collection {collection_name} has malformed dependency version for {dep}."
+            self._output.error(err)
+            return False
+        try:
+            spec = SpecifierSet(version)
+        except InvalidSpecifier:
+            spec = SpecifierSet(">=0.0.0")
+            msg = f"Invalid version specifier {version}, assuming >=0.0.0."
+            self._output.debug(msg)
+        if dep in collections:
+            dependency = collections[dep]
+            return self._check_installed_dependency(collection_name, dep, version, spec, dependency)
+        err = f"Collection {collection_name} requires {dep} {version} but it is not installed."
+        self._output.error(err)
+        msg = f"Try running `ade install {dep}`"
+        self._output.hint(msg)
+        return True
+
+    def _collection_deps(self) -> None:
         """Check collection dependencies."""
         collections = collect_manifests(
             target=self._config.site_pkg_collections_path,
@@ -54,76 +162,22 @@ class Checker:
         )
         missing = False
         for collection_name, details in collections.items():
-            error = "Collection {collection_name} has malformed metadata."
-            if not isinstance(details, dict):
-                self._output.error(error)
-                continue
-            if not isinstance(details["collection_info"], dict):
-                self._output.error(error)
-                continue
-            if not isinstance(details["collection_info"]["dependencies"], dict):
-                self._output.error(error)
+            error = f"Collection {collection_name} has malformed metadata."
+            if not self._validate_collection_info(details, error):
                 continue
 
             msg = f"Checking dependencies for {collection_name}."
             self._output.debug(msg)
 
-            deps = details["collection_info"]["dependencies"]
+            ci: dict[str, Any] = details["collection_info"]  # type: ignore[assignment]
+            deps: dict[str, str] = ci["dependencies"]
 
             if not deps:
                 msg = f"Collection {collection_name} has no dependencies."
                 self._output.debug(msg)
                 continue
             for dep, version in deps.items():
-                if not isinstance(version, str):
-                    err = (
-                        f"Collection {collection_name} has malformed dependency version for {dep}."
-                    )
-                    self._output.error(err)
-                    continue
-                try:
-                    spec = SpecifierSet(version)
-                except InvalidSpecifier:
-                    spec = SpecifierSet(">=0.0.0")
-                    msg = f"Invalid version specifier {version}, assuming >=0.0.0."
-                    self._output.debug(msg)
-                if dep in collections:
-                    dependency = collections[dep]
-                    error = "Collection {dep} has malformed metadata."
-                    if not isinstance(dependency, dict):
-                        self._output.error(error)
-                        continue
-                    if not isinstance(dependency["collection_info"], dict):
-                        self._output.error(error)
-                        continue
-
-                    dep_version = dependency["collection_info"]["version"]
-                    if not isinstance(dep_version, str):
-                        self._output.error(error)
-                        continue
-                    dep_spec = Version(dep_version)
-                    if not spec.contains(dep_spec):
-                        err = (
-                            f"Collection {collection_name} requires {dep} {version}"
-                            f" but {dep} {dep_version} is installed."
-                        )
-                        self._output.error(err)
-                        missing = True
-
-                    else:
-                        msg = (
-                            f"Collection {collection_name} requires {dep} {version}"
-                            f" and {dep} {dep_version} is installed."
-                        )
-                        self._output.debug(msg)
-                else:
-                    err = (
-                        f"Collection {collection_name} requires"
-                        f" {dep} {version} but it is not installed."
-                    )
-                    self._output.error(err)
-                    msg = f"Try running `ade install {dep}`"
-                    self._output.hint(msg)
+                if self._check_dependency(collection_name, dep, version, collections):
                     missing = True
 
         if not missing:
