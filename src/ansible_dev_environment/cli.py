@@ -36,7 +36,7 @@ class Cli:
         self.acfg_cwd = AnsibleCfg(path=Path("./ansible.cfg"))
         self.acfg_home = AnsibleCfg(path=Path("~/.ansible.cfg").expanduser().resolve())
         self.acfg_system = AnsibleCfg(path=Path("/etc/ansible/ansible.cfg"))
-        self.acfg_trusted: Path | None
+        self.acfg_trusted: Path | None = None
 
     def parse_args(self) -> None:
         """Parse the command line arguments."""
@@ -236,6 +236,7 @@ class Cli:
             term_features=self.term_features,
         )
         self.config.init()
+        self.config.ansible_cfg = self.acfg_trusted
 
         subcommand_cls = getattr(subcommands, self.config.args.subcommand.capitalize())
         subcommand = subcommand_cls(config=self.config, output=self.output)
