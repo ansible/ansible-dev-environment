@@ -219,15 +219,13 @@ def test_local_install_installs_deps_then_uses_no_deps(
     installer._install_local_collection(collection)
 
     galaxy_calls = [c for c in calls if "ansible-galaxy" in c["command"]]
-    assert len(galaxy_calls) == 3
-
-    deps_call = galaxy_calls[1]
+    build_call, deps_call, local_call = galaxy_calls
+    assert "collection build" in build_call["command"]
     assert "install 'ansible.posix:>=1.0.0' 'redhat.openshift:>=4.0.2'" in deps_call["command"]
     assert f"-p {config.site_pkg_path}" in deps_call["command"]
     assert deps_call["env"]["ANSIBLE_CONFIG"] == str(cfg)
     assert "--no-deps" not in deps_call["command"]
 
-    local_call = galaxy_calls[2]
     assert str(collection.build_dir / "infra-demo-1.0.0.tar.gz") in local_call["command"]
     assert "--no-deps" in local_call["command"]
     assert local_call["env"]["ANSIBLE_CONFIG"] == str(cfg)
