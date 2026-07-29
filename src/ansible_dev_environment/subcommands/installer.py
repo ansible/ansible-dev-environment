@@ -1,3 +1,4 @@
+# pylint: disable=C0302
 """The installer."""
 
 from __future__ import annotations
@@ -69,7 +70,7 @@ def _resolve_core_package(core_version: str) -> str:
     return f"{ANSIBLE_CORE_REPO_URL}/{core_version}.tar.gz"
 
 
-ACCESS_TOKEN_ERROR = "Unable to get access token"
+ACCESS_TOKEN_ERROR = "Unable to get access token"  # noqa: S105
 
 
 def format_process(exc: subprocess.CalledProcessError) -> str:
@@ -106,9 +107,9 @@ def galaxy_dependency_specs(dependencies: object) -> list[str]:
         if not name:
             continue
         spec = str(name)
-        version = "" if specifier is None else str(specifier).strip()
-        if version and version != "*":
-            spec = f"{spec}:{version}"
+        version_spec = "" if specifier is None else str(specifier).strip()
+        if version_spec and version_spec != "*":
+            spec = f"{spec}:{version_spec}"
         specs.append(spec)
     return specs
 
@@ -578,7 +579,7 @@ class Installer:
                 err = f"Failed to copy collection to build directory: {exc}"
                 self._output.critical(err)
 
-    def _install_local_collection(
+    def _install_local_collection(  # noqa: PLR0915
         self,
         collection: Collection,
     ) -> None:
@@ -744,7 +745,7 @@ class Installer:
         Raises:
             SystemError: If dependency installation fails.
         """
-        collections_str = " ".join(f"'{spec}'" for spec in dependency_specs)
+        collections_str = " ".join(shlex.quote(spec) for spec in dependency_specs)
         msg = f"Installing collection dependencies from galaxy.yml: {collections_str}"
         self._output.info(msg)
 

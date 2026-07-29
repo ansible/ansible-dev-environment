@@ -5,13 +5,13 @@ from __future__ import annotations
 import subprocess
 
 from argparse import Namespace
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
 import yaml
 
+from ansible_dev_environment.cli import Cli
 from ansible_dev_environment.collection import Collection
 from ansible_dev_environment.config import Config
 from ansible_dev_environment.subcommands.installer import (
@@ -22,6 +22,8 @@ from ansible_dev_environment.subcommands.installer import (
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from ansible_dev_environment.output import Output
 
 
@@ -78,7 +80,7 @@ def _make_local_collection(
         Collection ready for _install_local_collection.
     """
     collection_path.mkdir(parents=True, exist_ok=True)
-    galaxy = {
+    galaxy: dict[str, object] = {
         "namespace": "infra",
         "name": "demo",
         "version": "1.0.0",
@@ -110,9 +112,9 @@ def _make_local_collection(
 
 def test_galaxy_dependency_specs() -> None:
     """Test conversion of galaxy.yml dependencies to ansible-galaxy specs."""
-    assert galaxy_dependency_specs(None) == []
-    assert galaxy_dependency_specs("not-a-dict") == []
-    assert galaxy_dependency_specs({}) == []
+    assert not galaxy_dependency_specs(None)
+    assert not galaxy_dependency_specs("not-a-dict")
+    assert not galaxy_dependency_specs({})
     assert galaxy_dependency_specs(
         {
             "ansible.posix": ">=1.0.0",
@@ -128,7 +130,12 @@ def test_galaxy_dependency_specs() -> None:
 
 
 def test_galaxy_env_includes_ansible_config(tmp_path: Path, output: Output) -> None:
-    """Trusted ansible.cfg is pinned into galaxy subprocess env."""
+    """Trusted ansible.cfg is pinned into galaxy subprocess env.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
     cfg = tmp_path / "ansible.cfg"
     cfg.write_text("[defaults]\ncollections_path = .\n", encoding="utf-8")
     config = _make_config(tmp_path, output, ansible_cfg=cfg)
@@ -140,7 +147,12 @@ def test_galaxy_env_includes_ansible_config(tmp_path: Path, output: Output) -> N
 
 
 def test_galaxy_env_omits_ansible_config_when_unset(tmp_path: Path, output: Output) -> None:
-    """ANSIBLE_CONFIG is omitted when no trusted cfg was selected."""
+    """ANSIBLE_CONFIG is omitted when no trusted cfg was selected.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
     config = _make_config(tmp_path, output, ansible_cfg=None)
     installer = Installer(config=config, output=output)
 
@@ -148,12 +160,18 @@ def test_galaxy_env_omits_ansible_config_when_unset(tmp_path: Path, output: Outp
     assert "ANSIBLE_CONFIG" not in env
 
 
-def test_local_install_preinstalls_deps_and_uses_no_deps(
+def test_local_install_installs_deps_then_uses_no_deps(
     tmp_path: Path,
     output: Output,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Local install installs galaxy.yml deps then the tarball with --no-deps."""
+    """Local install installs galaxy.yml deps then the tarball with --no-deps.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
     cfg = tmp_path / "ansible.cfg"
     cfg.write_text("[defaults]\ncollections_path = .\n", encoding="utf-8")
     config = _make_config(tmp_path, output, ansible_cfg=cfg)
@@ -169,7 +187,7 @@ def test_local_install_preinstalls_deps_and_uses_no_deps(
 
     calls: list[dict[str, Any]] = []
 
-    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
         calls.append(kwargs)
         command = kwargs["command"]
         if "collection build" in command:
@@ -220,7 +238,13 @@ def test_local_install_without_deps_skips_no_deps(
     output: Output,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Local install without galaxy.yml deps does not use --no-deps."""
+    """Local install without galaxy.yml deps does not use --no-deps.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
     config = _make_config(tmp_path, output, ansible_cfg=None)
     collection = _make_local_collection(
         config,
@@ -231,7 +255,7 @@ def test_local_install_without_deps_skips_no_deps(
 
     calls: list[dict[str, Any]] = []
 
-    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
         calls.append(kwargs)
         if "collection install" in kwargs["command"]:
             collection.site_pkg_path.mkdir(parents=True, exist_ok=True)
@@ -266,7 +290,14 @@ def test_auth_failure_emits_hint(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Access-token failures emit a hint about AH offline tokens and ANSIBLE_CONFIG."""
+    """Access-token failures emit a hint about AH offline tokens and ANSIBLE_CONFIG.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+        capsys: Pytest capture fixture.
+    """
     cfg = tmp_path / "ansible.cfg"
     cfg.write_text("[defaults]\ncollections_path = .\n", encoding="utf-8")
     config = _make_config(tmp_path, output, ansible_cfg=cfg)
@@ -277,7 +308,7 @@ def test_auth_failure_emits_hint(
     )
     installer = Installer(config=config, output=output)
 
-    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
         command = kwargs["command"]
         if "collection build" in command:
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
@@ -308,9 +339,13 @@ def test_cli_assigns_trusted_ansible_cfg(
     output: Output,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Cli.run copies acfg_trusted onto Config.ansible_cfg."""
-    from ansible_dev_environment.cli import Cli
+    """Cli.run copies acfg_trusted onto Config.ansible_cfg.
 
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
         "sys.argv",
