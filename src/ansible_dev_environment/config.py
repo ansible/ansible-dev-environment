@@ -39,6 +39,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
         """
         self._create_venv: bool = False
         self.args: Namespace = args
+        self.ansible_cfg: Path | None = None
         self.bindir: Path
         self._output: Output = output
         self.python_path: Path

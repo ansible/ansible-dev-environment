@@ -1,3 +1,4 @@
+# pylint: disable=C0302
 """The installer."""
 
 from __future__ import annotations
@@ -69,6 +70,9 @@ def _resolve_core_package(core_version: str) -> str:
     return f"{ANSIBLE_CORE_REPO_URL}/{core_version}.tar.gz"
 
 
+ACCESS_TOKEN_ERROR = "Unable to get access token"  # noqa: S105
+
+
 def format_process(exc: subprocess.CalledProcessError) -> str:
     """Format the subprocess exception.
 
@@ -84,6 +88,30 @@ def format_process(exc: subprocess.CalledProcessError) -> str:
     if exc.stderr:
         result += f"stderr:\n{exc.stderr}"
     return result
+
+
+def galaxy_dependency_specs(dependencies: object) -> list[str]:
+    """Convert galaxy.yml dependencies to ansible-galaxy collection specs.
+
+    Args:
+        dependencies: The dependencies mapping from galaxy.yml.
+
+    Returns:
+        A list of collection specs suitable for ansible-galaxy install.
+    """
+    if not isinstance(dependencies, dict):
+        return []
+
+    specs: list[str] = []
+    for name, specifier in dependencies.items():
+        if not name:
+            continue
+        spec = str(name)
+        version_spec = "" if specifier is None else str(specifier).strip()
+        if version_spec and version_spec != "*":
+            spec = f"{spec}:{version_spec}"
+        specs.append(spec)
+    return specs
 
 
 class Installer:
@@ -105,6 +133,43 @@ class Installer:
         self._config = config
         self._output = output
         self._current_collection_spec: str
+
+    def _galaxy_env(self) -> dict[str, str]:
+        """Build environment variables for ansible-galaxy subprocesses.
+
+        Pins ANSIBLE_CONFIG to the trusted ansible.cfg from cfg isolation so
+        galaxy server and token settings match interactive ansible-galaxy use.
+
+        Returns:
+            Environment mapping for ansible-galaxy.
+        """
+        env = {
+            **os.environ,
+            "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
+        }
+        if self._config.ansible_cfg is not None:
+            env["ANSIBLE_CONFIG"] = str(self._config.ansible_cfg)
+        return env
+
+    def _hint_galaxy_auth_failure(self, exc: subprocess.CalledProcessError) -> None:
+        """Emit a hint when ansible-galaxy fails Automation Hub token exchange.
+
+        Args:
+            exc: The failed ansible-galaxy subprocess exception.
+        """
+        stderr = exc.stderr or ""
+        if ACCESS_TOKEN_ERROR not in stderr:
+            return
+
+        hint = (
+            "Automation Hub authentication failed while talking to galaxy servers. "
+            "Ensure ansible.cfg [galaxy] server_list / [galaxy_server.*] names match "
+            "environment variables like ANSIBLE_GALAXY_SERVER_<SERVER>_TOKEN, and that "
+            "the value is a Red Hat offline token."
+        )
+        if self._config.ansible_cfg is not None:
+            hint += f" Using ANSIBLE_CONFIG={self._config.ansible_cfg}."
+        self._output.hint(hint)
 
     def run(self) -> None:
         """Run the installer."""
@@ -326,21 +391,18 @@ class Installer:
             f" -p {self._config.site_pkg_path}"
             " --force"
         )
-        env = {
-            **os.environ,
-            "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
-        }
         msg = "Running ansible-galaxy to install non-local collection and it's dependencies."
         self._output.debug(msg)
         try:
             proc = subprocess_run(
                 command=command,
-                env=env,
+                env=self._galaxy_env(),
                 verbose=self._config.args.verbose,
                 msg=msg,
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
+            self._hint_galaxy_auth_failure(exc)
             err = f"Failed to install collection: {format_process(exc)}"
             self._output.critical(err)
             raise SystemError(err) from exc  # pragma: no cover # critical exits
@@ -379,11 +441,13 @@ class Installer:
         try:
             proc = subprocess_run(
                 command=command,
+                env=self._galaxy_env(),
                 verbose=self._config.args.verbose,
                 msg=work,
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
+            self._hint_galaxy_auth_failure(exc)
             err = f"Failed to install collections: {format_process(exc)}"
             self._output.critical(err)
 
@@ -515,7 +579,7 @@ class Installer:
                 err = f"Failed to copy collection to build directory: {exc}"
                 self._output.critical(err)
 
-    def _install_local_collection(
+    def _install_local_collection(  # noqa: PLR0915
         self,
         collection: Collection,
     ) -> None:
@@ -590,26 +654,35 @@ class Installer:
             self._output.debug(msg)
             shutil.rmtree(info_dir)
 
+        dependency_specs = self._collection_dependency_specs(collection)
+        installed_names: list[str] = []
+        if dependency_specs:
+            installed_names.extend(
+                self._install_collection_dependencies(dependency_specs),
+            )
+
+        no_deps = " --no-deps" if dependency_specs else ""
         command = (
             f"{self._config.galaxy_bin} collection"
             f" install {tarball} -p {self._config.site_pkg_path}"
-            " --force"
+            f" --force{no_deps}"
         )
-        env = {
-            **os.environ,
-            "ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING": str(self._config.args.verbose),
-        }
-        msg = "Running ansible-galaxy to install a local collection and it's dependencies."
+        msg = (
+            "Running ansible-galaxy to install a local collection without dependencies."
+            if dependency_specs
+            else "Running ansible-galaxy to install a local collection and it's dependencies."
+        )
         self._output.debug(msg)
         try:
             proc = subprocess_run(
                 command=command,
-                env=env,
+                env=self._galaxy_env(),
                 verbose=self._config.args.verbose,
                 msg=msg,
                 output=self._output,
             )
         except subprocess.CalledProcessError as exc:
+            self._hint_galaxy_auth_failure(exc)
             err = f"Failed to install collection: {format_process(exc)}"
             self._output.critical(err)
             raise SystemError(err) from exc  # pragma: no cover # critical exits
@@ -628,9 +701,77 @@ class Installer:
                 collection.cache_dir / "MANIFEST.json",
             )
 
-        installed = self.RE_GALAXY_INSTALLED.findall(proc.stdout)
+        installed_names.extend(self.RE_GALAXY_INSTALLED.findall(proc.stdout))
+        # Preserve order while removing duplicates from dep + local install notes.
+        installed = list(dict.fromkeys(installed_names))
         msg = f"Installed collections include: {oxford_join(installed)}"
         self._output.note(msg)
+
+    def _collection_dependency_specs(self, collection: Collection) -> list[str]:
+        """Read collection dependency specs from galaxy.yml.
+
+        Args:
+            collection: The local collection being installed.
+
+        Returns:
+            ansible-galaxy collection specs for dependencies.
+        """
+        galaxy_file = collection.path / GALAXY_YAML
+        if not galaxy_file.exists():
+            return []
+
+        try:
+            with galaxy_file.open(encoding="utf-8") as fh:
+                galaxy_data = yaml.safe_load(fh) or {}
+        except yaml.YAMLError as exc:
+            msg = f"Failed to parse {galaxy_file} for dependencies: {exc}"
+            self._output.warning(msg)
+            return []
+
+        if not isinstance(galaxy_data, dict):
+            return []
+
+        return galaxy_dependency_specs(galaxy_data.get("dependencies"))
+
+    def _install_collection_dependencies(self, dependency_specs: list[str]) -> list[str]:
+        """Install galaxy.yml dependencies into the virtual environment.
+
+        Args:
+            dependency_specs: Collection specs to install.
+
+        Returns:
+            Names of collections reported as installed by ansible-galaxy.
+
+        Raises:
+            SystemError: If dependency installation fails.
+        """
+        collections_str = " ".join(shlex.quote(spec) for spec in dependency_specs)
+        msg = f"Installing collection dependencies from galaxy.yml: {collections_str}"
+        self._output.info(msg)
+
+        command = (
+            f"{self._config.galaxy_bin} collection"
+            f" install {collections_str}"
+            f" -p {self._config.site_pkg_path}"
+            " --force"
+        )
+        work = "Running ansible-galaxy to install collection dependencies."
+        self._output.debug(work)
+        try:
+            proc = subprocess_run(
+                command=command,
+                env=self._galaxy_env(),
+                verbose=self._config.args.verbose,
+                msg=work,
+                output=self._output,
+            )
+        except subprocess.CalledProcessError as exc:
+            self._hint_galaxy_auth_failure(exc)
+            err = f"Failed to install collection dependencies: {format_process(exc)}"
+            self._output.critical(err)
+            raise SystemError(err) from exc  # pragma: no cover # critical exits
+
+        return self.RE_GALAXY_INSTALLED.findall(proc.stdout)
 
     def _swap_editable_collection(self, collection: Collection) -> None:
         """Swap the installed collection with selective symlinks.
