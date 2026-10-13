@@ -811,3 +811,67 @@ def test_editable_seeds_git_file_for_worktree(
     assert written_gitdir == str((installable_local_collection / rel_gitdir).resolve()), (
         "gitdir: path must be the resolved absolute path from the source collection"
     )
+
+
+def test_seed_git_symlink_skips_existing_non_symlink(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _seed_git_symlink does nothing when a real .git already exists at dest.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    (installable_local_collection / ".git").mkdir()
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+
+    # Place a real directory at dest to simulate a pre-existing non-symlink .git.
+    # _make_installer already seeded a symlink there; replace it with a real dir.
+    dest_git = collection.site_pkg_path / ".git"
+    if dest_git.is_symlink():
+        dest_git.unlink()
+    dest_git.mkdir(exist_ok=True)
+    sentinel = dest_git / "sentinel"
+    sentinel.write_text("do not touch")
+
+    installer._seed_git_symlink(collection=collection)
+
+    # The pre-existing directory must be untouched
+    assert dest_git.is_dir()
+    assert not dest_git.is_symlink()
+    assert sentinel.read_text() == "do not touch"
+
+
+def test_seed_git_symlink_unknown_git_file_format(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _seed_git_symlink falls back to a symlink for unknown .git file content.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    # Write a .git file with content that does not start with "gitdir:"
+    (installable_local_collection / ".git").write_text("unknown content\n", encoding="utf-8")
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+
+    dest_git = collection.site_pkg_path / ".git"
+    if dest_git.exists() or dest_git.is_symlink():
+        dest_git.unlink()
+
+    installer._seed_git_symlink(collection=collection)
+
+    assert dest_git.is_symlink(), ".git should be a symlink for unknown file format"
+    assert dest_git.resolve() == (installable_local_collection / ".git").resolve()
