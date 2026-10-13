@@ -21,7 +21,9 @@ csource
 delenv
 excinfo
 fileh
+followlinks
 fqcn
+gitdir
 keepends
 netcommon
 platinclude
@@ -37,3 +39,4 @@ testns
 treemaker
 unisolated
 usefixtures
+worktrees
