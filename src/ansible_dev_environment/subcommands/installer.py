@@ -815,6 +815,38 @@ class Installer:
             "you will need to re-run 'ade install -e .' to include them in the editable install."
         )
         self._output.note(msg)
+        self._seed_git_symlink(collection=collection)
+
+    def _seed_git_symlink(self, collection: Collection) -> None:
+        """Seed a .git symlink into the editable collection install directory.
+
+        ansible-test selects InstalledSource when no .git is present, and
+        InstalledSource.get_paths uses os.walk without followlinks=True, silently
+        skipping directory symlinks (including tests/). Seeding .git causes
+        ansible-test to select GitSource instead, which uses git ls-files and
+        returns all tracked paths including tests/integration/targets/.
+
+        Only created when the source collection has a .git entry; silently skipped
+        for non-git working copies.
+
+        Args:
+            collection: The collection object.
+        """
+        source_git = collection.path / ".git"
+        if not source_git.exists():
+            msg = f"No .git found at {collection.path}, skipping .git symlink seeding."
+            self._output.debug(msg)
+            return
+        dest_git = collection.site_pkg_path / ".git"
+        if dest_git.is_symlink():
+            dest_git.unlink()
+        elif dest_git.exists():
+            msg = f"Non-symlink .git already exists at {dest_git}, skipping seeding."
+            self._output.debug(msg)
+            return
+        dest_git.symlink_to(source_git)
+        msg = f"Seeded .git symlink: {dest_git} -> {source_git}"
+        self._output.debug(msg)
 
     def _ensure_build_ignore(self, collection: Collection) -> None:
         """Ensure galaxy.yml build_ignore includes dev artifacts created by editable installs.

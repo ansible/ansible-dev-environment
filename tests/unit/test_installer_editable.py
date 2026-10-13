@@ -163,7 +163,9 @@ def test_editable_excludes_python_artifacts(
     assert not (collection_site_pkg / "test.pyc").exists()
     assert not (collection_site_pkg / "test.pyo").exists()
     assert not (collection_site_pkg / "__pycache__").exists()
-    assert not (collection_site_pkg / ".git").exists()
+    # .git is seeded as a symlink pointing at the source .git, not absent
+    assert (collection_site_pkg / ".git").is_symlink()
+    assert (collection_site_pkg / ".git").resolve() == (installable_local_collection / ".git").resolve()
     assert (collection_site_pkg / "galaxy.yml").exists()
 
 
@@ -666,3 +668,86 @@ def test_editable_build_ignore_skips_empty_yaml(
     mock_collection = _make_mock_collection(installer._config, installable_local_collection)
     installer._ensure_build_ignore(collection=mock_collection)
     assert galaxy_file.read_text() == ""
+
+
+def test_editable_seeds_git_symlink_when_git_present(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that a .git symlink is created in site-packages when source has .git.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    subprocess.run(
+        ["git", "init"],
+        cwd=installable_local_collection,
+        check=True,
+        capture_output=True,
+    )
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    Installer(config=config, output=config._output).run()
+
+    collection_site_pkg = config.site_pkg_collections_path / "ansible" / "posix"
+    dest_git = collection_site_pkg / ".git"
+    assert dest_git.is_symlink(), ".git should be a symlink in the editable install"
+    assert dest_git.resolve() == (installable_local_collection / ".git").resolve()
+
+
+def test_editable_no_git_symlink_when_no_git(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that no .git symlink is created when the source has no .git.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    assert not (installable_local_collection / ".git").exists()
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    Installer(config=config, output=config._output).run()
+
+    collection_site_pkg = config.site_pkg_collections_path / "ansible" / "posix"
+    assert not (collection_site_pkg / ".git").exists(), (
+        ".git should not exist in site-packages when source has no .git"
+    )
