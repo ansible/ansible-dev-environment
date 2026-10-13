@@ -163,7 +163,11 @@ def test_editable_excludes_python_artifacts(
     assert not (collection_site_pkg / "test.pyc").exists()
     assert not (collection_site_pkg / "test.pyo").exists()
     assert not (collection_site_pkg / "__pycache__").exists()
-    assert not (collection_site_pkg / ".git").exists()
+    # .git is seeded as a symlink pointing at the source .git, not absent
+    assert (collection_site_pkg / ".git").is_symlink()
+    assert (collection_site_pkg / ".git").resolve() == (
+        installable_local_collection / ".git"
+    ).resolve()
     assert (collection_site_pkg / "galaxy.yml").exists()
 
 
@@ -666,3 +670,208 @@ def test_editable_build_ignore_skips_empty_yaml(
     mock_collection = _make_mock_collection(installer._config, installable_local_collection)
     installer._ensure_build_ignore(collection=mock_collection)
     assert galaxy_file.read_text() == ""
+
+
+def test_editable_seeds_git_symlink_when_git_present(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that a .git symlink is created in site-packages when source has .git.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    subprocess.run(
+        ["git", "init"],
+        cwd=installable_local_collection,
+        check=True,
+        capture_output=True,
+    )
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    Installer(config=config, output=config._output).run()
+
+    collection_site_pkg = config.site_pkg_collections_path / "ansible" / "posix"
+    dest_git = collection_site_pkg / ".git"
+    assert dest_git.is_symlink(), ".git should be a symlink in the editable install"
+    assert dest_git.resolve() == (installable_local_collection / ".git").resolve()
+
+
+def test_editable_no_git_symlink_when_no_git(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that no .git symlink is created when the source has no .git.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    assert not (installable_local_collection / ".git").exists()
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    Installer(config=config, output=config._output).run()
+
+    collection_site_pkg = config.site_pkg_collections_path / "ansible" / "posix"
+    assert not (collection_site_pkg / ".git").exists(), (
+        ".git should not exist in site-packages when source has no .git"
+    )
+
+
+def test_editable_seeds_git_file_for_worktree(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that a .git file with an absolute gitdir: path is written for git worktrees.
+
+    When the source .git is a file (git worktree), a relative gitdir: path inside
+    it must be resolved to absolute before writing to the install location, so that
+    git resolves it correctly regardless of where site-packages lives.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    # Simulate a git worktree: .git is a file containing a relative gitdir: path
+    fake_git_common_dir = tmp_path / "repo" / ".git" / "worktrees" / "wt"
+    fake_git_common_dir.mkdir(parents=True)
+    rel_gitdir = "../../../repo/.git/worktrees/wt"
+    (installable_local_collection / ".git").write_text(
+        f"gitdir: {rel_gitdir}\n",
+        encoding="utf-8",
+    )
+
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    Installer(config=config, output=config._output).run()
+
+    collection_site_pkg = config.site_pkg_collections_path / "ansible" / "posix"
+    dest_git = collection_site_pkg / ".git"
+    assert dest_git.exists(), ".git file should exist in the editable install"
+    assert not dest_git.is_symlink(), ".git should be a file, not a symlink, for worktrees"
+    content = dest_git.read_text(encoding="utf-8").strip()
+    assert content.startswith("gitdir:")
+    written_gitdir = content[len("gitdir:") :].strip()
+    # The written path must be absolute so git resolves it from any location
+    assert written_gitdir == str((installable_local_collection / rel_gitdir).resolve()), (
+        "gitdir: path must be the resolved absolute path from the source collection"
+    )
+
+
+def test_seed_git_symlink_skips_existing_non_symlink(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _seed_git_symlink does nothing when a real .git already exists at dest.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    (installable_local_collection / ".git").mkdir()
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+
+    # Place a real directory at dest to simulate a pre-existing non-symlink .git.
+    # _make_installer already seeded a symlink there; replace it with a real dir.
+    dest_git = collection.site_pkg_path / ".git"
+    if dest_git.is_symlink():
+        dest_git.unlink()
+    dest_git.mkdir(exist_ok=True)
+    sentinel = dest_git / "sentinel"
+    sentinel.write_text("do not touch")
+
+    installer._seed_git_symlink(collection=collection)
+
+    # The pre-existing directory must be untouched
+    assert dest_git.is_dir()
+    assert not dest_git.is_symlink()
+    assert sentinel.read_text() == "do not touch"
+
+
+def test_seed_git_symlink_unknown_git_file_format(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that _seed_git_symlink falls back to a symlink for unknown .git file content.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    # Write a .git file with content that does not start with "gitdir:"
+    (installable_local_collection / ".git").write_text("unknown content\n", encoding="utf-8")
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+
+    dest_git = collection.site_pkg_path / ".git"
+    if dest_git.exists() or dest_git.is_symlink():
+        dest_git.unlink()
+
+    installer._seed_git_symlink(collection=collection)
+
+    assert dest_git.is_symlink(), ".git should be a symlink for unknown file format"
+    assert dest_git.resolve() == (installable_local_collection / ".git").resolve()
