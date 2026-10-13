@@ -165,7 +165,9 @@ def test_editable_excludes_python_artifacts(
     assert not (collection_site_pkg / "__pycache__").exists()
     # .git is seeded as a symlink pointing at the source .git, not absent
     assert (collection_site_pkg / ".git").is_symlink()
-    assert (collection_site_pkg / ".git").resolve() == (installable_local_collection / ".git").resolve()
+    assert (collection_site_pkg / ".git").resolve() == (
+        installable_local_collection / ".git"
+    ).resolve()
     assert (collection_site_pkg / "galaxy.yml").exists()
 
 
@@ -804,8 +806,8 @@ def test_editable_seeds_git_file_for_worktree(
     assert not dest_git.is_symlink(), ".git should be a file, not a symlink, for worktrees"
     content = dest_git.read_text(encoding="utf-8").strip()
     assert content.startswith("gitdir:")
-    written_gitdir = content[len("gitdir:"):].strip()
+    written_gitdir = content[len("gitdir:") :].strip()
     # The written path must be absolute so git resolves it from any location
-    assert written_gitdir == str(
-        (installable_local_collection / rel_gitdir).resolve()
-    ), "gitdir: path must be the resolved absolute path from the source collection"
+    assert written_gitdir == str((installable_local_collection / rel_gitdir).resolve()), (
+        "gitdir: path must be the resolved absolute path from the source collection"
+    )

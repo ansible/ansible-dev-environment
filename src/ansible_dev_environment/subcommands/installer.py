@@ -859,7 +859,7 @@ class Installer:
             # that the installed .git file works from any location.
             content = source_git.read_text(encoding="utf-8").strip()
             if content.startswith("gitdir:"):
-                rel_gitdir = content[len("gitdir:"):].strip()
+                rel_gitdir = content[len("gitdir:") :].strip()
                 abs_gitdir = (collection.path / rel_gitdir).resolve()
                 dest_git.write_text(f"gitdir: {abs_gitdir}\n", encoding="utf-8")
                 msg = f"Seeded .git file: {dest_git} -> {abs_gitdir}"
