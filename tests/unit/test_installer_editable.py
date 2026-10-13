@@ -751,3 +751,61 @@ def test_editable_no_git_symlink_when_no_git(
     assert not (collection_site_pkg / ".git").exists(), (
         ".git should not exist in site-packages when source has no .git"
     )
+
+
+def test_editable_seeds_git_file_for_worktree(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Test that a .git file with an absolute gitdir: path is written for git worktrees.
+
+    When the source .git is a file (git worktree), a relative gitdir: path inside
+    it must be resolved to absolute before writing to the install location, so that
+    git resolves it correctly regardless of where site-packages lives.
+
+    Args:
+        tmp_path: A temporary directory.
+        installable_local_collection: The installable_local_collection fixture.
+        monkeypatch: The monkeypatch fixture.
+        output: The output fixture.
+    """
+    # Simulate a git worktree: .git is a file containing a relative gitdir: path
+    fake_git_common_dir = tmp_path / "repo" / ".git" / "worktrees" / "wt"
+    fake_git_common_dir.mkdir(parents=True)
+    rel_gitdir = "../../../repo/.git/worktrees/wt"
+    (installable_local_collection / ".git").write_text(
+        f"gitdir: {rel_gitdir}\n",
+        encoding="utf-8",
+    )
+
+    venv_path = tmp_path / "venv"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ade",
+            "install",
+            "--editable",
+            str(installable_local_collection),
+            "--venv",
+            str(venv_path),
+            "-vvv",
+        ],
+    )
+    args = parse()
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config.init()
+    Installer(config=config, output=config._output).run()
+
+    collection_site_pkg = config.site_pkg_collections_path / "ansible" / "posix"
+    dest_git = collection_site_pkg / ".git"
+    assert dest_git.exists(), ".git file should exist in the editable install"
+    assert not dest_git.is_symlink(), ".git should be a file, not a symlink, for worktrees"
+    content = dest_git.read_text(encoding="utf-8").strip()
+    assert content.startswith("gitdir:")
+    written_gitdir = content[len("gitdir:"):].strip()
+    # The written path must be absolute so git resolves it from any location
+    assert written_gitdir == str(
+        (installable_local_collection / rel_gitdir).resolve()
+    ), "gitdir: path must be the resolved absolute path from the source collection"

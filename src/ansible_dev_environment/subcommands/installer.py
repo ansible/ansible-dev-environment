@@ -818,7 +818,7 @@ class Installer:
         self._seed_git_symlink(collection=collection)
 
     def _seed_git_symlink(self, collection: Collection) -> None:
-        """Seed a .git symlink into the editable collection install directory.
+        """Seed a .git entry into the editable collection install directory.
 
         ansible-test selects InstalledSource when no .git is present, and
         InstalledSource.get_paths uses os.walk without followlinks=True, silently
@@ -828,6 +828,12 @@ class Installer:
 
         Only created when the source collection has a .git entry; silently skipped
         for non-git working copies.
+
+        For standard clones (.git is a directory) a symlink is created.
+        For git worktrees (.git is a file containing a gitdir: line) a new .git
+        file is written with the gitdir: path resolved to an absolute value, so
+        that git resolves it correctly from the install location rather than
+        relative to the symlink target.
 
         Args:
             collection: The collection object.
@@ -844,8 +850,22 @@ class Installer:
             msg = f"Non-symlink .git already exists at {dest_git}, skipping seeding."
             self._output.debug(msg)
             return
-        dest_git.symlink_to(source_git)
-        msg = f"Seeded .git symlink: {dest_git} -> {source_git}"
+        if source_git.is_dir():
+            dest_git.symlink_to(source_git)
+            msg = f"Seeded .git symlink: {dest_git} -> {source_git}"
+        else:
+            # git worktree: .git is a file with "gitdir: <relative-path>".
+            # Resolve the relative path against the source collection root so
+            # that the installed .git file works from any location.
+            content = source_git.read_text(encoding="utf-8").strip()
+            if content.startswith("gitdir:"):
+                rel_gitdir = content[len("gitdir:"):].strip()
+                abs_gitdir = (collection.path / rel_gitdir).resolve()
+                dest_git.write_text(f"gitdir: {abs_gitdir}\n", encoding="utf-8")
+                msg = f"Seeded .git file: {dest_git} -> {abs_gitdir}"
+            else:
+                dest_git.symlink_to(source_git)
+                msg = f"Seeded .git symlink (unknown format): {dest_git} -> {source_git}"
         self._output.debug(msg)
 
     def _ensure_build_ignore(self, collection: Collection) -> None:
