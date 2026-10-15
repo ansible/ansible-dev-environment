@@ -191,6 +191,127 @@ def test_dependency_spec_satisfied(tmp_path: Path, output: Output) -> None:
     assert not installer._dependency_spec_satisfied("missing.collection:>=1.0.0", installed)
 
 
+def test_collection_dependency_specs_edge_cases(
+    tmp_path: Path,
+    output: Output,
+) -> None:
+    """Test reading galaxy.yml dependencies handles missing or invalid files.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    installer = Installer(config=config, output=output)
+
+    missing_galaxy = Collection(
+        config=config,
+        path=tmp_path / "no.galaxy",
+        opt_deps="",
+        local=True,
+        cnamespace="infra",
+        cname="demo",
+        csource=[],
+        specifier="",
+        original=str(tmp_path / "no.galaxy"),
+    )
+    missing_galaxy.path.mkdir(parents=True)
+    assert installer._collection_dependency_specs(missing_galaxy) == []
+
+    bad_yaml_path = tmp_path / "bad.yaml"
+    bad_yaml_path.mkdir(parents=True)
+    (bad_yaml_path / "galaxy.yml").write_text(":\n  bad: [\n", encoding="utf-8")
+    bad_yaml = Collection(
+        config=config,
+        path=bad_yaml_path,
+        opt_deps="",
+        local=True,
+        cnamespace="infra",
+        cname="demo",
+        csource=[],
+        specifier="",
+        original=str(bad_yaml_path),
+    )
+    assert installer._collection_dependency_specs(bad_yaml) == []
+
+    list_galaxy_path = tmp_path / "list.galaxy"
+    list_galaxy_path.mkdir(parents=True)
+    (list_galaxy_path / "galaxy.yml").write_text("- not a mapping\n", encoding="utf-8")
+    list_galaxy = Collection(
+        config=config,
+        path=list_galaxy_path,
+        opt_deps="",
+        local=True,
+        cnamespace="infra",
+        cname="demo",
+        csource=[],
+        specifier="",
+        original=str(list_galaxy_path),
+    )
+    assert installer._collection_dependency_specs(list_galaxy) == []
+
+
+def test_install_missing_collection_dependencies_no_specs(
+    tmp_path: Path,
+    output: Output,
+) -> None:
+    """Empty dependency list short-circuits without calling ansible-galaxy.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    installer = Installer(config=config, output=output)
+    assert installer._install_missing_collection_dependencies([]) == []
+
+
+def test_dependency_specs_to_install_partition(
+    tmp_path: Path,
+    output: Output,
+) -> None:
+    """Partition dependency specs using manifests from the venv.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    _write_installed_collection_manifest(config, "ansible", "posix", "1.5.0")
+    installer = Installer(config=config, output=output)
+
+    specs_to_install, satisfied = installer._dependency_specs_to_install(
+        [
+            "ansible.posix:>=1.0.0,<2.0.0",
+            "missing.collection:>=1.0.0",
+        ],
+    )
+    assert satisfied == ["ansible.posix"]
+    assert specs_to_install == ["missing.collection:>=1.0.0"]
+
+
+def test_dependency_spec_satisfied_without_packaging(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Version checks fail closed when packaging is unavailable.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    monkeypatch.setattr("ansible_dev_environment.subcommands.installer.specifiers", None)
+    monkeypatch.setattr("ansible_dev_environment.subcommands.installer.version", None)
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    installer = Installer(config=config, output=output)
+    installed: dict[str, dict[str, JSONVal]] = {
+        "ansible.posix": {"collection_info": {"version": "1.5.0"}},
+    }
+    assert not installer._dependency_spec_satisfied("ansible.posix:>=1.0.0", installed)
+
+
 def test_galaxy_dependency_specs() -> None:
     """Test conversion of galaxy.yml dependencies to ansible-galaxy specs."""
     assert not galaxy_dependency_specs(None)
