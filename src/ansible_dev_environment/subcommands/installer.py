@@ -625,7 +625,7 @@ class Installer:
                 err = f"Failed to copy collection to build directory: {exc}"
                 self._output.critical(err)
 
-    def _install_local_collection(  # noqa: PLR0915
+    def _install_local_collection(
         self,
         collection: Collection,
     ) -> None:
