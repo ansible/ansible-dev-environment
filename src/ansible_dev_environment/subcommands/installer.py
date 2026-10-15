@@ -24,7 +24,9 @@ except ImportError:
 from ansible_dev_environment.collection import Collection, parse_collection_request
 from ansible_dev_environment.constants import GALAXY_YAML
 from ansible_dev_environment.utils import (
+    JSONVal,
     builder_introspect,
+    collect_manifests,
     collections_from_requirements,
     get_dependency_constraint,
     opt_deps_to_files,
@@ -112,6 +114,50 @@ def galaxy_dependency_specs(dependencies: object) -> list[str]:
             spec = f"{spec}:{version_spec}"
         specs.append(spec)
     return specs
+
+
+def parse_galaxy_collection_spec(spec: str) -> tuple[str, str | None]:
+    """Split an ansible-galaxy collection spec into name and optional version.
+
+    Args:
+        spec: Collection spec (e.g. ``namespace.name:>=1.0.0``).
+
+    Returns:
+        Fully qualified collection name and version specifier, if any.
+    """
+    if ":" in spec:
+        name_part, raw_version = spec.split(":", 1)
+        stripped_version = raw_version.strip()
+        return name_part.strip(), stripped_version or None
+    return spec.strip(), None
+
+
+def _installed_collection_version(
+    installed: dict[str, dict[str, JSONVal]],
+    name: str,
+) -> str | None:
+    """Return the installed version for a collection, if manifest data is usable.
+
+    Args:
+        installed: Manifest data keyed by collection name.
+        name: Fully qualified collection name.
+
+    Returns:
+        Installed version string, or None if missing or malformed.
+    """
+    dependency = installed.get(name)
+    if not isinstance(dependency, dict):
+        return None
+
+    collection_info = dependency.get("collection_info")
+    if not isinstance(collection_info, dict):
+        return None
+
+    dep_version = collection_info.get("version")
+    if not isinstance(dep_version, str):
+        return None
+
+    return dep_version
 
 
 class Installer:
@@ -579,7 +625,7 @@ class Installer:
                 err = f"Failed to copy collection to build directory: {exc}"
                 self._output.critical(err)
 
-    def _install_local_collection(  # noqa: PLR0915
+    def _install_local_collection(
         self,
         collection: Collection,
     ) -> None:
@@ -655,11 +701,7 @@ class Installer:
             shutil.rmtree(info_dir)
 
         dependency_specs = self._collection_dependency_specs(collection)
-        installed_names: list[str] = []
-        if dependency_specs:
-            installed_names.extend(
-                self._install_collection_dependencies(dependency_specs),
-            )
+        installed_names = self._install_missing_collection_dependencies(dependency_specs)
 
         no_deps = " --no-deps" if dependency_specs else ""
         command = (
@@ -732,6 +774,87 @@ class Installer:
             return []
 
         return galaxy_dependency_specs(galaxy_data.get("dependencies"))
+
+    def _dependency_spec_satisfied(
+        self,
+        spec: str,
+        installed: dict[str, dict[str, JSONVal]],
+    ) -> bool:
+        """Return True if an installed collection satisfies a galaxy dependency spec.
+
+        Args:
+            spec: ansible-galaxy collection spec from galaxy.yml.
+            installed: Manifest data keyed by collection name.
+
+        Returns:
+            Whether the dependency is already satisfied in the venv.
+        """
+        name, version_req = parse_galaxy_collection_spec(spec)
+        dep_version = _installed_collection_version(installed, name)
+        if dep_version is None:
+            return False
+
+        if not version_req or version_req == "*":
+            return True
+
+        if specifiers is None or version is None:
+            return False
+
+        try:
+            return version.parse(dep_version) in specifiers.SpecifierSet(version_req)
+        except (version.InvalidVersion, specifiers.InvalidSpecifier):
+            return False
+
+    def _dependency_specs_to_install(
+        self,
+        dependency_specs: list[str],
+    ) -> tuple[list[str], list[str]]:
+        """Partition galaxy.yml dependency specs into missing and already satisfied.
+
+        Args:
+            dependency_specs: Collection specs from galaxy.yml.
+
+        Returns:
+            Specs that still need ansible-galaxy install, and satisfied collection names.
+        """
+        installed = collect_manifests(
+            target=self._config.site_pkg_collections_path,
+            venv_cache_dir=self._config.venv_cache_dir,
+        )
+        specs_to_install: list[str] = []
+        satisfied_names: list[str] = []
+        for spec in dependency_specs:
+            name, _version = parse_galaxy_collection_spec(spec)
+            if self._dependency_spec_satisfied(spec, installed):
+                msg = f"Collection dependency {name} is already installed; skipping."
+                self._output.debug(msg)
+                satisfied_names.append(name)
+            else:
+                specs_to_install.append(spec)
+        return specs_to_install, satisfied_names
+
+    def _install_missing_collection_dependencies(
+        self,
+        dependency_specs: list[str],
+    ) -> list[str]:
+        """Install galaxy.yml dependencies that are missing or version-mismatched.
+
+        Args:
+            dependency_specs: Collection specs from galaxy.yml.
+
+        Returns:
+            Collection names skipped as satisfied plus those installed via ansible-galaxy.
+        """
+        if not dependency_specs:
+            return []
+
+        specs_to_install, satisfied = self._dependency_specs_to_install(dependency_specs)
+        installed_names: list[str] = list(satisfied)
+        if specs_to_install:
+            installed_names.extend(
+                self._install_collection_dependencies(specs_to_install),
+            )
+        return installed_names
 
     def _install_collection_dependencies(self, dependency_specs: list[str]) -> list[str]:
         """Install galaxy.yml dependencies into the virtual environment.
