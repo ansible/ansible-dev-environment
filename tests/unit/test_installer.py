@@ -192,6 +192,40 @@ def test_copy_using_git(tmp_path: Path, output: Output) -> None:
     assert [m.name for m in list(moved)] == ["file_tracked.txt"]
 
 
+def test_copy_git_missing_tracked_file(
+    tmp_path: Path,
+    output: Output,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test copy fails clearly when git index lists a missing working-tree file.
+
+    Args:
+        tmp_path: Temp directory
+        output: Output instance
+        capsys: The capsys fixture
+    """
+    source = tmp_path / "source"
+    source.mkdir()
+    dest = tmp_path / "build"
+    dest.mkdir()
+    config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
+    installer = Installer(output=output, config=config)
+    subprocess.run(args=["git", "init"], cwd=source, check=False)
+    tracked = source / "file_tracked.txt"
+    tracked.touch()
+    subprocess.run(args=["git", "add", "file_tracked.txt"], cwd=source, check=False)
+    tracked.unlink()
+
+    with pytest.raises(SystemExit) as excinfo:
+        installer._copy_repo_files(local_repo_path=source, destination_path=dest)
+
+    assert excinfo.value.code == 1
+    captured = capsys.readouterr()
+    assert "missing from the working tree" in captured.err
+    assert "file_tracked.txt" in captured.err
+    assert "git add -A" in captured.err
+
+
 def test_copy_using_ls(tmp_path: Path, output: Output) -> None:
     """Test file copy using ls.
 

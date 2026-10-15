@@ -556,7 +556,25 @@ class Installer:
         self._output.info(msg)
 
         # Parse tracked files output
-        files_list = files_stdout.split("\n")
+        files_list = [file for file in files_stdout.split("\n") if file]
+
+        if found_using == "git ls-files":
+            missing_files = [
+                file
+                for file in files_list
+                if not (Path(local_repo_path) / file).exists()
+            ]
+            if missing_files:
+                missing_list = "\n".join(f"  - {file}" for file in missing_files)
+                msg = (
+                    "One or more paths from 'git ls-files' are missing from the "
+                    f"working tree:\n{missing_list}\n\n"
+                    "ADE copies files listed in the git index. Unstaged deletes or "
+                    "moves leave the index out of sync with disk until you stage "
+                    "or restore changes.\n"
+                    "Try: git add -A   (or restore files to match the index)"
+                )
+                self._output.critical(msg)
 
         # Create the destination folder if it doesn't exist
         Path(destination_path).mkdir(parents=True, exist_ok=True)
@@ -575,6 +593,12 @@ class Installer:
             try:
                 # Copy the file
                 shutil.copy2(src_file_path, dest_file_path)
+            except FileNotFoundError:
+                err = (
+                    f"Failed to copy collection to build directory: "
+                    f"missing file '{file}'"
+                )
+                self._output.critical(err)
             except shutil.Error as exc:
                 err = f"Failed to copy collection to build directory: {exc}"
                 self._output.critical(err)
