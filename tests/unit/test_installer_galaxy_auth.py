@@ -216,7 +216,7 @@ def test_collection_dependency_specs_edge_cases(
         original=str(tmp_path / "no.galaxy"),
     )
     missing_galaxy.path.mkdir(parents=True)
-    assert installer._collection_dependency_specs(missing_galaxy) == []
+    assert not installer._collection_dependency_specs(missing_galaxy)
 
     bad_yaml_path = tmp_path / "bad.yaml"
     bad_yaml_path.mkdir(parents=True)
@@ -232,7 +232,7 @@ def test_collection_dependency_specs_edge_cases(
         specifier="",
         original=str(bad_yaml_path),
     )
-    assert installer._collection_dependency_specs(bad_yaml) == []
+    assert not installer._collection_dependency_specs(bad_yaml)
 
     list_galaxy_path = tmp_path / "list.galaxy"
     list_galaxy_path.mkdir(parents=True)
@@ -248,7 +248,7 @@ def test_collection_dependency_specs_edge_cases(
         specifier="",
         original=str(list_galaxy_path),
     )
-    assert installer._collection_dependency_specs(list_galaxy) == []
+    assert not installer._collection_dependency_specs(list_galaxy)
 
 
 def test_install_missing_collection_dependencies_no_specs(
@@ -263,7 +263,7 @@ def test_install_missing_collection_dependencies_no_specs(
     """
     config = _make_config(tmp_path, output, ansible_cfg=None)
     installer = Installer(config=config, output=output)
-    assert installer._install_missing_collection_dependencies([]) == []
+    assert not installer._install_missing_collection_dependencies([])
 
 
 def test_dependency_specs_to_install_partition(
