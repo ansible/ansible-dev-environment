@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 
 from argparse import Namespace
@@ -18,6 +19,7 @@ from ansible_dev_environment.subcommands.installer import (
     ACCESS_TOKEN_ERROR,
     Installer,
     galaxy_dependency_specs,
+    parse_galaxy_collection_spec,
 )
 
 
@@ -108,6 +110,45 @@ def _make_local_collection(
     (collection.build_dir / "infra-demo-1.0.0.tar.gz").write_text("fake", encoding="utf-8")
     (collection.build_dir / "galaxy.yml").write_text(yaml.dump(galaxy), encoding="utf-8")
     return collection
+
+
+def _write_installed_collection_manifest(
+    config: Config,
+    namespace: str,
+    name: str,
+    version: str,
+) -> None:
+    """Place a collection MANIFEST.json under the test site-packages tree.
+
+    Args:
+        config: Application config.
+        namespace: Collection namespace.
+        name: Collection name.
+        version: Installed collection version.
+    """
+    collection_dir = config.site_pkg_collections_path / namespace / name
+    collection_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "collection_info": {
+            "namespace": namespace,
+            "name": name,
+            "version": version,
+            "dependencies": {},
+        },
+    }
+    (collection_dir / "MANIFEST.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+
+def test_parse_galaxy_collection_spec() -> None:
+    """Test splitting ansible-galaxy collection specs."""
+    assert parse_galaxy_collection_spec("ansible.posix") == ("ansible.posix", None)
+    assert parse_galaxy_collection_spec("ansible.posix:>=1.0.0,<2.0.0") == (
+        "ansible.posix",
+        ">=1.0.0,<2.0.0",
+    )
 
 
 def test_galaxy_dependency_specs() -> None:
@@ -229,6 +270,60 @@ def test_local_install_installs_deps_then_uses_no_deps(
     assert str(collection.build_dir / "infra-demo-1.0.0.tar.gz") in local_call["command"]
     assert "--no-deps" in local_call["command"]
     assert local_call["env"]["ANSIBLE_CONFIG"] == str(cfg)
+
+
+def test_local_install_skips_already_installed_dependencies(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Local install does not re-install galaxy.yml deps already in the venv.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    _write_installed_collection_manifest(config, "ansible", "posix", "1.5.0")
+    collection = _make_local_collection(
+        config,
+        tmp_path / "infra.demo",
+        dependencies={"ansible.posix": ">=1.0.0,<2.0.0"},
+    )
+    installer = Installer(config=config, output=output)
+
+    calls: list[dict[str, Any]] = []
+
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
+        calls.append(kwargs)
+        command = kwargs["command"]
+        if "collection build" in command:
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        collection.site_pkg_path.mkdir(parents=True, exist_ok=True)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="infra.demo:1.0.0 was installed successfully\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+    monkeypatch.setattr(installer, "_copy_repo_files", MagicMock())
+
+    installer._install_local_collection(collection)
+
+    galaxy_installs = [
+        c
+        for c in calls
+        if "collection install" in c["command"] and "ansible-galaxy" in c["command"]
+    ]
+    assert len(galaxy_installs) == 1
+    assert "ansible.posix" not in galaxy_installs[0]["command"]
+    assert "--no-deps" in galaxy_installs[0]["command"]
 
 
 def test_local_install_without_deps_skips_no_deps(
