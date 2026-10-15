@@ -701,14 +701,7 @@ class Installer:
             shutil.rmtree(info_dir)
 
         dependency_specs = self._collection_dependency_specs(collection)
-        installed_names: list[str] = []
-        if dependency_specs:
-            specs_to_install, satisfied = self._dependency_specs_to_install(dependency_specs)
-            installed_names.extend(satisfied)
-            if specs_to_install:
-                installed_names.extend(
-                    self._install_collection_dependencies(specs_to_install),
-                )
+        installed_names = self._install_missing_collection_dependencies(dependency_specs)
 
         no_deps = " --no-deps" if dependency_specs else ""
         command = (
@@ -839,6 +832,29 @@ class Installer:
             else:
                 specs_to_install.append(spec)
         return specs_to_install, satisfied_names
+
+    def _install_missing_collection_dependencies(
+        self,
+        dependency_specs: list[str],
+    ) -> list[str]:
+        """Install galaxy.yml dependencies that are missing or version-mismatched.
+
+        Args:
+            dependency_specs: Collection specs from galaxy.yml.
+
+        Returns:
+            Collection names skipped as satisfied plus those installed via ansible-galaxy.
+        """
+        if not dependency_specs:
+            return []
+
+        specs_to_install, satisfied = self._dependency_specs_to_install(dependency_specs)
+        installed_names: list[str] = list(satisfied)
+        if specs_to_install:
+            installed_names.extend(
+                self._install_collection_dependencies(specs_to_install),
+            )
+        return installed_names
 
     def _install_collection_dependencies(self, dependency_specs: list[str]) -> list[str]:
         """Install galaxy.yml dependencies into the virtual environment.
