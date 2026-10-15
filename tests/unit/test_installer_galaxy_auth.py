@@ -18,6 +18,7 @@ from ansible_dev_environment.config import Config
 from ansible_dev_environment.subcommands.installer import (
     ACCESS_TOKEN_ERROR,
     Installer,
+    _installed_collection_version,
     galaxy_dependency_specs,
     parse_galaxy_collection_spec,
 )
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from ansible_dev_environment.output import Output
+    from ansible_dev_environment.utils import JSONVal
 
 
 def _make_config(tmp_path: Path, output: Output, *, ansible_cfg: Path | None = None) -> Config:
@@ -149,6 +151,44 @@ def test_parse_galaxy_collection_spec() -> None:
         "ansible.posix",
         ">=1.0.0,<2.0.0",
     )
+    assert parse_galaxy_collection_spec("ansible.posix:") == ("ansible.posix", None)
+
+
+def test_installed_collection_version() -> None:
+    """Test reading versions from collected manifest data."""
+    installed: dict[str, dict[str, JSONVal]] = {
+        "ansible.posix": {"collection_info": {"version": "1.5.0"}},
+    }
+    assert _installed_collection_version(installed, "ansible.posix") == "1.5.0"
+    assert _installed_collection_version(installed, "missing") is None
+    assert _installed_collection_version({"ansible.posix": {}}, "ansible.posix") is None
+    assert (
+        _installed_collection_version(
+            {"ansible.posix": {"collection_info": {"version": 1}}},
+            "ansible.posix",
+        )
+        is None
+    )
+
+
+def test_dependency_spec_satisfied(tmp_path: Path, output: Output) -> None:
+    """Test galaxy.yml dependency satisfaction against installed manifests.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    installer = Installer(config=config, output=output)
+    installed: dict[str, dict[str, JSONVal]] = {
+        "ansible.posix": {"collection_info": {"version": "1.5.0"}},
+    }
+    assert installer._dependency_spec_satisfied("ansible.posix:>=1.0.0,<2.0.0", installed)
+    assert installer._dependency_spec_satisfied("ansible.posix", installed)
+    assert installer._dependency_spec_satisfied("ansible.posix:*", installed)
+    assert not installer._dependency_spec_satisfied("ansible.posix:>=2.0.0", installed)
+    assert not installer._dependency_spec_satisfied("ansible.posix:not-a-specifier", installed)
+    assert not installer._dependency_spec_satisfied("missing.collection:>=1.0.0", installed)
 
 
 def test_galaxy_dependency_specs() -> None:
@@ -270,6 +310,60 @@ def test_local_install_installs_deps_then_uses_no_deps(
     assert str(collection.build_dir / "infra-demo-1.0.0.tar.gz") in local_call["command"]
     assert "--no-deps" in local_call["command"]
     assert local_call["env"]["ANSIBLE_CONFIG"] == str(cfg)
+
+
+def test_local_install_reinstalls_version_mismatched_dependency(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Local install re-runs ansible-galaxy when an installed dep is too old.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+    _write_installed_collection_manifest(config, "ansible", "posix", "0.9.0")
+    collection = _make_local_collection(
+        config,
+        tmp_path / "infra.demo",
+        dependencies={"ansible.posix": ">=1.0.0,<2.0.0"},
+    )
+    installer = Installer(config=config, output=output)
+
+    calls: list[dict[str, Any]] = []
+
+    def mock_subprocess_run(**kwargs: Any) -> subprocess.CompletedProcess[str]:  # noqa: ANN401
+        calls.append(kwargs)
+        command = kwargs["command"]
+        if "collection build" in command:
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        collection.site_pkg_path.mkdir(parents=True, exist_ok=True)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="infra.demo:1.0.0 was installed successfully\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(
+        "ansible_dev_environment.subcommands.installer.subprocess_run",
+        mock_subprocess_run,
+    )
+    monkeypatch.setattr(installer, "_copy_repo_files", MagicMock())
+
+    installer._install_local_collection(collection)
+
+    galaxy_installs = [
+        c
+        for c in calls
+        if "collection install" in c["command"] and "ansible-galaxy" in c["command"]
+    ]
+    deps_call, local_call = galaxy_installs
+    assert "ansible.posix" in deps_call["command"]
+    assert "--no-deps" in local_call["command"]
 
 
 def test_local_install_skips_already_installed_dependencies(

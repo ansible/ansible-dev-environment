@@ -24,6 +24,7 @@ except ImportError:
 from ansible_dev_environment.collection import Collection, parse_collection_request
 from ansible_dev_environment.constants import GALAXY_YAML
 from ansible_dev_environment.utils import (
+    JSONVal,
     builder_introspect,
     collect_manifests,
     collections_from_requirements,
@@ -125,10 +126,38 @@ def parse_galaxy_collection_spec(spec: str) -> tuple[str, str | None]:
         Fully qualified collection name and version specifier, if any.
     """
     if ":" in spec:
-        name, version_spec = spec.split(":", 1)
-        version_spec = version_spec.strip() or None
-        return name.strip(), version_spec
+        name_part, raw_version = spec.split(":", 1)
+        stripped_version = raw_version.strip()
+        return name_part.strip(), stripped_version or None
     return spec.strip(), None
+
+
+def _installed_collection_version(
+    installed: dict[str, dict[str, JSONVal]],
+    name: str,
+) -> str | None:
+    """Return the installed version for a collection, if manifest data is usable.
+
+    Args:
+        installed: Manifest data keyed by collection name.
+        name: Fully qualified collection name.
+
+    Returns:
+        Installed version string, or None if missing or malformed.
+    """
+    dependency = installed.get(name)
+    if not isinstance(dependency, dict):
+        return None
+
+    collection_info = dependency.get("collection_info")
+    if not isinstance(collection_info, dict):
+        return None
+
+    dep_version = collection_info.get("version")
+    if not isinstance(dep_version, str):
+        return None
+
+    return dep_version
 
 
 class Installer:
@@ -847,7 +876,7 @@ class Installer:
     def _dependency_spec_satisfied(
         self,
         spec: str,
-        installed: dict[str, object],
+        installed: dict[str, dict[str, JSONVal]],
     ) -> bool:
         """Return True if an installed collection satisfies a galaxy dependency spec.
 
@@ -859,16 +888,8 @@ class Installer:
             Whether the dependency is already satisfied in the venv.
         """
         name, version_req = parse_galaxy_collection_spec(spec)
-        dependency = installed.get(name)
-        if not isinstance(dependency, dict):
-            return False
-
-        collection_info = dependency.get("collection_info")
-        if not isinstance(collection_info, dict):
-            return False
-
-        dep_version = collection_info.get("version")
-        if not isinstance(dep_version, str):
+        dep_version = _installed_collection_version(installed, name)
+        if dep_version is None:
             return False
 
         if not version_req or version_req == "*":
