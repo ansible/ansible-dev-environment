@@ -291,6 +291,50 @@ def test_copy_fails(
     assert "Failed to copy collection to build directory" in captured.err
 
 
+def test_copy_file_not_found(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test copy reports clearly when shutil.copy2 raises FileNotFoundError.
+
+    Args:
+        tmp_path: Temp directory
+        output: Output instance
+        monkeypatch: The monkeypatch fixture
+        capsys: The capsys fixture
+    """
+    source = tmp_path / "source"
+    source.mkdir()
+    dest = tmp_path / "build"
+    dest.mkdir()
+    config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
+    installer = Installer(output=output, config=config)
+    (source / "file1.txt").touch()
+
+    def mock_copy2(src: Path, dest: Path) -> None:  # noqa: ARG001
+        """Raise FileNotFoundError.
+
+        Args:
+            src: Source path
+            dest: Destination path
+
+        Raises:
+            FileNotFoundError: Always
+
+        """
+        raise FileNotFoundError(src)
+
+    monkeypatch.setattr(shutil, "copy2", mock_copy2)
+    with pytest.raises(SystemExit) as excinfo:
+        installer._copy_repo_files(local_repo_path=source, destination_path=dest)
+
+    assert excinfo.value.code == 1
+    captured = capsys.readouterr()
+    assert "missing file 'file1.txt'" in captured.err
+
+
 def test_no_adt_install(
     tmp_path: Path,
     output: Output,

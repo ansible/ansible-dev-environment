@@ -560,9 +560,7 @@ class Installer:
 
         if found_using == "git ls-files":
             missing_files = [
-                file
-                for file in files_list
-                if not (Path(local_repo_path) / file).exists()
+                file for file in files_list if not (Path(local_repo_path) / file).exists()
             ]
             if missing_files:
                 missing_list = "\n".join(f"  - {file}" for file in missing_files)
@@ -594,10 +592,7 @@ class Installer:
                 # Copy the file
                 shutil.copy2(src_file_path, dest_file_path)
             except FileNotFoundError:
-                err = (
-                    f"Failed to copy collection to build directory: "
-                    f"missing file '{file}'"
-                )
+                err = f"Failed to copy collection to build directory: missing file '{file}'"
                 self._output.critical(err)
             except shutil.Error as exc:
                 err = f"Failed to copy collection to build directory: {exc}"
