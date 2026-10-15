@@ -81,6 +81,34 @@ scenarios = (
         ),
     ),
     (
+        "community.hashi_vault",
+        Collection(
+            config=config,
+            cname="hashi_vault",
+            cnamespace="community",
+            local=False,
+            original="community.hashi_vault",
+            specifier="",
+            path=Path(),
+            opt_deps="",
+            csource=[],
+        ),
+    ),
+    (
+        "community.hashi_vault>=1.0.0",
+        Collection(
+            config=config,
+            cname="hashi_vault",
+            cnamespace="community",
+            specifier=">=1.0.0",
+            local=False,
+            original="community.hashi_vault>=1.0.0",
+            path=Path(),
+            opt_deps="",
+            csource=[],
+        ),
+    ),
+    (
         str(FIXTURE_DIR),
         Collection(
             cname="cname",
