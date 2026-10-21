@@ -79,11 +79,12 @@ class UnInstaller:
             err = f"Failed to find {self._collection.name}: {self._collection.site_pkg_path}"
             self._output.warning(err)
 
+        info_prefix = f"{self._collection.name}-"
         for entry in self._config.site_pkg_collections_path.iterdir():
             if all(
                 (
                     entry.is_dir(),
-                    entry.name.startswith(self._collection.name),
+                    entry.name.startswith(info_prefix),
                     entry.suffix == ".info",
                 ),
             ):

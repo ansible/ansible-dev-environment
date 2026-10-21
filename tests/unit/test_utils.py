@@ -140,6 +140,9 @@ scenarios = (
     ("abcdefg", None),
     ("/12345678901234567890[test]", None),
     ("not_a_collection_name", None),
+    ("_leading.collection", None),
+    ("namespace._leading", None),
+    ("_bad._both", None),
 )
 
 

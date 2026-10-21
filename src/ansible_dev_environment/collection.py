@@ -254,10 +254,10 @@ def parse_collection_request(  # noqa: PLR0915
         return collection
     non_local_re = re.compile(
         r"""
-        (?P<cnamespace>\w+)             # collection namespace
-        \.                              # dot
-        (?P<cname>\w+)                  # collection name
-        (?P<specifier>[^\w].*)?         # optional specifier
+        (?P<cnamespace>[A-Za-z0-9][A-Za-z0-9_]*)   # collection namespace (ASCII, no leading _)
+        \.                                          # dot
+        (?P<cname>[A-Za-z0-9][A-Za-z0-9_]*)         # collection name (ASCII, no leading _)
+        (?P<specifier>[^A-Za-z0-9_].*)?             # optional specifier
         """,
         re.VERBOSE,
     )
