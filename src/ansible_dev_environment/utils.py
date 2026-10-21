@@ -595,6 +595,41 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
         sys.stdout.write("\033[?25h")
 
 
+def version_satisfies_constraint(installed_version: str, version_req: str | None) -> bool:
+    """Check if an installed version satisfies a galaxy.yml version constraint.
+
+    When the constraint string is unparseable (InvalidSpecifier), falls back to
+    ``>=0.0.0`` so any valid installed version is treated as satisfied—matching
+    the behaviour of ``ade check``.
+
+    Args:
+        installed_version: The installed collection version string.
+        version_req: The version constraint from galaxy.yml (e.g. ``>=1.0.0,<2.0.0``).
+
+    Returns:
+        True if the installed version satisfies the constraint.
+    """
+    if not version_req or version_req == "*":
+        return True
+
+    try:
+        from packaging import specifiers as _specifiers
+        from packaging import version as _version
+    except ImportError:
+        return False
+
+    try:
+        spec = _specifiers.SpecifierSet(version_req)
+    except _specifiers.InvalidSpecifier:
+        logger.debug("Invalid version specifier %s, assuming >=0.0.0.", version_req)
+        spec = _specifiers.SpecifierSet(">=0.0.0")
+
+    try:
+        return _version.parse(installed_version) in spec
+    except _version.InvalidVersion:
+        return False
+
+
 def str_to_bool(value: str) -> bool | None:
     """Converts a string to a boolean based on common truthy and falsy values.
 

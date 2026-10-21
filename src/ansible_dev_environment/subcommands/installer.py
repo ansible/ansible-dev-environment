@@ -32,6 +32,7 @@ from ansible_dev_environment.utils import (
     opt_deps_to_files,
     oxford_join,
     subprocess_run,
+    version_satisfies_constraint,
 )
 
 from .checker import Checker
@@ -885,16 +886,7 @@ class Installer:
         if dep_version is None:
             return False
 
-        if not version_req or version_req == "*":
-            return True
-
-        if specifiers is None or version is None:
-            return False
-
-        try:
-            return version.parse(dep_version) in specifiers.SpecifierSet(version_req)
-        except (version.InvalidVersion, specifiers.InvalidSpecifier):
-            return False
+        return version_satisfies_constraint(dep_version, version_req)
 
     def _dependency_specs_to_install(
         self,

@@ -187,7 +187,7 @@ def test_dependency_spec_satisfied(tmp_path: Path, output: Output) -> None:
     assert installer._dependency_spec_satisfied("ansible.posix", installed)
     assert installer._dependency_spec_satisfied("ansible.posix:*", installed)
     assert not installer._dependency_spec_satisfied("ansible.posix:>=2.0.0", installed)
-    assert not installer._dependency_spec_satisfied("ansible.posix:not-a-specifier", installed)
+    assert installer._dependency_spec_satisfied("ansible.posix:not-a-specifier", installed)
     assert not installer._dependency_spec_satisfied("missing.collection:>=1.0.0", installed)
 
 
@@ -290,6 +290,51 @@ def test_dependency_specs_to_install_partition(
     assert specs_to_install == ["missing.collection:>=1.0.0"]
 
 
+def test_dependency_specs_to_install_cache_only_manifest(
+    tmp_path: Path,
+    output: Output,
+) -> None:
+    """Partition recognises manifests in venv_cache_dir (editable installs).
+
+    After an editable install, site-packages has namespace/name/ but no
+    MANIFEST.json; collect_manifests() reads from venv_cache_dir instead.
+    _dependency_specs_to_install must still treat this as satisfied.
+
+    Args:
+        tmp_path: Temporary directory.
+        output: Output fixture.
+    """
+    config = _make_config(tmp_path, output, ansible_cfg=None)
+
+    # Create the collection directory under site-packages *without* MANIFEST.json
+    collection_dir = config.site_pkg_collections_path / "ansible" / "posix"
+    collection_dir.mkdir(parents=True, exist_ok=True)
+
+    # Write manifest only to venv_cache_dir (editable-install path)
+    cache_manifest_dir = config.venv_cache_dir / "ansible.posix"
+    cache_manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "collection_info": {
+            "namespace": "ansible",
+            "name": "posix",
+            "version": "1.5.0",
+            "dependencies": {},
+        },
+    }
+    (cache_manifest_dir / "MANIFEST.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+    installer = Installer(config=config, output=output)
+    specs_to_install, satisfied = installer._dependency_specs_to_install(
+        ["ansible.posix:>=1.0.0,<2.0.0", "missing.collection:>=1.0.0"],
+    )
+    assert "ansible.posix" in satisfied
+    assert "ansible.posix:>=1.0.0,<2.0.0" not in specs_to_install
+    assert specs_to_install == ["missing.collection:>=1.0.0"]
+
+
 def test_dependency_spec_satisfied_without_packaging(
     tmp_path: Path,
     output: Output,
@@ -302,8 +347,16 @@ def test_dependency_spec_satisfied_without_packaging(
         output: Output fixture.
         monkeypatch: Pytest monkeypatch fixture.
     """
-    monkeypatch.setattr("ansible_dev_environment.subcommands.installer.specifiers", None)
-    monkeypatch.setattr("ansible_dev_environment.subcommands.installer.version", None)
+    import builtins
+
+    real_import = builtins.__import__
+
+    def block_packaging(name: str, *args: object, **kwargs: object) -> object:
+        if name.startswith("packaging"):
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", block_packaging)
     config = _make_config(tmp_path, output, ansible_cfg=None)
     installer = Installer(config=config, output=output)
     installed: dict[str, dict[str, JSONVal]] = {
