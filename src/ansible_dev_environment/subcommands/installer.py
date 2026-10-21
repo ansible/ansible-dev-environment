@@ -556,11 +556,26 @@ class Installer:
         self._output.info(msg)
 
         # Parse tracked files output
-        files_list = [file for file in files_stdout.split("\n") if file]
+        files_list = [file for file in files_stdout.split("\n") if file.strip()]
+
+        if not files_list:
+            msg = "No files found with either 'git ls-files' or 'ls"
+            self._output.critical(msg)
+            raise SystemExit(msg)  # pragma: no cover # critical exits
+
+        repo_root = local_repo_path.resolve()
+        for file in files_list:
+            try:
+                (local_repo_path / file).resolve().relative_to(repo_root)
+            except ValueError:
+                msg = f"Refusing to copy path outside collection: '{file}'"
+                self._output.critical(msg)
 
         if found_using == "git ls-files":
             missing_files = [
-                file for file in files_list if not (Path(local_repo_path) / file).exists()
+                file
+                for file in files_list
+                if not (local_repo_path / file).resolve().exists()
             ]
             if missing_files:
                 missing_list = "\n".join(f"  - {file}" for file in missing_files)

@@ -224,6 +224,84 @@ def test_copy_git_missing_tracked_file(
     assert "missing from the working tree" in captured.err
     assert "file_tracked.txt" in captured.err
     assert "git add -A" in captured.err
+    assert list(dest.glob("**/*")) == []
+
+
+def test_copy_whitespace_only_file_list(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test copy fails when file listing is only blank lines.
+
+    Args:
+        tmp_path: Temp directory
+        output: Output instance
+        monkeypatch: The monkeypatch fixture
+    """
+    source = tmp_path / "source"
+    source.mkdir()
+    dest = tmp_path / "build"
+    config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
+    installer = Installer(output=output, config=config)
+
+    def mock_git_ls_files(
+        local_repo_path: Path,  # noqa: ARG001
+    ) -> tuple[str, str]:
+        return "git ls-files", "\n\n"
+
+    monkeypatch.setattr(installer, "_find_files_using_git_ls_files", mock_git_ls_files)
+    monkeypatch.setattr(
+        installer,
+        "_find_files_using_ls",
+        lambda local_repo_path: (None, None),  # noqa: ARG005
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        installer._copy_repo_files(local_repo_path=source, destination_path=dest)
+
+    assert excinfo.value.code == 1
+
+
+def test_copy_path_outside_collection(
+    tmp_path: Path,
+    output: Output,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test copy refuses paths that resolve outside the collection root.
+
+    Args:
+        tmp_path: Temp directory
+        output: Output instance
+        monkeypatch: The monkeypatch fixture
+        capsys: The capsys fixture
+    """
+    source = tmp_path / "source"
+    source.mkdir()
+    dest = tmp_path / "build"
+    config = Config(args=NAMESPACE, output=output, term_features=output.term_features)
+    installer = Installer(output=output, config=config)
+
+    def mock_git_ls_files(
+        local_repo_path: Path,  # noqa: ARG001
+    ) -> tuple[str, str]:
+        return "git ls-files", "../escape.txt"
+
+    monkeypatch.setattr(installer, "_find_files_using_git_ls_files", mock_git_ls_files)
+    monkeypatch.setattr(
+        installer,
+        "_find_files_using_ls",
+        lambda local_repo_path: (None, None),  # noqa: ARG005
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        installer._copy_repo_files(local_repo_path=source, destination_path=dest)
+
+    assert excinfo.value.code == 1
+    captured = capsys.readouterr()
+    assert "outside collection" in captured.err
+    assert "../escape.txt" in captured.err
 
 
 def test_copy_using_ls(tmp_path: Path, output: Output) -> None:
