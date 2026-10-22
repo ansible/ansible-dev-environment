@@ -559,6 +559,11 @@ class Installer:
             self._output.critical(msg)
             raise SystemExit(msg)  # pragma: no cover # critical exits
 
+        if found_using is None:  # pragma: no cover
+            msg = "No files found with either 'git ls-files' or 'ls'"
+            self._output.critical(msg)
+            raise SystemExit(msg)
+
         return found_using, files_list
 
     def _reject_repo_paths_outside_root(
@@ -592,9 +597,7 @@ class Installer:
             files_list: Paths from ``git ls-files``.
         """
         missing_files = [
-            file
-            for file in files_list
-            if not (local_repo_path / file).resolve().exists()
+            file for file in files_list if not (local_repo_path / file).resolve().exists()
         ]
         if not missing_files:
             return
@@ -653,10 +656,6 @@ class Installer:
         Args:
             local_repo_path: The collection local path.
             destination_path: The build destination path.
-
-        Raises:
-            SystemExit: If no files are found.
-
         """
         found_using, files_list = self._discover_repo_file_list(local_repo_path)
 
