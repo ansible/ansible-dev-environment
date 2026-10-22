@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import subprocess
 
@@ -294,7 +295,7 @@ def test_dependency_specs_to_install_cache_only_manifest(
     tmp_path: Path,
     output: Output,
 ) -> None:
-    """Partition recognises manifests in venv_cache_dir (editable installs).
+    """Partition recognizes manifests in venv_cache_dir (editable installs).
 
     After an editable install, site-packages has namespace/name/ but no
     MANIFEST.json; collect_manifests() reads from venv_cache_dir instead.
@@ -347,14 +348,12 @@ def test_dependency_spec_satisfied_without_packaging(
         output: Output fixture.
         monkeypatch: Pytest monkeypatch fixture.
     """
-    import builtins
-
     real_import = builtins.__import__
 
     def block_packaging(name: str, *args: object, **kwargs: object) -> object:
         if name.startswith("packaging"):
             raise ImportError(name)
-        return real_import(name, *args, **kwargs)
+        return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
 
     monkeypatch.setattr(builtins, "__import__", block_packaging)
     config = _make_config(tmp_path, output, ansible_cfg=None)

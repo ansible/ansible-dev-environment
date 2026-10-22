@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import builtins
+
 from typing import TYPE_CHECKING
 
-import yaml
-
 import pytest
+import yaml
 
 from ansible_dev_environment.utils import (
     JSONVal,
@@ -141,7 +142,7 @@ def test_process_requirements_files_no_files(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("installed_version", "version_req", "expected"),
-    [
+    (
         pytest.param("1.5.0", ">=1.0.0,<2.0.0", True, id="range-satisfied"),
         pytest.param("2.0.0", ">=1.0.0,<2.0.0", False, id="range-not-satisfied"),
         pytest.param("1.5.0", None, True, id="no-constraint"),
@@ -150,12 +151,12 @@ def test_process_requirements_files_no_files(tmp_path: Path) -> None:
         pytest.param("1.5.0", ">=2.0.0", False, id="too-old"),
         pytest.param("1.5.0", "not-a-specifier", True, id="invalid-specifier-fallback"),
         pytest.param("not-a-version", ">=1.0.0", False, id="invalid-version"),
-    ],
+    ),
 )
 def test_version_satisfies_constraint(
     installed_version: str,
     version_req: str | None,
-    expected: bool,
+    expected: bool,  # noqa: FBT001
 ) -> None:
     """Shared constraint helper used by both Checker and Installer.
 
@@ -175,14 +176,12 @@ def test_version_satisfies_constraint_without_packaging(
     Args:
         monkeypatch: Pytest monkeypatch fixture.
     """
-    import builtins
-
     real_import = builtins.__import__
 
     def block_packaging(name: str, *args: object, **kwargs: object) -> object:
         if name.startswith("packaging"):
             raise ImportError(name)
-        return real_import(name, *args, **kwargs)
+        return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
 
     monkeypatch.setattr(builtins, "__import__", block_packaging)
     assert version_satisfies_constraint("1.5.0", ">=1.0.0") is False

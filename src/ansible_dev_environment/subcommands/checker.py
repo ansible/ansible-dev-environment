@@ -138,12 +138,12 @@ class Checker:
         if dep in collections:
             dependency = collections[dep]
             return self._check_installed_dependency(
-                collection_name, dep, version_req, dependency,
+                collection_name,
+                dep,
+                version_req,
+                dependency,
             )
-        err = (
-            f"Collection {collection_name} requires {dep} {version_req}"
-            " but it is not installed."
-        )
+        err = f"Collection {collection_name} requires {dep} {version_req} but it is not installed."
         self._output.error(err)
         msg = f"Try running `ade install {dep}`"
         self._output.hint(msg)

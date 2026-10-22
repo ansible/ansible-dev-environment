@@ -20,6 +20,14 @@ import yaml
 from ansible_dev_environment.constants import GALAXY_YAML
 
 
+try:
+    from packaging import specifiers as _packaging_specifiers
+    from packaging import version as _packaging_version
+except ImportError:
+    _packaging_specifiers = None  # type: ignore[assignment]
+    _packaging_version = None  # type: ignore[assignment]
+
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
@@ -598,9 +606,9 @@ class Spinner:  # pylint: disable=too-many-instance-attributes
 def version_satisfies_constraint(installed_version: str, version_req: str | None) -> bool:
     """Check if an installed version satisfies a galaxy.yml version constraint.
 
-    When the constraint string is unparseable (InvalidSpecifier), falls back to
+    When the constraint string is not a valid specifier (InvalidSpecifier), falls back to
     ``>=0.0.0`` so any valid installed version is treated as satisfied—matching
-    the behaviour of ``ade check``.
+    the behavior of ``ade check``.
 
     Args:
         installed_version: The installed collection version string.
@@ -612,21 +620,18 @@ def version_satisfies_constraint(installed_version: str, version_req: str | None
     if not version_req or version_req == "*":
         return True
 
-    try:
-        from packaging import specifiers as _specifiers
-        from packaging import version as _version
-    except ImportError:
+    if _packaging_specifiers is None or _packaging_version is None:
         return False
 
     try:
-        spec = _specifiers.SpecifierSet(version_req)
-    except _specifiers.InvalidSpecifier:
+        spec = _packaging_specifiers.SpecifierSet(version_req)
+    except _packaging_specifiers.InvalidSpecifier:
         logger.debug("Invalid version specifier %s, assuming >=0.0.0.", version_req)
-        spec = _specifiers.SpecifierSet(">=0.0.0")
+        spec = _packaging_specifiers.SpecifierSet(">=0.0.0")
 
     try:
-        return _version.parse(installed_version) in spec
-    except _version.InvalidVersion:
+        return _packaging_version.parse(installed_version) in spec
+    except _packaging_version.InvalidVersion:
         return False
 
 
