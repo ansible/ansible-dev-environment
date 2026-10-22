@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
-
 from typing import TYPE_CHECKING
 
 import pytest
@@ -176,12 +174,6 @@ def test_version_satisfies_constraint_without_packaging(
     Args:
         monkeypatch: Pytest monkeypatch fixture.
     """
-    real_import = builtins.__import__
-
-    def block_packaging(name: str, *args: object, **kwargs: object) -> object:
-        if name.startswith("packaging"):
-            raise ImportError(name)
-        return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
-
-    monkeypatch.setattr(builtins, "__import__", block_packaging)
+    monkeypatch.setattr("ansible_dev_environment.utils._packaging_specifiers", None)
+    monkeypatch.setattr("ansible_dev_environment.utils._packaging_version", None)
     assert version_satisfies_constraint("1.5.0", ">=1.0.0") is False

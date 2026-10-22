@@ -626,8 +626,13 @@ def version_satisfies_constraint(installed_version: str, version_req: str | None
     try:
         spec = _packaging_specifiers.SpecifierSet(version_req)
     except _packaging_specifiers.InvalidSpecifier:
-        logger.debug("Invalid version specifier %s, assuming >=0.0.0.", version_req)
-        spec = _packaging_specifiers.SpecifierSet(">=0.0.0")
+        try:
+            exact_version = _packaging_version.Version(version_req)
+        except _packaging_version.InvalidVersion:
+            logger.debug("Invalid version specifier %s, assuming >=0.0.0.", version_req)
+            spec = _packaging_specifiers.SpecifierSet(">=0.0.0")
+        else:
+            spec = _packaging_specifiers.SpecifierSet(f"=={exact_version}")
 
     try:
         return _packaging_version.parse(installed_version) in spec

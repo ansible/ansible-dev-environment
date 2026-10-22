@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import json
 import subprocess
 
@@ -348,14 +347,8 @@ def test_dependency_spec_satisfied_without_packaging(
         output: Output fixture.
         monkeypatch: Pytest monkeypatch fixture.
     """
-    real_import = builtins.__import__
-
-    def block_packaging(name: str, *args: object, **kwargs: object) -> object:
-        if name.startswith("packaging"):
-            raise ImportError(name)
-        return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
-
-    monkeypatch.setattr(builtins, "__import__", block_packaging)
+    monkeypatch.setattr("ansible_dev_environment.utils._packaging_specifiers", None)
+    monkeypatch.setattr("ansible_dev_environment.utils._packaging_version", None)
     config = _make_config(tmp_path, output, ansible_cfg=None)
     installer = Installer(config=config, output=output)
     installed: dict[str, dict[str, JSONVal]] = {

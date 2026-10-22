@@ -717,7 +717,7 @@ class Installer:
 
         self._copy_listed_repo_files(local_repo_path, destination_path, files_list)
 
-    def _install_local_collection(  # noqa: PLR0915
+    def _install_local_collection(
         self,
         collection: Collection,
     ) -> None:
