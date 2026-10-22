@@ -224,7 +224,7 @@ def test_copy_git_missing_tracked_file(
     assert "missing from the working tree" in captured.err
     assert "file_tracked.txt" in captured.err
     assert "git add -A" in captured.err
-    assert list(dest.glob("**/*")) == []
+    assert not list(dest.glob("**/*"))
 
 
 def test_copy_whitespace_only_file_list(
