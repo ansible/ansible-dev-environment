@@ -24,6 +24,7 @@ fileh
 followlinks
 fqcn
 gitdir
+hashi
 keepends
 netcommon
 platinclude

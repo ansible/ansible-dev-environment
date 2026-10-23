@@ -522,22 +522,22 @@ class Installer:
 
         return "ls", tracked_files_output.stdout
 
-    def _copy_repo_files(
+    def _discover_repo_file_list(
         self,
         local_repo_path: Path,
-        destination_path: Path,
-    ) -> None:
-        """Copy collection files tracked in git to the build directory.
+    ) -> tuple[str, list[str]]:
+        """Return the file listing command used and non-empty paths to copy.
 
         Args:
             local_repo_path: The collection local path.
-            destination_path: The build destination path.
+
+        Returns:
+            Command name (``git ls-files`` or ``ls``) and paths relative to the repo.
 
         Raises:
             SystemExit: If no files are found.
 
         """
-        # Get tracked files from git ls-files command
         found_using, files_stdout = self._find_files_using_git_ls_files(
             local_repo_path=local_repo_path,
         )
@@ -552,32 +552,123 @@ class Installer:
             self._output.critical(msg)
             raise SystemExit(msg)  # pragma: no cover # critical exits
 
-        msg = f"File list generated with '{found_using}'"
-        self._output.info(msg)
+        files_list = [file for file in files_stdout.split("\n") if file.strip()]
 
-        # Parse tracked files output
-        files_list = files_stdout.split("\n")
+        if not files_list:
+            msg = "No files found with either 'git ls-files' or 'ls"
+            self._output.critical(msg)
+            raise SystemExit(msg)  # pragma: no cover # critical exits
 
-        # Create the destination folder if it doesn't exist
+        if found_using is None:  # pragma: no cover
+            msg = "No files found with either 'git ls-files' or 'ls'"
+            self._output.critical(msg)
+            raise SystemExit(msg)
+
+        return found_using, files_list
+
+    def _reject_repo_paths_outside_root(
+        self,
+        local_repo_path: Path,
+        repo_root: Path,
+        files_list: list[str],
+    ) -> None:
+        """Refuse paths that resolve outside the collection root.
+
+        Args:
+            local_repo_path: The collection local path.
+            repo_root: Resolved collection root.
+            files_list: Paths relative to the collection root.
+        """
+        for file in files_list:
+            resolved = (local_repo_path / file).resolve()
+            if not resolved.is_relative_to(repo_root):
+                msg = f"Refusing to copy path outside collection: '{file}'"
+                self._output.critical(msg)
+
+    def _critical_if_git_index_paths_missing(
+        self,
+        local_repo_path: Path,
+        files_list: list[str],
+    ) -> None:
+        """Exit with guidance when git-index paths are absent on disk.
+
+        Args:
+            local_repo_path: The collection local path.
+            files_list: Paths from ``git ls-files``.
+        """
+        missing_files = [
+            file for file in files_list if not (local_repo_path / file).resolve().exists()
+        ]
+        if not missing_files:
+            return
+
+        missing_list = "\n".join(f"  - {file}" for file in missing_files)
+        msg = (
+            "One or more paths from 'git ls-files' are missing from the "
+            f"working tree:\n{missing_list}\n\n"
+            "ADE copies files listed in the git index. Unstaged deletes or "
+            "moves leave the index out of sync with disk until you stage "
+            "or restore changes.\n"
+            "Try: git add -A   (or restore files to match the index)"
+        )
+        self._output.critical(msg)
+
+    def _copy_listed_repo_files(
+        self,
+        local_repo_path: Path,
+        destination_path: Path,
+        files_list: list[str],
+    ) -> None:
+        """Copy listed paths from the collection tree into the build directory.
+
+        Args:
+            local_repo_path: The collection local path.
+            destination_path: The build destination path.
+            files_list: Paths relative to the collection root.
+        """
         Path(destination_path).mkdir(parents=True, exist_ok=True)
 
         for file in files_list:
             src_file_path = Path(local_repo_path) / file
             dest_file_path = Path(destination_path) / file
 
-            # Ensure the destination directory for the file exists
             dest_file_path.parent.mkdir(parents=True, exist_ok=True)
 
             if src_file_path.is_dir():
-                # Skip directories
                 continue
 
             try:
-                # Copy the file
                 shutil.copy2(src_file_path, dest_file_path)
+            except FileNotFoundError:
+                err = f"Failed to copy collection to build directory: missing file '{file}'"
+                self._output.critical(err)
             except shutil.Error as exc:
                 err = f"Failed to copy collection to build directory: {exc}"
                 self._output.critical(err)
+
+    def _copy_repo_files(
+        self,
+        local_repo_path: Path,
+        destination_path: Path,
+    ) -> None:
+        """Copy collection files tracked in git to the build directory.
+
+        Args:
+            local_repo_path: The collection local path.
+            destination_path: The build destination path.
+        """
+        found_using, files_list = self._discover_repo_file_list(local_repo_path)
+
+        msg = f"File list generated with '{found_using}'"
+        self._output.info(msg)
+
+        repo_root = local_repo_path.resolve()
+        self._reject_repo_paths_outside_root(local_repo_path, repo_root, files_list)
+
+        if found_using == "git ls-files":
+            self._critical_if_git_index_paths_missing(local_repo_path, files_list)
+
+        self._copy_listed_repo_files(local_repo_path, destination_path, files_list)
 
     def _install_local_collection(  # noqa: PLR0915
         self,

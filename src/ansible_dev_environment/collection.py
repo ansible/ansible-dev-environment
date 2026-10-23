@@ -252,12 +252,14 @@ def parse_collection_request(  # noqa: PLR0915
         )
         get_galaxy(collection=collection, output=output)
         return collection
+    # ASCII Galaxy ids (no leading _); avoid \w (Unicode) and [A-Za-z0-9_] (Sonar S6353).
+    _galaxy_id = r"[A-Za-z0-9](?:_|[A-Za-z0-9])*"
     non_local_re = re.compile(
-        r"""
-        (?P<cnamespace>[A-Za-z0-9]+)    # collection name
+        rf"""
+        (?P<cnamespace>{_galaxy_id})   # collection namespace
         \.                              # dot
-        (?P<cname>[A-Za-z0-9]+)         # collection name
-        (?P<specifier>[^A-Za-z0-9].*)?   # optional specifier
+        (?P<cname>{_galaxy_id})        # collection name
+        (?P<specifier>(?:(?![A-Za-z0-9])(?!_).).*)?    # optional specifier
         """,
         re.VERBOSE,
     )
