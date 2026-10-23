@@ -1021,6 +1021,121 @@ class Installer:
             "you will need to re-run 'ade install -e .' to include them in the editable install."
         )
         self._output.note(msg)
+        self._seed_git_entry(collection=collection)
+
+    def _seed_git_entry(self, collection: Collection) -> None:
+        """Seed a .git entry into the editable collection install directory.
+
+        ansible-test selects InstalledSource when no .git is present, and
+        InstalledSource.get_paths uses os.walk without followlinks=True, silently
+        skipping directory symlinks (including tests/). Seeding .git causes
+        ansible-test to select GitSource instead, which uses git ls-files and
+        returns all tracked paths including tests/integration/targets/.
+
+        Only created when the source collection has a .git entry; silently skipped
+        for non-git working copies.
+
+        A .git file containing a gitdir: line is written for standard clones
+        and worktrees. This keeps the installed collection on the same Git
+        repository without symlinking the .git directory itself.
+
+        Args:
+            collection: The collection object.
+        """
+        source_git = collection.path / ".git"
+        if not source_git.exists():
+            if source_git.is_symlink():
+                msg = f"Dangling .git symlink found at {source_git}, skipping seeding."
+                self._output.warning(msg)
+                return
+            msg = f"No .git found at {collection.path}, skipping seeding."
+            self._output.debug(msg)
+            return
+        dest_git = collection.site_pkg_path / ".git"
+        if dest_git.is_symlink():
+            dest_git.unlink()
+        elif dest_git.exists():
+            msg = f"Non-symlink .git already exists at {dest_git}, skipping seeding."
+            self._output.debug(msg)
+            return
+        gitdir = self._get_gitdir_target(collection, source_git)
+        if gitdir is None:
+            return
+
+        dest_git.write_text(f"gitdir: {gitdir}\n", encoding="utf-8")
+        msg = f"Seeded .git file: {dest_git} -> {gitdir}"
+        self._output.debug(msg)
+
+    def _get_gitdir_target(self, collection: Collection, source_git: Path) -> Path | None:
+        """Return a valid Git directory referenced by the source .git entry.
+
+        Args:
+            collection: The source collection.
+            source_git: The source collection's .git entry.
+
+        Returns:
+            The resolved Git directory, or None when the entry is unsupported.
+        """
+        if source_git.is_dir():
+            gitdir = source_git.resolve()
+        else:
+            # Git worktrees store a relative gitdir path in the .git file.
+            try:
+                content = source_git.read_text(encoding="utf-8").strip()
+            except (OSError, UnicodeError) as exc:
+                msg = f"Failed to read .git file at {source_git}: {exc}, skipping seeding."
+                self._output.warning(msg)
+                return None
+            if not content.startswith("gitdir:"):
+                msg = f"Unknown .git file format at {source_git}, skipping seeding."
+                self._output.warning(msg)
+                return None
+
+            rel_gitdir = content[len("gitdir:") :].strip()
+            if not rel_gitdir:
+                msg = f"Invalid .git file at {source_git}: missing gitdir path, skipping seeding."
+                self._output.warning(msg)
+                return None
+            try:
+                gitdir = (collection.path / rel_gitdir).resolve(strict=True)
+            except OSError:
+                msg = f"Invalid .git file at {source_git}: gitdir target does not exist, skipping seeding."
+                self._output.warning(msg)
+                return None
+            if not self._is_real_gitdir(gitdir):
+                msg = f"Invalid .git file at {source_git}: gitdir target is not a Git directory, skipping seeding."
+                self._output.warning(msg)
+                return None
+        return gitdir
+
+    @staticmethod
+    def _is_real_gitdir(gitdir: Path) -> bool:
+        """Check that a path contains Git directory metadata.
+
+        Args:
+            gitdir: Candidate Git directory path.
+
+        Returns:
+            Whether the path has a valid Git directory structure.
+        """
+        if not gitdir.is_dir() or not (gitdir / "HEAD").is_file():
+            return False
+
+        common_dir_file = gitdir / "commondir"
+        if common_dir_file.is_file():
+            try:
+                common_dir = (gitdir / common_dir_file.read_text(encoding="utf-8").strip()).resolve(
+                    strict=True
+                )
+            except (OSError, UnicodeError):
+                return False
+            return (
+                common_dir.is_dir()
+                and (common_dir / "objects").is_dir()
+                and (common_dir / "refs").is_dir()
+            )
+
+        return (gitdir / "objects").is_dir() and (gitdir / "refs").is_dir()
 
     def _ensure_build_ignore(self, collection: Collection) -> None:
         """Ensure galaxy.yml build_ignore includes dev artifacts created by editable installs.
