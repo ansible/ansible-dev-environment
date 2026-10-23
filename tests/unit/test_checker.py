@@ -8,8 +8,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from packaging.specifiers import SpecifierSet
-
 from ansible_dev_environment.subcommands.checker import Checker
 from ansible_dev_environment.utils import TermFeatures
 
@@ -90,7 +88,6 @@ def test_installed_dep_match(checker: Checker) -> None:
         "ns.col",
         "ns.dep",
         ">=1.0",
-        SpecifierSet(">=1.0"),
         dep_data,
     )
     assert result is False
@@ -107,7 +104,6 @@ def test_installed_dep_mismatch(checker: Checker) -> None:
         "ns.col",
         "ns.dep",
         ">=1.0",
-        SpecifierSet(">=1.0"),
         dep_data,
     )
     assert result is True
