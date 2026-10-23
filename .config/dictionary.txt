@@ -15,6 +15,7 @@ cauthor
 cdescription
 cnamespace
 collectonly
+commondir
 cpath
 crepository
 csource
