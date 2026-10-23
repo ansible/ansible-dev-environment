@@ -8,14 +8,12 @@ import sys
 
 from typing import TYPE_CHECKING, Any
 
-from packaging.specifiers import InvalidSpecifier, SpecifierSet
-from packaging.version import Version
-
 from ansible_dev_environment.utils import (
     builder_introspect,
     collect_manifests,
     oxford_join,
     subprocess_run,
+    version_satisfies_constraint,
 )
 
 
@@ -72,8 +70,7 @@ class Checker:
         self,
         collection_name: str,
         dep: str,
-        version: str,
-        spec: SpecifierSet,
+        version_req: str,
         dependency: dict[str, Any],
     ) -> bool:
         """Check version of an installed dependency.
@@ -81,8 +78,7 @@ class Checker:
         Args:
             collection_name: Name of the collection requiring the dependency.
             dep: Name of the dependency.
-            version: Required version specifier.
-            spec: Parsed SpecifierSet for version.
+            version_req: Required version specifier.
             dependency: Dependency collection details.
 
         Returns:
@@ -101,17 +97,17 @@ class Checker:
         if not isinstance(dep_version, str):  # pragma: no cover
             self._output.error(error)
             return False
-        dep_spec = Version(dep_version)
-        if not spec.contains(dep_spec):
+
+        if not version_satisfies_constraint(dep_version, version_req):
             err = (
-                f"Collection {collection_name} requires {dep} {version}"
+                f"Collection {collection_name} requires {dep} {version_req}"
                 f" but {dep} {dep_version} is installed."
             )
             self._output.error(err)
             return True
 
         msg = (
-            f"Collection {collection_name} requires {dep} {version}"
+            f"Collection {collection_name} requires {dep} {version_req}"
             f" and {dep} {dep_version} is installed."
         )
         self._output.debug(msg)
@@ -121,7 +117,7 @@ class Checker:
         self,
         collection_name: str,
         dep: str,
-        version: str,
+        version_req: str,
         collections: dict[str, Any],
     ) -> bool:
         """Check a single dependency.
@@ -129,26 +125,25 @@ class Checker:
         Args:
             collection_name: Name of the collection requiring the dependency.
             dep: Name of the dependency.
-            version: Required version specifier.
+            version_req: Required version specifier.
             collections: Dictionary of all collections.
 
         Returns:
             True if dependency missing or version mismatch, False otherwise.
         """
-        if not isinstance(version, str):  # pragma: no cover
+        if not isinstance(version_req, str):  # pragma: no cover
             err = f"Collection {collection_name} has malformed dependency version for {dep}."
             self._output.error(err)
             return False
-        try:
-            spec = SpecifierSet(version)
-        except InvalidSpecifier:
-            spec = SpecifierSet(">=0.0.0")
-            msg = f"Invalid version specifier {version}, assuming >=0.0.0."
-            self._output.debug(msg)
         if dep in collections:
             dependency = collections[dep]
-            return self._check_installed_dependency(collection_name, dep, version, spec, dependency)
-        err = f"Collection {collection_name} requires {dep} {version} but it is not installed."
+            return self._check_installed_dependency(
+                collection_name,
+                dep,
+                version_req,
+                dependency,
+            )
+        err = f"Collection {collection_name} requires {dep} {version_req} but it is not installed."
         self._output.error(err)
         msg = f"Try running `ade install {dep}`"
         self._output.hint(msg)
