@@ -8,7 +8,7 @@ on:
 jobs:
   release:
     environment: release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
 
@@ -20,7 +20,7 @@ jobs:
       - name: Switch to using Python 3.12 by default
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: Install tox
         run: python3 -m pip install --user "tox>=4.0.0"
@@ -38,7 +38,7 @@ jobs:
 
   forum_post:
     needs: release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # Explicit empty permissions: CodeQL actions/missing-workflow-permissions.
     # Job only posts to the forum via secrets; it does not need GITHUB_TOKEN.
     permissions: {}
