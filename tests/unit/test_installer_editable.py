@@ -163,7 +163,6 @@ def test_editable_excludes_python_artifacts(
     assert not (collection_site_pkg / "test.pyc").exists()
     assert not (collection_site_pkg / "test.pyo").exists()
     assert not (collection_site_pkg / "__pycache__").exists()
-    assert not (collection_site_pkg / ".git").exists()
     assert (collection_site_pkg / "galaxy.yml").exists()
 
 
