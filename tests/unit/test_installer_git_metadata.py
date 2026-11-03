@@ -5,7 +5,9 @@ from __future__ import annotations
 import shutil
 import subprocess
 
+from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 from ansible_dev_environment.arg_parser import parse
 from ansible_dev_environment.config import Config
@@ -14,8 +16,6 @@ from tests.unit.test_installer_editable import _make_installer, _make_mock_colle
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import pytest
 
     from ansible_dev_environment.output import Output
@@ -308,6 +308,185 @@ def test_seed_git_skips_invalid_worktree_gitdir(
     assert not dest_git.exists()
     assert not dest_git.is_symlink()
     assert output.call_count["warning"] == warnings_before + 1
+
+
+def test_seed_git_skips_empty_worktree_gitdir(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """An empty gitdir target is rejected with a warning.
+
+    Args:
+        tmp_path: Temporary directory.
+        installable_local_collection: The installable local collection fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+        output: Output fixture.
+    """
+    (installable_local_collection / ".git").write_text("gitdir:  \n", encoding="utf-8")
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+    dest_git = collection.site_pkg_path / ".git"
+
+    warning = Mock(wraps=output.warning)
+    monkeypatch.setattr(output, "warning", warning)
+    installer._seed_git_entry(collection=collection)
+
+    assert not dest_git.exists()
+    assert not dest_git.is_symlink()
+    warning.assert_called_once_with(
+        f"Invalid .git file at {installable_local_collection / '.git'}: "
+        "missing gitdir path, skipping seeding."
+    )
+
+
+def test_seed_git_skips_non_gitdir_target(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """A worktree target without Git metadata is rejected with a warning.
+
+    Args:
+        tmp_path: Temporary directory.
+        installable_local_collection: The installable local collection fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+        output: Output fixture.
+    """
+    non_gitdir = tmp_path / "not-a-gitdir"
+    non_gitdir.mkdir()
+    (installable_local_collection / ".git").write_text(
+        f"gitdir: {non_gitdir}\n",
+        encoding="utf-8",
+    )
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+    dest_git = collection.site_pkg_path / ".git"
+
+    warning = Mock(wraps=output.warning)
+    monkeypatch.setattr(output, "warning", warning)
+    installer._seed_git_entry(collection=collection)
+
+    assert not dest_git.exists()
+    assert not dest_git.is_symlink()
+    warning.assert_called_once_with(
+        f"Invalid .git file at {installable_local_collection / '.git'}: "
+        "gitdir target is not a Git directory, skipping seeding."
+    )
+
+
+def test_seed_git_skips_invalid_worktree_commondir(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """A worktree with a missing common Git directory is rejected.
+
+    Args:
+        tmp_path: Temporary directory.
+        installable_local_collection: The installable local collection fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+        output: Output fixture.
+    """
+    gitdir = tmp_path / "worktree-gitdir"
+    gitdir.mkdir()
+    (gitdir / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+    (gitdir / "commondir").write_text("../missing-common-dir\n", encoding="utf-8")
+    (installable_local_collection / ".git").write_text(
+        f"gitdir: {gitdir}\n",
+        encoding="utf-8",
+    )
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+    dest_git = collection.site_pkg_path / ".git"
+
+    warning = Mock(wraps=output.warning)
+    monkeypatch.setattr(output, "warning", warning)
+    installer._seed_git_entry(collection=collection)
+
+    assert not dest_git.exists()
+    assert not dest_git.is_symlink()
+    warning.assert_called_once_with(
+        f"Invalid .git file at {installable_local_collection / '.git'}: "
+        "gitdir target is not a Git directory, skipping seeding."
+    )
+
+
+def test_seed_git_skips_unreadable_git_file(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """An unreadable .git file is skipped with a warning.
+
+    Args:
+        tmp_path: Temporary directory.
+        installable_local_collection: The installable local collection fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+        output: Output fixture.
+    """
+    source_git = installable_local_collection / ".git"
+    source_git.write_text("gitdir: unavailable\n", encoding="utf-8")
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+    dest_git = collection.site_pkg_path / ".git"
+    original_read_text = Path.read_text
+
+    def read_text(
+        path: Path,
+        encoding: str | None = None,
+        errors: str | None = None,
+    ) -> str:
+        if path == source_git:
+            raise PermissionError
+        return original_read_text(path, encoding=encoding, errors=errors)
+
+    monkeypatch.setattr(Path, "read_text", read_text)
+    warnings_before = output.call_count["warning"]
+    installer._seed_git_entry(collection=collection)
+
+    assert not dest_git.exists()
+    assert output.call_count["warning"] == warnings_before + 1
+
+
+def test_seed_git_replaces_existing_destination_symlink(
+    tmp_path: Path,
+    installable_local_collection: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """A stale destination .git symlink is replaced by a gitdir file.
+
+    Args:
+        tmp_path: Temporary directory.
+        installable_local_collection: The installable local collection fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+        output: Output fixture.
+    """
+    subprocess.run(
+        ["git", "init"],
+        cwd=installable_local_collection,
+        check=True,
+        capture_output=True,
+    )
+    installer = _make_installer(tmp_path, installable_local_collection, monkeypatch, output)
+    collection = _make_mock_collection(installer._config, installable_local_collection)
+    dest_git = collection.site_pkg_path / ".git"
+    if dest_git.exists() or dest_git.is_symlink():
+        dest_git.unlink()
+    dest_git.symlink_to(tmp_path / "stale-gitdir", target_is_directory=True)
+
+    installer._seed_git_entry(collection=collection)
+
+    assert dest_git.is_file()
+    assert not dest_git.is_symlink()
+    assert dest_git.read_text(encoding="utf-8").strip() == (
+        f"gitdir: {(installable_local_collection / '.git').resolve()}"
+    )
 
 
 def test_seed_git_skips_dangling_source_git_symlink(

@@ -146,6 +146,8 @@ def test_process_requirements_files_no_files(tmp_path: Path) -> None:
         pytest.param("1.5.0", None, True, id="no-constraint"),
         pytest.param("1.5.0", "", True, id="empty-constraint"),
         pytest.param("1.5.0", "*", True, id="wildcard"),
+        pytest.param("1.5.0", "1.5.0", True, id="exact-version-match"),
+        pytest.param("1.5.0", "2.0.0", False, id="exact-version-mismatch"),
         pytest.param("1.5.0", ">=2.0.0", False, id="too-old"),
         pytest.param("1.5.0", "not-a-specifier", True, id="invalid-specifier-fallback"),
         pytest.param("not-a-version", ">=1.0.0", False, id="invalid-version"),
