@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -48,6 +49,43 @@ def gen_args(
     if venv is not None:
         args.venv = venv
     return args
+
+
+def test_default_uv_venv_uses_running_python(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    output: Output,
+) -> None:
+    """Use the running interpreter when no Python is specified.
+
+    Args:
+        tmp_path: Temporary directory.
+        monkeypatch: Pytest monkeypatch fixture.
+        output: Output fixture.
+    """
+    venv = tmp_path / "venv"
+    args = gen_args(venv=str(venv), subcommand="install")
+    config = Config(args=args, output=output, term_features=output.term_features)
+    config._create_venv = True
+    monkeypatch.setattr(config, "uv_available", True)
+    commands: list[str] = []
+
+    def create_venv(command: str) -> None:
+        """Record the uv command and create a stub interpreter.
+
+        Args:
+            command: The command used to create the virtual environment.
+        """
+        commands.append(command)
+        (venv / "bin").mkdir(parents=True)
+        (venv / "bin" / "python").touch()
+
+    monkeypatch.setattr(config, "_create_new_venv", create_venv)
+    config._set_interpreter()
+
+    assert commands == [
+        f"uv venv --seed --python-preference=system --python {shlex.quote(sys.executable)}"
+    ]
 
 
 @pytest.mark.parametrize(

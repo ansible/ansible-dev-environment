@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -208,7 +209,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
         self._locate_python()
         if self.specified_python is None:
             venv_cmd = (
-                "uv venv --seed --python-preference=system"
+                f"uv venv --seed --python-preference=system --python {shlex.quote(sys.executable)}"
                 if self.uv_available
                 else f"{sys.executable} -m venv"
             )
