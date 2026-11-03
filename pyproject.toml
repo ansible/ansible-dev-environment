@@ -2,12 +2,12 @@
 name = "ansible-dev-environment"
 description = "A pip-like ansible collection installer."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "GPL-3.0-only"
 authors = [{ "name" = "Bradley A. Thornton", "email" = "bthornto@redhat.com" }]
 maintainers = [{ "name" = "Ansible by Red Hat", "email" = "info@ansible.com" }]
 keywords = ["ansible"]
-classifiers = ["Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "Operating System :: OS Independent", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: Implementation :: CPython", "Topic :: Software Development", "Topic :: Utilities"]
+classifiers = ["Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "Operating System :: OS Independent", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: Implementation :: CPython", "Topic :: Software Development", "Topic :: Utilities"]
 dependencies = ["ansible-builder>=3.1.0", "bindep>=2.13.0", "pyyaml>=6.0.1", "subprocess-tee>=0.4.2"]
 dynamic = ["version"]
 
@@ -358,7 +358,7 @@ builtins = ["__"]
 cache-dir = "./.cache/.ruff"
 fix = true
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = [
@@ -455,7 +455,7 @@ Build package, verify metadata, install package and assert behavior when ansible
 skip_install = true
 set_env.PYTHONWARNINGS = "error"
 
-[tool.tox.env.py310-lower]
+[tool.tox.env.py311-lower]
 dependency_groups = ["dev"]
 description = "Install using lowest constraints possible."
 runner = "uv-venv-runner"
@@ -502,6 +502,13 @@ PRE_COMMIT_COLOR = "always"
 TERM = "xterm-256color"
 
 [tool.uv]
-constraint-dependencies = ["cairosvg>=2.9.0"]
+constraint-dependencies = [
+  "cairosvg>=2.9.0",
+  "certifi>=2026.10.18",
+  "dnspython>=2.9.0",
+  "filelock>=4.2.1",
+  "pillow>=13.0.0",
+  "virtualenv>=21.14.9",
+]
 default-groups = "all"
 package = true
