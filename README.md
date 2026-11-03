@@ -181,7 +181,7 @@ ade install -e . --venv .venv --python python3.11
 ade install -e . --venv .venv --python 3.12
 
 # Use specific Python path
-ade install -e . --venv .venv --python /usr/bin/python3.10
+ade install -e . --venv .venv --python /usr/bin/python3.11
 ```
 
 ## Isolation Modes
