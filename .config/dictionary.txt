@@ -19,7 +19,6 @@ commondir
 cpath
 crepository
 csource
-delenv
 excinfo
 fileh
 followlinks
@@ -40,5 +39,3 @@ testcol
 testns
 treemaker
 unisolated
-usefixtures
-worktrees
